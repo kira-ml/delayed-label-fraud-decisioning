@@ -71,7 +71,7 @@ The cost matrix is fixed in `configs/costs.yaml` and must not change between run
 fraud_loss: 1.0
 false_positive_cost: 0.1
 review_cost: 0.02
-residual_fraud_loss_after_review: 0.3
+residual_fraud_loss: 0.3
 amount_scaled: false
 fraud_loss_rate: 0.0
 ```
@@ -79,9 +79,9 @@ fraud_loss_rate: 0.0
 ### 4.3 Notes
 
 - Costs are **relative units** in Week 1. Absolute calibration is out of scope.
-- `residual_fraud_loss_after_review` reflects that review does not catch all fraud.
+- `residual_fraud_loss` reflects that review does not catch all fraud.
 - Week 1 uses a **constant** `fraud_loss`. Amount-scaled fraud loss is a required sensitivity analysis (Section 12), not a Week 1 default.
-- Sensitivity analysis on `false_positive_cost`, `review_cost`, and `residual_fraud_loss_after_review` is required in the final report.
+- Sensitivity analysis on `false_positive_cost`, `review_cost`, and `residual_fraud_loss` is required in the final report.
 - Do not silently change costs between baseline and improved model.
 
 ---
@@ -327,7 +327,7 @@ Required in the final report:
 
 - Vary `false_positive_cost` across a range
 - Vary `review_cost` across a range
-- Vary `residual_fraud_loss_after_review` across a range
+- Vary `residual_fraud_loss` across a range
 - **Compare constant `fraud_loss` against amount-scaled `fraud_loss(amount) = amount * fraud_loss_rate`**
 - Report how policy choices change
 - Report how rankings of baselines change
@@ -414,7 +414,7 @@ Week 1 evaluates:
 - Cost per transaction, fraud dollars saved, precision@N, recall@N
 - Calibration: Brier score and ECE
 - Censored-label counts per split and per regime
-- Sensitivity to `false_positive_cost`, `review_cost`, `residual_fraud_loss_after_review`, and amount-scaled fraud loss
+- Sensitivity to `false_positive_cost`, `review_cost`, `residual_fraud_loss`, and amount-scaled fraud loss
 
 Week 1 does **not** evaluate:
 
