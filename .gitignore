@@ -1,0 +1,247 @@
+# ============================================================
+# .gitignore — delayed-label-fraud-decisioning
+# ============================================================
+
+# ----------------------------
+# Data (NEVER commit data)
+# ----------------------------
+data/raw/
+data/interim/
+data/processed/
+data/external/
+data/backup/
+
+# Keep folder structure but ignore contents
+!data/raw/.gitkeep
+!data/interim/.gitkeep
+!data/processed/.gitkeep
+
+# Dataset archives
+*.zip
+*.tar
+*.tar.gz
+*.tgz
+*.7z
+*.rar
+
+# Common dataset formats
+*.csv
+*.tsv
+*.parquet
+*.feather
+*.arrow
+*.h5
+*.hdf5
+*.pkl
+*.pickle
+*.npy
+*.npz
+*.joblib
+
+# ----------------------------
+# Model artifacts
+# ----------------------------
+artifacts/
+models/
+checkpoints/
+*.ckpt
+*.pt
+*.pth
+*.onnx
+*.bin
+*.model
+*.h5
+*.sav
+
+# LightGBM / XGBoost / CatBoost
+*.txt
+!requirements.txt
+!pyproject.toml
+!*.md
+lgbm_*.txt
+xgboost_*.json
+catboost_*.cbm
+
+# ----------------------------
+# Python
+# ----------------------------
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+MANIFEST
+pip-wheel-metadata/
+
+# Virtual environments
+.venv/
+venv/
+env/
+ENV/
+env.bak/
+venv.bak/
+.python-version
+
+# ----------------------------
+# Jupyter
+# ----------------------------
+.ipynb_checkpoints/
+*/.ipynb_checkpoints/*
+*.ipynb_checkpoints
+
+# Jupyter notebook output (optional — uncomment if you want to strip outputs)
+# *.ipynb
+
+# ----------------------------
+# Testing / coverage
+# ----------------------------
+.pytest_cache/
+.coverage
+.coverage.*
+htmlcov/
+.tox/
+.nox/
+.hypothesis/
+coverage.xml
+*.cover
+.cache
+
+# ----------------------------
+# Type checking / linting
+# ----------------------------
+.mypy_cache/
+.dmypy.json
+dmypy.json
+.ruff_cache/
+.flake8
+.pyre/
+
+# ----------------------------
+# Logs
+# ----------------------------
+logs/
+*.log
+*.log.*
+pip-log.txt
+pip-delete-this-directory.txt
+
+# ----------------------------
+# Reports (generated)
+# ----------------------------
+reports/figures/
+reports/tables/
+reports/*.pdf
+reports/*.html
+reports/*.png
+reports/*.jpg
+reports/*.svg
+
+# Keep markdown reports
+!reports/*.md
+!reports/.gitkeep
+
+# ----------------------------
+# Config secrets
+# ----------------------------
+.env
+.env.*
+!.env.example
+secrets/
+*.secret
+credentials.json
+service-account*.json
+
+# ----------------------------
+# IDE / Editor
+# ----------------------------
+.vscode/
+!.vscode/settings.json.example
+!.vscode/extensions.json
+.idea/
+*.swp
+*.swo
+*~
+*.sublime-project
+*.sublime-workspace
+
+# Vim
+*.sw?
+[._]*.s[a-v][a-z]
+[._]*.sw[a-p]
+[._]s[a-rt-v][a-z]
+[._]ss[a-gi-z]
+[._]sw[a-p]
+
+# Emacs
+*~
+\#*\#
+.\#*
+
+# ----------------------------
+# OS
+# ----------------------------
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+desktop.ini
+$RECYCLE.BIN/
+
+# ----------------------------
+# Streamlit / Dash / Dashboards (deferred)
+# ----------------------------
+.streamlit/secrets.toml
+
+# ----------------------------
+# MLflow / Weights & Biases (if used later)
+# ----------------------------
+mlruns/
+mlartifacts/
+wandb/
+.aim/
+lightning_logs/
+
+# ----------------------------
+# DVC (if used later)
+# ----------------------------
+.dvc/
+.dvcignore
+*.dvc
+
+# ----------------------------
+# Docker (deferred — not Week 1)
+# ----------------------------
+*.pid
+*.seed
+*.pid.lock
+
+# ----------------------------
+# Misc
+# ----------------------------
+.cache/
+.temp/
+tmp/
+temp/
+scratch/
+*.bak
+*.orig
+*.rej
+*.tmp
