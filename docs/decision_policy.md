@@ -2,7 +2,7 @@
 
 > **Repository:** `delayed-label-fraud-decisioning`  
 > **Document:** Decision Policy  
-> **Status:** v0.1 — LOCKED before modeling  
+> **Status:** v0.2 — LOCKED before modeling  
 > **Last updated:** YYYY-MM-DD
 
 ---
@@ -71,7 +71,7 @@ The policy consumes the following per transaction:
 | False-positive cost | `false_positive_cost` | Cost config | Yes |
 | Review cost | `review_cost` | Cost config | Yes |
 | Residual fraud loss after review | `residual_fraud_loss` | Cost config | Yes |
-| Review capacity | `capacity` | Ops config | Yes |
+| Review capacity | `capacity` | Ops config | Yes (optional in Week 1) |
 
 All cost inputs come from `configs/costs.yaml`. They are fixed for a given experiment and never tuned on the test set.
 
@@ -178,19 +178,41 @@ residual_fraud_loss: 0.3
 Then:
 
 ```text
-p_review = 0.02 / (1.0 - 0.3)  = 0.0286
-p_block  = (0.1 - 0.02) / (0.1 + 0.3) = 0.20
+p_review = 0.02 / (1.0 - 0.3)           = 0.0286
+p_block  = (0.1 - 0.02) / (0.1 + 0.3)   = 0.20
 ```
 
 Policy:
 
 ```text
-p < 0.0286  → approve
-0.0286 <= p < 0.20 → review
-p >= 0.20   → block
+p < 0.0286              → approve
+0.0286 <= p < 0.20      → review
+p >= 0.20               → block
 ```
 
 These are the Week 1 defaults. They are documented so any change is visible.
+
+### 6.5 Threshold Edge Cases
+
+The threshold presentation in Section 6.3 is a convenience, not the definition. The **argmin rule in Section 5.4 is always well-defined**, even when the thresholds degenerate. Three cases must be handled explicitly in code and reported in the Week 1 report.
+
+**Case A — `fraud_loss <= residual_fraud_loss`.**  
+Denominator of `p_review` is zero or negative. Review is never cheaper than approve for any `p ≥ 0`. The review band is empty. The policy reduces to an approve-vs-block decision:
+
+```text
+approve if  p * fraud_loss < (1 - p) * false_positive_cost
+block otherwise
+```
+
+This is a sign that the cost matrix is inconsistent (review is as bad as or worse than doing nothing). The config should be rejected before modeling, not silently accepted.
+
+**Case B — `p_review >= p_block`.**  
+The review band is empty: for `p` in `[p_block, p_review)` the threshold rule would say `approve`, but block is cheaper. The argmin rule handles this correctly; the threshold rule does not. Implement the argmin rule, not the threshold rule.
+
+**Case C — thresholds outside `[0, 1]`.**  
+If `p_review < 0` or `p_block > 1`, the corresponding band vanishes. The argmin rule still applies. Do not clip thresholds. Report any regime where this occurs.
+
+**Rule:** implement Section 5.4 as the source of truth. Use Section 6.3 only as a diagnostic view for the Week 1 report.
 
 ---
 
@@ -204,17 +226,32 @@ In reality, `fraud_loss` scales with `amount`:
 fraud_loss(amount) = amount * fraud_loss_rate
 ```
 
-If amount-scaled costs are used, thresholds become amount-dependent:
+If amount-scaled costs are used, the review-vs-approve threshold becomes amount-dependent:
 
 ```text
 p_review(amount) = review_cost / (amount * fraud_loss_rate - residual_fraud_loss)
 ```
 
+and the block-vs-review threshold becomes:
+
+```text
+p_block(amount) = (false_positive_cost - review_cost) / (false_positive_cost + residual_fraud_loss)
+```
+
+The same edge cases from Section 6.5 apply, plus the additional case where `amount * fraud_loss_rate <= residual_fraud_loss`, in which review is never cheaper than approve.
+
 ### 7.1 Week 1 Rule
 
-Use constant `fraud_loss` for simplicity.  
-Document the simplification.  
-Add amount-scaled costs in Week 2 only if the Week 1 backtest shows the simplification changes decisions materially.
+- **Default:** constant `fraud_loss` in `configs/costs.yaml`, with `amount_scaled: false`.
+- **Required:** an amount-scaled sensitivity analysis in the Week 1 report (`amount_scaled: true`, `fraud_loss_rate > 0`).
+- The sensitivity analysis must report whether the ranking of baselines changes when amount-scaled costs are used.
+- If the ranking changes, this must be documented as a limitation of the constant-loss default.
+
+This aligns with `evaluation_protocol.md` v0.2 Section 12.
+
+### 7.2 Out-of-Scope Cost Realism
+
+`false_positive_cost` is also plausibly proportional to `amount` (lost revenue, customer value). Week 1 does not model this. It is named here so it is not a hidden assumption, and it is a candidate for the Week 2 sensitivity analysis.
 
 ---
 
@@ -239,8 +276,11 @@ route the rest by the block-vs-approve decision only
 
 ### 8.3 Week 1 Rule
 
-Capacity simulation is optional in Week 1.  
-If included, it must be reported as a separate experiment, not mixed into the baseline.
+Capacity simulation is **optional** in Week 1.  
+If included, it must be reported as a **separate experiment**, not mixed into the Week 1 baseline.  
+`capacity_enabled: false` is the default in `configs/policy.yaml`.
+
+Budget-constrained **ranking** metrics (top 1% / 5% / 10%) are reported in Week 1 per `evaluation_protocol.md` v0.2 Section 10. Those are not the same as capacity-aware decisioning.
 
 ---
 
@@ -285,14 +325,20 @@ Every decision must be logged for audit and backtest.
 | `expected_cost_block` | float | For audit |
 | `chosen_expected_cost` | float | Min of the three |
 | `reason` | string | e.g., "p > p_block" |
+| `cost_config_hash` | string | Hash of `configs/costs.yaml` used for the decision |
 
 ### 10.2 Why Log All Three Costs
 
 - Debugging: shows why the action was chosen
 - Sensitivity: allows re-scoring under different cost matrices without re-running the model
 - Fairness: allows auditing whether one action dominates for a subgroup
+- The `cost_config_hash` makes it unambiguous which cost matrix produced each decision
 
-### 10.3 Storage
+### 10.3 Labels Are Not in the Action Log
+
+`y_true` and `label_time` are **not** columns of the action log. They are joined in the backtest, only for transactions whose labels have matured by `test_end`. This preserves the audit trail as a pure decision record.
+
+### 10.4 Storage
 
 - Week 1: `data/processed/action_log.parquet`
 - No database in Week 1
@@ -308,6 +354,7 @@ The policy is simple, but it can still fail. Name them now.
 | Uncalibrated `p` | Model outputs uncalibrated scores | Costs and thresholds wrong |
 | Wrong cost matrix | Costs do not reflect reality | Policy picks wrong action |
 | Constant fraud loss | Amount ignored | Large transactions under-protected |
+| Degenerate thresholds | `fraud_loss <= residual_fraud_loss` or `p_review >= p_block` | Review band empty or misleading |
 | Capacity ignored | Review queue overflows | Latency and backlog |
 | Threshold tuning on test | Retro-fitting to results | Leakage, invalid comparison |
 | Feedback loop | Policy changes labels | Observed labels biased |
@@ -351,8 +398,11 @@ The two documents must agree on:
 - Cost matrix values
 - Action set
 - Decision rule
+- Canonical config key names
 
-If they disagree, the evaluation protocol wins, and this document is updated.
+**Canonical key:** the residual loss after review is `residual_fraud_loss` in `configs/costs.yaml`. Any earlier use of `residual_fraud_loss_after_review` in `evaluation_protocol.md` should be treated as the same quantity and aligned.
+
+If the two documents disagree, the evaluation protocol wins and this document is updated.
 
 ---
 
@@ -387,14 +437,17 @@ If `p_review` and `p_block` are provided explicitly, they override derived thres
 
 - [ ] Actions defined: approve / review / block
 - [ ] Expected cost formulas implemented in `src/policy/decide.py`
-- [ ] Derived thresholds computed from costs
-- [ ] Cost matrix in `configs/costs.yaml`
+- [ ] Argmin rule implemented as the source of truth
+- [ ] Derived thresholds computed from costs and reported as a diagnostic view only
+- [ ] Threshold edge cases (Section 6.5) handled and covered by a unit test
+- [ ] Cost matrix in `configs/costs.yaml` with canonical key `residual_fraud_loss`
 - [ ] Policy config in `configs/policy.yaml`
 - [ ] Action log written to `data/processed/action_log.parquet`
-- [ ] Action log schema matches Section 10
-- [ ] Calibration measured and reported
+- [ ] Action log schema matches Section 10, including `cost_config_hash`
+- [ ] Calibration measured and reported: Brier and ECE
 - [ ] Policy evaluated under all three delay regimes
-- [ ] Policy compared against random, rule-based, approve-all, and static-threshold baselines
+- [ ] Policy compared against the canonical baseline set: random, approve-all, block-all, rule-based, LightGBM + static threshold
+- [ ] Amount-scaled fraud loss sensitivity analysis run and reported
 - [ ] Failure modes documented in the Week 1 report
 
 ---
@@ -404,6 +457,7 @@ If `p_review` and `p_block` are provided explicitly, they override derived thres
 | Date | Change | Reason |
 |---|---|---|
 | YYYY-MM-DD | Initial decision policy | Project start |
+| YYYY-MM-DD | Added threshold edge cases; made amount-scaled loss a required Week 1 sensitivity; added `cost_config_hash` to log schema; declared canonical `residual_fraud_loss` key; aligned baselines | Align with problem framing v0.2, data card v0.2, and evaluation protocol v0.2 |
 
 ---
 

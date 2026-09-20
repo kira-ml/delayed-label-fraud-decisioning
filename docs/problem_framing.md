@@ -3,22 +3,22 @@
 > **Repository:** `delayed-label-fraud-decisioning`  
 > **Course:** Introduction to Machine Learning  
 > **Document:** Problem framing / project charter  
-> **Status:** v0.1  
+> **Status:** v0.2 — aligned with Week 1 MVP  
 > **Last updated:** YYYY-MM-DD
 
 ---
 
 ## 1. One-Sentence Project
 
-Build an end-to-end machine learning system that makes **real-time fraud decisions** under **delayed, partial, and biased labels**, optimizing **operational utility** rather than offline classification accuracy alone.
+Build and evaluate a cost-sensitive fraud decision policy that makes `approve`, `review`, or `block` decisions at transaction time using only features available then, while fraud labels are delayed and only partially observed by evaluation time.
 
 ---
 
 ## 2. Core Question
 
-> How can a fraud detection system decide **now** when the truth about whether that decision was correct may not arrive for **weeks or months**?
+> How can a fraud decision policy be trained and evaluated when fraud labels arrive late, are censored at evaluation time, and have asymmetric operational costs?
 
-This is not a standard classification problem. It is a **sequential decision-making problem under delayed feedback, asymmetric costs, and nonstationarity**.
+This is not a standard binary classification project. It is a **one-step decision problem under delayed, partial, and biased feedback**. The model predicts fraud probability; the policy maps that probability to an operational action.
 
 ---
 
@@ -30,28 +30,35 @@ At decision time `t`, the system observes transaction features `X_t` and must ch
 - `review`
 - `block`
 
-The true label `y_t` is not available at time `t`. It arrives later at time `t + Δ_t`, where `Δ_t` is the label delay.
-
-The system must therefore optimize expected utility over a horizon:
+The true label `y_t` is not available at time `t`. It becomes observable later at:
 
 ```text
-maximize  E[ Σ utility(action_t, y_t, cost_t) ]
+label_time = t + Δ_t
+```
+
+where `Δ_t` is the label delay.
+
+The system must optimize expected operational utility:
+
+```text
+maximize  E[ utility(action_t, y_t, cost_t) ]
 ```
 
 where utility depends on:
 
 - fraud loss avoided
 - false-positive friction cost
-- review/investigation cost
+- review / investigation cost
 - operational capacity
 - customer experience
-- regulatory constraints
 
-The model is only one component. The real system is:
+The model is only one component. The decision policy is the product being evaluated.
 
 ```text
-observe → decide → act → observe delayed/biased outcome → update → monitor → adapt
+observe → decide → act → observe delayed/partial outcome → evaluate
 ```
+
+Full online adaptation and delayed-label correction are future work, not Week 1 requirements.
 
 ---
 
@@ -71,7 +78,7 @@ This creates a structural gap:
 Therefore, the core difficulty is not “which model gets the best AUC?”  
 The core difficulty is:
 
-> How do we learn and decide when the feedback loop is delayed, partial, biased, and adversarial?
+> How do we make and evaluate cost-based decisions when the feedback loop is delayed, partial, biased, and adversarial?
 
 ---
 
@@ -85,10 +92,10 @@ The core difficulty is:
 | Root causes | Delayed chargebacks, censored labels, unreported fraud, investigation bias | Observed labels are not ground truth |
 | Conventional failure | Offline random-split AUC on resolved labels | Overestimates live performance |
 | Why still hard | Nonstationarity + delayed feedback + adversarial adaptation | Model learns from a biased, delayed view |
-| ML contribution | Online learning, PU learning, delayed-label correction, cost-sensitive policy | Model must match the decision loop |
+| ML contribution | Calibrated probability model + cost-sensitive decision policy | Model must match the decision loop |
 | Measurable objective | Fraud loss avoided at fixed false-positive or review budget | Business-relevant evaluation |
 | Data required | Timestamped transactions, actions, features, delayed labels | Temporal data is mandatory |
-| MVP | Streaming simulator + baseline + cost-sensitive policy + temporal backtest | Buildable in one semester |
+| MVP | Baseline model + cost-sensitive policy + temporal backtest | Buildable in one semester |
 
 ---
 
@@ -96,55 +103,67 @@ The core difficulty is:
 
 ### In Scope
 
-- Streaming transaction simulation
+- Chronological transaction replay from a static dataset
 - Time-aware feature computation
+- Delayed-label simulation with documented rules
+- Chronological train / validation / test splits
 - Fraud scoring model
 - Cost-sensitive decision policy
 - Action logging
-- Delayed label reconciliation
-- Temporal backtesting
-- Monitoring dashboard
+- Cost-based temporal backtest
+- Calibration measurement
+- Sensitivity analysis on cost assumptions
 - Reproducible evaluation
 
-### Out of Scope
+### Out of Scope for Week 1 and Core Final Project
 
+- Streaming infrastructure such as Kafka, RabbitMQ, or Faust
+- FastAPI or any service layer
+- Dashboards such as Streamlit, Grafana, or Dash
+- Online learning such as SGD or Passive-Aggressive
+- PU learning
+- Delayed-label correction models
+- Drift detectors
+- Graph neural networks or graph features
+- Federated learning
 - Production bank integration
 - Real PII or live customer data
 - Novel algorithm research
-- Deep learning unless justified by the problem
-- Graph neural networks unless the baseline clearly fails
-- Full federated learning deployment
-- Legal or regulatory compliance certification
+- Deep learning unless a measured baseline failure justifies it
+
+These are future work, not Week 1 requirements.
 
 ---
 
 ## 7. System Architecture
 
+Week 1 is a batch pipeline, not a production system.
+
 ```mermaid
 flowchart LR
-    A[Transaction Stream] --> B[Feature Computation]
-    B --> C[Fraud Scorer]
-    C --> D[Decision Policy]
-    D --> E[Action Logger]
-    E --> F[Delayed Label Reconciler]
-    F --> G[Training Set Builder]
-    G --> H[Model Trainer]
-    H --> C
-    D --> I[Monitoring Dashboard]
-    F --> I
+    A[Raw Dataset] --> B[Load and Normalize]
+    B --> C[Delay Simulator]
+    C --> D[Temporal Splitter]
+    D --> E[Baseline Trainer]
+    E --> F[Scorer]
+    F --> G[Decision Policy]
+    G --> H[Action Log]
+    H --> I[Cost-Based Backtest]
+    I --> J[Week 1 Report]
 ```
 
 ### Components
 
-1. **Transaction Stream** — chronological events with timestamps.
-2. **Feature Computation** — only features available at decision time.
-3. **Fraud Scorer** — baseline: LightGBM/XGBoost; improvement: online SGD/PA, PU learning.
-4. **Decision Policy** — maps score + costs to `approve`, `review`, or `block`.
-5. **Action Logger** — records decisions, scores, thresholds, and reasons.
-6. **Delayed Label Reconciler** — joins labels only when they become available.
-7. **Training Set Builder** — builds time-correct training data.
-8. **Model Trainer** — retrains or updates online.
-9. **Monitoring Dashboard** — tracks cost, drift, calibration, and alert volume.
+1. **Raw Dataset** — BAF primary; IEEE-CIS optional later.
+2. **Load and Normalize** — standard schema, timestamps, sorting.
+3. **Delay Simulator** — assign `decision_time` and `label_time` under fixed delay regimes.
+4. **Temporal Splitter** — chronological train / validation / test.
+5. **Baseline Trainer** — LightGBM binary classifier.
+6. **Scorer** — attach `p_fraud` to each test transaction.
+7. **Decision Policy** — map `p_fraud` and costs to `approve`, `review`, or `block`.
+8. **Action Log** — audit trail of decisions and expected costs.
+9. **Cost-Based Backtest** — realized cost, fraud dollars saved, precision@N, calibration.
+10. **Week 1 Report** — baseline comparison, failure cases, limitations.
 
 ---
 
@@ -164,33 +183,37 @@ Why:
 
 ### Secondary Dataset
 
-**IEEE-CIS Fraud Detection**
+**IEEE-CIS Fraud Detection** — optional.
 
-Why:
-
-- Large transaction dataset
-- Rich features
-- Useful for graph and feature engineering extensions
+Use only if BAF is insufficient. Keep it out of Week 1 unless needed.
 
 ### Label Delay Simulation
 
-Since public datasets do not usually provide realistic chargeback timestamps, simulate them.
+Public fraud datasets do not usually provide realistic chargeback timestamps. Delay must be simulated.
 
-For each transaction:
+Week 1 rule:
 
 ```text
 decision_time = t
-label_time = t + Δ
+label_time    = t + Δ
 ```
 
-Where `Δ` can be:
+Use fixed delay per regime:
 
-- 7 days
-- 30 days
-- 90 days
+| Regime | Δ |
+|---|---|
+| Short | 7 days |
+| Medium | 30 days |
+| Long | 90 days |
 
-For fraud cases, sample delay from a realistic distribution.  
-For non-fraud cases, assign a fixed observation window or administrative label time.
+If BAF does not support day-level timestamps, fall back to month-based regimes (1 / 2 / 3 months) and document the fallback in `data_card.md`.
+
+Censoring rule:
+
+```text
+A label is observed only if label_time <= evaluation_end.
+Unobserved labels are censored, not negative.
+```
 
 ### Time-Aware Splits
 
@@ -206,7 +229,7 @@ Testing must use future transactions:
 decision_time > T
 ```
 
-This prevents temporal leakage.
+No random splits. No shuffling. No cross-validation across time boundaries.
 
 ---
 
@@ -236,30 +259,37 @@ t + Δ_t
 
 ### Baseline
 
-- LightGBM or XGBoost
-- Static threshold
-- Offline training on resolved labels
-
-### Improvements
-
-- Online SGD / Passive-Aggressive
-- PU learning
-- Delayed-label correction
-- Cost-sensitive thresholding
-- Calibration
-- Drift-aware retraining
+- LightGBM binary classifier
+- Trained on matured labels only
+- Static threshold baseline for comparison
 
 ### Decision Policy
 
-Given predicted probability `p = P(y=1 | X_t)`, choose action minimizing expected cost:
+Given predicted probability `p = P(y=1 | X_t)`, choose the action minimizing expected cost:
 
 ```text
-Expected cost(approve) = p * fraud_loss
-Expected cost(review)  = review_cost + p * residual_fraud_loss
-Expected cost(block)   = (1 - p) * false_positive_cost
+E[cost(approve)] = p * fraud_loss
+E[cost(review)]  = review_cost + p * residual_fraud_loss
+E[cost(block)]   = (1 - p) * false_positive_cost
 ```
 
 Choose the action with the lowest expected cost.
+
+Week 1 default: constant `fraud_loss` for simplicity.  
+Required sensitivity analysis: amount-scaled fraud loss.
+
+### Future Improvements
+
+- Calibration
+- Cost-sensitive training
+- Amount-scaled costs
+- Capacity-aware policy
+- Online learning
+- PU learning
+- Delayed-label correction
+- Drift-aware retraining
+
+These are not Week 1 requirements.
 
 ---
 
@@ -268,66 +298,76 @@ Choose the action with the lowest expected cost.
 ### Primary Metrics
 
 - Cost per transaction
+- Total cost
 - Fraud dollars saved at fixed false-positive rate
 - Fraud dollars saved at fixed review budget
 - Precision@N alerts
 - Recall@N alerts
-- Calibration error
+- Calibration error: Brier score and ECE
 
 ### Temporal Metrics
 
 - Performance over time
-- Time-to-detect drift
-- Recovery after retraining
 - Offline-vs-live gap
+- Per-window variance in later weeks
 
-### Baselines
+### Canonical Week 1 Baselines
 
 1. Random decision
-2. Rule-based threshold
-3. Offline LightGBM with static threshold
-4. Cost-sensitive LightGBM
-5. Online SGD / Passive-Aggressive
+2. Approve-all
+3. Block-all
+4. Rule-based threshold
+5. Offline LightGBM + static threshold
+6. Cost-sensitive policy using the same LightGBM probabilities
 
 ### Validation Protocol
 
-- Chronological backtest
-- Multiple label-delay regimes: 7 / 30 / 90 days
-- Fixed cost matrix
-- Fixed alert budget
-- Report both fraud and friction costs
+- Chronological backtest only
+- Fixed delay regimes: 7 / 30 / 90 days
+- Fixed cost matrix in `configs/costs.yaml`
+- Fixed review budget: top 1% / 5% / 10%
+- Report results separately per delay regime
+- Report censored-label counts
+- Do not tune thresholds on the test set
 
 ---
 
 ## 11. MVP Definition: 3–4 Weeks
 
-### Week 1 — Data and Delay Simulation
+### Week 1 — Baseline End-to-End Loop
 
-- Load BAF or IEEE-CIS
+- Load BAF
+- Simulate 7 / 30 / 90 day label delay
 - Build chronological splits
-- Simulate 7/30/90-day label delay
-- Create evaluation harness
+- Train LightGBM baseline
+- Score test set
+- Apply cost-sensitive policy
+- Write action log
+- Run cost-based backtest
+- Write `reports/week1_backtest.md`
 
-### Week 2 — Baseline System
+### Week 2 — Calibration and Cost-Sensitive Model
 
-- Train LightGBM/XGBoost
-- Apply static threshold
-- Measure cost, PR-AUC, precision@N, calibration
+- Measure Brier score and ECE
+- Apply Platt scaling or isotonic regression if needed
+- Compare cost-sensitive LightGBM against baseline
+- Keep same splits, delay regimes, and cost matrix
 
-### Week 3 — Decision Policy and Improvement
+### Week 3 — Policy and Sensitivity
 
-- Add cost-sensitive policy
-- Add online SGD / PA
-- Add PU learning or delayed-label correction
-- Compare against baseline
+- Add amount-scaled cost sensitivity
+- Add budget-constrained metrics
+- Optionally add capacity simulation as a separate experiment
+- Report how policy choices change under different costs
 
-### Week 4 — System and Demo
+### Week 4 — One Optional Improvement and Final Report
 
-- Add action logger
-- Add delayed label reconciler
-- Add monitoring dashboard
-- Write README and results
+- Add one improvement only if justified by a measured Week 1 failure
+- Candidate improvements: calibration, cost-sensitive training, capacity-aware policy
+- Do not add online learning, PU learning, or delayed-label correction unless the baseline clearly fails
+- Write final report
 - Record demo
+- Ensure reproducibility
 
 ### MVP Deliverables
 
@@ -336,27 +376,27 @@ Choose the action with the lowest expected cost.
 - `docs/problem_framing.md`
 - Data pipeline
 - Delay simulator
+- Temporal splitter
 - Baseline model
-- Improved model
+- Decision policy
+- Cost-based backtest
 - Evaluation report
-- Dashboard or notebook demo
+- Notebook or Markdown demo
 
 ---
 
 ## 12. Success Criteria
 
-- The project is problem-driven, not model-driven.
-- The system makes decisions under simulated delayed labels.
-- Evaluation uses cost-sensitive and temporal metrics.
-- Baseline and improvement are compared fairly.
-- Results are reproducible.
-- The repository is portfolio-ready.
-- The final presentation clearly explains:
-  - the pain point
-  - the root cause
-  - the ML formulation
-  - the evaluation
-  - the limitations
+The project succeeds if:
+
+- The cost-sensitive policy produces lower realized cost than approve-all, block-all, random, rule-based, and static-threshold baselines under the same chronological splits, delay regime, cost matrix, and review budget.
+- Calibration is measured and reported.
+- Censored-label counts are reported per split and delay regime.
+- Results are reproducible from raw data, configs, and seeds.
+- Sensitivity analysis does not reverse the main conclusion.
+- The final report clearly explains the pain point, root cause, ML formulation, evaluation, and limitations.
+
+These are measurable. Presentation quality is important, but it is not a substitute for these criteria.
 
 ---
 
@@ -364,12 +404,14 @@ Choose the action with the lowest expected cost.
 
 | Risk | Mitigation |
 |---|---|
-| Public data lacks realistic label delays | Simulate multiple delay regimes |
-| Temporal leakage | Strict time-aware splits |
-| Online learning unstable | Compare against LightGBM baseline |
-| Scope creep | Stick to MVP and non-goals |
+| Public data lacks realistic label delays | Simulate fixed delay regimes; document assumptions |
+| BAF timestamp granularity is insufficient | Verify before modeling; fallback to month-based regimes |
+| Temporal leakage | Strict time-aware splits; feature audit |
+| Censored labels bias evaluation | Report censored counts; never treat censored as negative |
 | Unrealistic cost matrix | Run sensitivity analysis |
-| Dashboard takes too long | Start with notebook plots, then add dashboard |
+| Scope creep | Stick to Week 1 MVP and non-goals |
+| Dashboard takes too long | Use notebook plots and Markdown report instead |
+| Overclaiming delayed-label learning | State that Week 1 uses matured labels only |
 
 ---
 
@@ -381,6 +423,7 @@ Choose the action with the lowest expected cost.
 - Do not claim causal proof.
 - Do not optimize only AUC.
 - Do not ignore operational costs.
+- Do not build streaming, dashboards, online learning, PU learning, or delayed-label correction in Week 1.
 
 ---
 
@@ -393,16 +436,18 @@ Choose the action with the lowest expected cost.
 - Entity graph features
 - Federated learning across simulated institutions
 - Investigator feedback loops
+- Capacity-aware scheduling
+- Fairness-aware policy constraints
 
 ---
 
 ## 16. References and Data Sources
 
-- Bank Account Fraud (BAF) Suite
-- IEEE-CIS Fraud Detection Dataset
+- Bank Account Fraud (BAF) Suite — Jesus et al., NeurIPS 2022
+- IEEE-CIS Fraud Detection — Kaggle
+- Cost-sensitive learning — Elkan 2001
+- PU learning — Elkan & Noto 2008
 - Chargeback and dispute lifecycle documentation
-- Cost-sensitive learning literature
-- PU learning literature
 - Online learning literature
 
 ---
@@ -411,12 +456,15 @@ Choose the action with the lowest expected cost.
 
 - [ ] Problem framing documented
 - [ ] Dataset selected
+- [ ] BAF timestamp granularity verified
 - [ ] Label delay simulator implemented
 - [ ] Temporal split implemented
 - [ ] Baseline model trained
 - [ ] Cost-sensitive policy implemented
 - [ ] Evaluation harness implemented
-- [ ] Improved model compared
-- [ ] Dashboard or demo created
+- [ ] Cost-based backtest written
+- [ ] Calibration measured
+- [ ] Censored-label counts reported
+- [ ] Sensitivity analysis run
 - [ ] README completed
 - [ ] Repository pushed to GitHub

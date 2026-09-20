@@ -2,7 +2,7 @@
 
 > **Repository:** `delayed-label-fraud-decisioning`  
 > **Document:** Evaluation Protocol  
-> **Status:** v0.1 — LOCKED before modeling  
+> **Status:** v0.2 — LOCKED before modeling  
 > **Last updated:** YYYY-MM-DD
 
 ---
@@ -72,13 +72,16 @@ fraud_loss: 1.0
 false_positive_cost: 0.1
 review_cost: 0.02
 residual_fraud_loss_after_review: 0.3
+amount_scaled: false
+fraud_loss_rate: 0.0
 ```
 
 ### 4.3 Notes
 
 - Costs are **relative units** in Week 1. Absolute calibration is out of scope.
 - `residual_fraud_loss_after_review` reflects that review does not catch all fraud.
-- Sensitivity analysis on `false_positive_cost` and `review_cost` is required in the final report.
+- Week 1 uses a **constant** `fraud_loss`. Amount-scaled fraud loss is a required sensitivity analysis (Section 12), not a Week 1 default.
+- Sensitivity analysis on `false_positive_cost`, `review_cost`, and `residual_fraud_loss_after_review` is required in the final report.
 - Do not silently change costs between baseline and improved model.
 
 ---
@@ -116,15 +119,23 @@ Every experiment is run under three delay regimes:
 
 - `decision_time = t`
 - `label_time = t + Δ`
+- Week 1 uses **fixed Δ per regime** — not sampled per transaction
+- Fraud and non-fraud share the same fixed Δ within a regime
 - A label is **observed** only if `label_time <= evaluation_end`
 - Unobserved labels are treated as **censored**, not negative
 
 ### 6.2 Delay Assumptions
 
-- Fraud labels are sampled from a delay distribution, not fixed.
-- Non-fraud labels use an observation window.
-- All assumptions are documented in `data_card.md`.
+- Delay is fixed per regime in Week 1.
+- Sampled delay distributions are out of scope for Week 1 and may be added in Week 2+ only if a measured failure justifies them.
+- All delay assumptions are documented in `data_card.md`.
 - Results must be reported **separately per regime**. No averaging across regimes.
+
+### 6.3 Granularity Fallback
+
+If the BAF dataset does not support day-level timestamps, the delay regimes are redefined as month-based (1 / 2 / 3 months) and this section is updated before modeling.
+
+The fallback must be applied consistently across `data_card.md`, `decision_policy.md`, and this document.
 
 ---
 
@@ -145,18 +156,20 @@ Constraints:
 - Train uses only labels where `label_time <= T_train`
 - Val uses only labels where `label_time <= T_val`
 - Test uses only labels where `label_time <= test_end`
+- Censored labels are excluded from training and evaluation
+- Censored counts are reported per split and per regime
 - No shuffling
 - No stratification that breaks time order
 
-### 7.2 Rolling Evaluation (Week 3+)
+### 7.2 Rolling Evaluation (Week 3+, Optional)
 
-Once Week 1 baseline is done, add rolling windows:
+Once the Week 1 baseline is done and measured, rolling windows may be added:
 
 ```text
 window k: train on [T0, Tk), test on [Tk, Tk+1)
 ```
 
-Report per-window metrics to expose drift.
+Report per-window metrics to expose drift. Rolling evaluation is **not** a Week 1 requirement.
 
 ### 7.3 Forbidden
 
@@ -165,12 +178,13 @@ Report per-window metrics to expose drift.
 - SMOTE applied across time boundaries
 - Feature computation using future transactions
 - Using post-decision fields (e.g., chargeback reason code) as features
+- Treating censored labels as negatives
 
 ---
 
 ## 8. Metrics
 
-All metrics are reported per delay regime and per baseline.
+All metrics are reported per delay regime, per baseline, and with censored-label counts visible.
 
 ### 8.1 Primary Metrics (Operational)
 
@@ -189,7 +203,6 @@ All metrics are reported per delay regime and per baseline.
 | Precision@N | Fraction of top-N alerts that are fraud |
 | Recall@N | Fraction of fraud captured in top-N alerts |
 | Alerts per true fraud | Alert efficiency |
-| Fraud caught per reviewer hour | Investigator productivity proxy |
 
 ### 8.3 Probabilistic Metrics
 
@@ -202,44 +215,65 @@ All metrics are reported per delay regime and per baseline.
 
 **Rule:** AUC may be reported but never used as the sole success criterion.
 
-### 8.4 Temporal Metrics
+### 8.4 Data Integrity Metrics (Required)
+
+| Metric | Definition | Why it matters |
+|---|---|---|
+| Censored-label count | Number of transactions with `label_time > split cutoff` | Makes evaluation coverage explicit |
+| Censored-label rate | Censored count ÷ transactions in window | Quantifies how partial the evaluation is |
+| Evaluated fraction | 1 − censored-label rate | How much of the test window is actually scored |
+
+Censored-label counts must be reported **per split** and **per delay regime**.
+
+### 8.5 Temporal Metrics (Future Work)
+
+These are reported only if rolling evaluation is implemented. They are not Week 1 requirements.
 
 | Metric | Definition |
 |---|---|
 | Performance over time | Metric vs window |
-| Time-to-detect drift | Windows until monitor fires |
-| Recovery after retrain | Windows to return to baseline |
-| Offline-vs-live gap | Offline estimate minus live estimate |
+| Offline-vs-live gap | Offline estimate minus observed estimate |
 
-### 8.5 Forbidden Metrics
+### 8.6 Forbidden Metrics
 
 - Accuracy (meaningless under class imbalance)
 - Raw F1 without cost context
 - AUC-only claims
 - Metrics computed on random splits
+- Metrics that treat censored labels as negatives
 
 ---
 
 ## 9. Baselines
 
-Every improvement must be compared against **all** of the following:
+Every improvement must be compared against **all** of the following. This is the canonical Week 1 baseline set.
 
 | # | Baseline | Purpose |
 |---|---|---|
 | 1 | Random decision | Sanity floor |
-| 2 | Rule-based threshold | Domain prior |
-| 3 | Approve-all | Zero-friction reference |
-| 4 | Block-all | Maximum-friction reference |
-| 5 | Offline LightGBM + static threshold | Standard ML baseline |
-| 6 | Cost-sensitive LightGBM | Week 2 improvement |
+| 2 | Approve-all | Zero-friction reference |
+| 3 | Block-all | Maximum-friction reference |
+| 4 | Rule-based threshold | Domain prior |
+| 5 | LightGBM + static threshold | Standard ML baseline |
+| 6 | Cost-sensitive policy using the same LightGBM probabilities | The policy under test |
 
 ### 9.1 Rules
 
 - All baselines use the same temporal splits.
 - All baselines use the same cost matrix.
 - All baselines use the same delay regimes.
+- All baselines use the same review budget.
 - No baseline is tuned on the test set.
 - If a baseline is missing, the comparison is invalid.
+
+### 9.2 Out of Scope for Week 1 Baselines
+
+- Online SGD / Passive-Aggressive
+- PU learning
+- Delayed-label correction
+- Drift detection
+
+These are future work and are not Week 1 comparison points.
 
 ---
 
@@ -261,6 +295,8 @@ At each budget, report:
 - Total cost
 
 This prevents the "review everything" trivial solution.
+
+Week 1 reports these as ranking metrics. Capacity-aware scheduling is not a Week 1 requirement.
 
 ---
 
@@ -291,9 +327,10 @@ Required in the final report:
 
 - Vary `false_positive_cost` across a range
 - Vary `review_cost` across a range
-- Vary `residual_fraud_loss_after_review`
+- Vary `residual_fraud_loss_after_review` across a range
+- **Compare constant `fraud_loss` against amount-scaled `fraud_loss(amount) = amount * fraud_loss_rate`**
 - Report how policy choices change
-- Report how rankings of models change
+- Report how rankings of baselines change
 
 Purpose: show results are not artifacts of one arbitrary cost matrix.
 
@@ -314,6 +351,11 @@ Every experiment report includes:
 - Policy:
 - Cost matrix:
 
+## Data Integrity
+- Censored-label count:
+- Censored-label rate:
+- Evaluated fraction:
+
 ## Results
 | Baseline | Cost/txn | Fraud $ saved | Precision@1% | Recall@1% | ECE |
 
@@ -329,19 +371,22 @@ Every experiment report includes:
 ## Next Steps
 ```
 
-No report is valid without a baseline comparison and a failure section.
+No report is valid without:
+
+- A baseline comparison
+- A censored-label count
+- A failure section
 
 ---
 
 ## 14. Statistical Rigor
 
 - Report confidence intervals via bootstrap on the test set
-- Report per-window variance for rolling evaluation
 - Do not claim improvement smaller than noise
 - Document seeds
 - Document library versions
 
-Week 1 may skip formal significance testing, but must state that limitation.
+Week 1 may skip formal significance testing, but must state that limitation explicitly in the report.
 
 ---
 
@@ -362,11 +407,14 @@ If a result cannot be reproduced, it is not a result.
 
 Week 1 evaluates:
 
-- Baseline LightGBM + static threshold
-- Cost-sensitive policy with fixed costs
-- Temporal split
-- 7 / 30 / 90 day delay regimes
-- Cost per transaction, fraud dollars saved, precision@N, calibration
+- The canonical baseline set in Section 9
+- Cost-sensitive policy with a fixed cost matrix
+- Chronological train / validation / test split
+- Fixed 7 / 30 / 90 day delay regimes (or month-based fallback)
+- Cost per transaction, fraud dollars saved, precision@N, recall@N
+- Calibration: Brier score and ECE
+- Censored-label counts per split and per regime
+- Sensitivity to `false_positive_cost`, `review_cost`, `residual_fraud_loss_after_review`, and amount-scaled fraud loss
 
 Week 1 does **not** evaluate:
 
@@ -376,30 +424,44 @@ Week 1 does **not** evaluate:
 - Drift detection
 - Graph features
 - Federated learning
+- Capacity-aware scheduling
+- Rolling-window evaluation
 
-Those are evaluated in later weeks with the same protocol.
+Those are future work and would be evaluated with the same protocol if added.
 
 ---
 
 ## 17. Definition of Done for Evaluation
 
-- [ ] Cost matrix defined and frozen
-- [ ] Delay regimes implemented
-- [ ] Temporal splits implemented
-- [ ] Baselines implemented
+- [ ] Cost matrix defined and frozen in `configs/costs.yaml`
+- [ ] Delay regimes implemented and consistent with `data_card.md`
+- [ ] Temporal splits implemented and saved to `configs/splits.yaml`
+- [ ] Canonical baselines implemented (Section 9)
 - [ ] Primary metrics computed
 - [ ] Ranking metrics computed
-- [ ] Calibration measured
+- [ ] Calibration measured: Brier and ECE
+- [ ] Censored-label counts reported per split and per regime
 - [ ] Budget-constrained metrics computed
-- [ ] Per-regime results reported
+- [ ] Per-regime results reported separately
+- [ ] Amount-scaled fraud loss sensitivity analysis run
 - [ ] Failure cases documented
 - [ ] Results reproducible
-- [ ] Report written
+- [ ] Report written using the format in Section 13
 
 ---
 
 ## 18. Guiding Rule
 
 > A model is only better if it produces **lower realized cost** under the **same temporal split, same delay regime, same cost matrix, and same budget** as the baseline.
+
+The primary Week 1 success criterion is:
+
+```text
+realized cost per transaction (policy)
+    <
+realized cost per transaction (every canonical baseline)
+```
+
+under identical split, delay regime, cost matrix, and budget.
 
 Everything else is noise.

@@ -2,7 +2,7 @@
 
 > **Repository:** `delayed-label-fraud-decisioning`  
 > **Document:** Data Card  
-> **Status:** v0.1  
+> **Status:** v0.2 — aligned with Week 1 MVP  
 > **Last updated:** YYYY-MM-DD
 
 ---
@@ -38,6 +38,7 @@ It exists so that:
 | Features | 31 (mixed numeric + categorical) |
 | Fraud rate | ~1.1% (variant-dependent) |
 | Time span | Synthetic, month-based |
+| Time granularity | **TBD — verify before modeling** (see Section 4.6) |
 | Storage | `data/raw/baf/` |
 
 **Why chosen:**
@@ -53,6 +54,7 @@ It exists so that:
 - Synthetic, not real bank data
 - Fraud rate may not match production distributions
 - No real chargeback timestamps — delay must be simulated
+- Timestamp granularity is unverified (see Section 4.6)
 
 ### 2.2 Secondary Dataset — IEEE-CIS Fraud Detection (optional)
 
@@ -103,6 +105,8 @@ After `src/data/load.py`, every transaction has this canonical schema.
 - All features must be obtainable at or before `decision_time`
 - Timestamps are stored in UTC
 
+If BAF does not expose `customer_id`, `merchant_id`, or `device_id` directly, they must be omitted from the canonical schema and this document updated before modeling.
+
 ---
 
 ## 4. Label Delay Simulation
@@ -118,7 +122,9 @@ decision_time = t
 label_time    = t + Δ
 ```
 
-Where `Δ` is sampled per transaction.
+Week 1 rule: **Δ is fixed per regime**, not sampled per transaction. This keeps the Week 1 evaluation reproducible and simple.
+
+Sampled delay distributions are explicitly **out of scope for Week 1** and may be added in Week 2+ if a measured Week 1 result justifies them.
 
 ### 4.2 Delay Regimes
 
@@ -130,11 +136,19 @@ Every experiment is run under three regimes.
 | Medium | 30 days | 30 days | Typical dispute window |
 | Long | 90 days | 90 days | Worst-case delayed feedback |
 
+Week 1 rule:
+
+- Fraud and non-fraud use the **same fixed Δ within a regime**
+- Each regime is evaluated **separately**
+- Results are **never averaged across regimes**
+
+If the BAF timestamp granularity does not support day-level offsets, the regimes are redefined as month-based (1 / 2 / 3 months) and this section is updated. The fallback must be documented before modeling.
+
 ### 4.3 Delay Distribution
 
-Week 1 uses **fixed delay per regime** for simplicity.
+Week 1: fixed delay per regime (Section 4.2).
 
-Week 2+ may switch to a sampled distribution:
+Week 2+ optional extension (not required):
 
 ```text
 Δ_fraud     ~ LogNormal(mu, sigma)  truncated to [1, 120] days
@@ -157,17 +171,32 @@ Week 1 treatment of censored labels:
 
 - Excluded from training
 - Excluded from evaluation
-- Count reported in the backtest
+- **Count reported per split and per delay regime**
+
+Censored labels are never treated as `y = 0`.
 
 ### 4.5 Assumptions
 
-- Fraud labels and non-fraud labels share the same delay regime in Week 1
+- Fraud labels and non-fraud labels share the same fixed delay in Week 1
 - Non-fraud labels are assumed fully observed after `label_time`
 - Fraud labels are assumed correct once observed
 - Delay is independent of features
 - Delay is independent of model decisions
 
-**These assumptions are known to be unrealistic.** They are documented so that the sensitivity of results to each can be tested later.
+**These assumptions are known to be unrealistic.** They are documented so the sensitivity of results to each can be tested later. None are resolved in Week 1.
+
+### 4.6 BAF Timestamp Granularity Verification (Blocking)
+
+Before any delay simulation is run, verify:
+
+- Does BAF expose a usable day-level timestamp, or only a month index?
+- Is there a per-row `decision_time` field, or must it be synthesized?
+- If synthesized, what is the rule, and does it preserve ordering within a month?
+
+**Rule:** Delay regimes may not be finalized until this verification is done.  
+**Fallback:** If only month-level ordering exists, redefine regimes as 1 / 2 / 3 months and update Section 4.2 before modeling.
+
+This is a **blocking pre-modeling task** and appears in the Definition of Done (Section 12).
 
 ---
 
@@ -177,11 +206,27 @@ Week 1 treatment of censored labels:
 
 | Split | Rule | Purpose |
 |---|---|---|
-| Train | `decision_time < T_train` and `label_time <= T_train` | Fit model |
-| Validation | `T_train <= decision_time < T_val` and `label_time <= T_val` | Early stopping, calibration |
-| Test | `decision_time >= T_val` and `label_time <= test_end` | Final evaluation |
+| Train | `decision_time < T_train` **and** `label_time <= T_train` | Fit model |
+| Validation | `T_train <= decision_time < T_val` **and** `label_time <= T_val` | Early stopping, calibration |
+| Test | `decision_time >= T_val` **and** `label_time <= test_end` | Final evaluation |
 
-### 5.2 Rules
+### 5.2 Label Maturation Rule
+
+The same rule applies to every split:
+
+```text
+A transaction belongs to a split only if:
+  its decision_time falls inside the split window, AND
+  its label_time is at or before the split's cutoff.
+```
+
+Consequences:
+
+- Transactions whose labels have not matured by a split cutoff are **censored for that split**
+- Censored transactions are excluded from training and evaluation for that split
+- Censored counts are reported per split and per delay regime
+
+### 5.3 Rules
 
 - Splits are **chronological only**
 - No shuffling
@@ -190,7 +235,7 @@ Week 1 treatment of censored labels:
 - No oversampling or SMOTE before splitting
 - Any resampling must respect time order
 
-### 5.3 Cutoff Values
+### 5.4 Cutoff Values
 
 | Split | T_train | T_val | test_end |
 |---|---|---|---|
@@ -257,6 +302,14 @@ Before any model is trained:
 | Outcome | y_true, label_time | No | Never as features |
 | Post-decision | dispute reason, case notes | No | Never as features |
 
+### 8.1 Amount Usage
+
+`amount` is a decision-time feature **and** a cost input.
+
+- As a feature: allowed, and used by the baseline model
+- As a cost input: Week 1 uses a **constant** `fraud_loss`; amount-scaled `fraud_loss(amount) = amount * fraud_loss_rate` is a **required sensitivity analysis**, not the Week 1 default
+- This split is documented so Week 1 stays simple while still testing the realism of the cost assumption
+
 ---
 
 ## 9. Preprocessing Rules
@@ -280,6 +333,7 @@ Before any model is trained:
 | Configs | `configs/` | Yes |
 | Split definitions | `configs/splits.yaml` | Yes |
 | Delay definitions | `configs/delay.yaml` | Yes |
+| Cost definitions | `configs/costs.yaml` | Yes |
 
 Raw and processed data are never committed to GitHub. Only code, configs, and documentation are tracked.
 
@@ -310,14 +364,17 @@ python -m src.data.build --config configs/week1.yaml
 ## 12. Week 1 Data Definition of Done
 
 - [ ] BAF dataset downloaded to `data/raw/baf/`
+- [ ] BAF timestamp granularity verified and documented (Section 4.6)
+- [ ] Delay regimes finalized as day-based or month-based
 - [ ] `src/data/load.py` produces `data/interim/transactions.parquet`
 - [ ] Schema matches Section 3
-- [ ] `src/data/simulate_delay.py` produces 7 / 30 / 90 day labels
+- [ ] `src/data/simulate_delay.py` produces labels for all three regimes
 - [ ] `src/data/split.py` produces chronological train/val/test
 - [ ] Cutoffs saved to `configs/splits.yaml`
 - [ ] Delay config saved to `configs/delay.yaml`
+- [ ] Cost config saved to `configs/costs.yaml`
 - [ ] Leakage audit checklist completed
-- [ ] Censored label counts reported
+- [ ] Censored label counts reported per split and per delay regime
 - [ ] Data build reproducible with one command
 
 ---
@@ -327,6 +384,7 @@ python -m src.data.build --config configs/week1.yaml
 | Date | Change | Reason |
 |---|---|---|
 | YYYY-MM-DD | Initial data card | Project start |
+| YYYY-MM-DD | Fixed delay per regime; added granularity check; added per-regime censored reporting | Align with Week 1 MVP and problem framing v0.2 |
 
 ---
 
