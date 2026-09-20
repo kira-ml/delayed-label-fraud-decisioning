@@ -1,6 +1,6 @@
 # MVP Backtest Report
 
-_Generated: 2026-09-20 16:26:05 UTC_
+_Generated: 2026-09-20 16:59:05 UTC_
 
 ## Setup
 
