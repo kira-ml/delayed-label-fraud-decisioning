@@ -1,6 +1,6 @@
 # MVP Backtest Report
 
-_Generated: 2026-09-20 16:59:05 UTC_
+_Generated: 2026-09-20 17:33:19 UTC_
 
 ## Setup
 
@@ -10,6 +10,7 @@ _Generated: 2026-09-20 16:59:05 UTC_
 - Model: LightGBM binary classifier, library defaults, early stopping on val
 - Policy: `argmin` of expected cost over `{approve, review, block}`
 - Cost matrix: `fraud_loss=1.0`, `false_positive_cost=0.1`, `review_cost=0.02`, `residual_fraud_loss=0.3`
+- Amount scaling: **enabled**, `fraud_loss(amount) = amount * 0.002067377733397323`
 
 ## Data Integrity
 
@@ -21,11 +22,11 @@ _Generated: 2026-09-20 16:59:05 UTC_
 
 | Baseline | Cost/txn | Total cost | Fraud $ saved vs approve-all |
 |---|---:|---:|---:|
-| Random | 0.044916 | 10218.04 | -7357.04 |
-| Approve-all | 0.012576 | 2861.00 | 0.00 |
-| Block-all | 0.098742 | 22463.00 | -19602.00 |
-| LightGBM + static 0.5 | 0.012088 | 2749.90 | 111.10 |
-| Cost-sensitive policy | 0.008901 | 2024.98 | 836.02 |
+| Random | 0.047402 | 10783.47 | -6144.15 |
+| Approve-all | 0.020393 | 4639.32 | 0.00 |
+| Block-all | 0.098742 | 22463.00 | -17823.68 |
+| LightGBM + static 0.5 | 0.018892 | 4297.75 | 341.57 |
+| Cost-sensitive policy | 0.007777 | 1769.17 | 2870.15 |
 
 ## Ranking metrics (on the policy's scores)
 
@@ -42,19 +43,19 @@ _Generated: 2026-09-20 16:59:05 UTC_
 
 ## Action distribution
 
-- `approve`: 210,734
-- `review`: 15,124
+- `approve`: 205,192
+- `review`: 20,666
 - `block`: 1,633
 
 ## Interpretation
 
-The cost-sensitive policy achieves **0.008901** cost per transaction. The strongest non-policy baseline is **LightGBM + static 0.5** at **0.012088**.
+The cost-sensitive policy achieves **0.007777** cost per transaction. The strongest non-policy baseline is **LightGBM + static 0.5** at **0.018892**.
 **Result:** the policy does beat the strongest baseline on realized cost per transaction under the same split, delay regime, and cost matrix.
 
 ## Limitations
 
 - Single delay regime (1 month).
-- Constant `fraud_loss`; no amount-scaled cost in this MVP.
+- Amount-scaled `fraud_loss` uses `amount_proxy = proposed_credit_limit`.
 - BAF is synthetic data; results are not production estimates.
 - Censored labels are excluded, not modelled.
 - No hyperparameter tuning, no calibration step, no capacity constraint.
