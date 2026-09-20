@@ -48,3 +48,36 @@ def test_expected_and_realized_agree_at_extremes():
     realized = realized_cost(actions, [0], COSTS)
     assert actions[0] == "approve"
     assert realized[0] == chosen[0] == 0.0
+
+
+def test_realized_cost_amount_scaled_per_row():
+    """When amount_scaled is true, fraud_loss is per-row (amount * rate)."""
+    costs = {
+        "fraud_loss": 999.0,          # ignored when amount_scaled
+        "false_positive_cost": 0.1,
+        "review_cost": 0.02,
+        "residual_fraud_loss": 0.3,
+        "amount_scaled": True,
+        "fraud_loss_rate": 0.01,
+    }
+    actions = np.array(["approve", "approve", "approve"])
+    y = np.array([1, 1, 1])          # all fraud
+    amounts = np.array([50.0, 100.0, 200.0])
+    c = realized_cost(actions, y, costs, amounts=amounts)
+    # Expected: 50*0.01, 100*0.01, 200*0.01 = 0.5, 1.0, 2.0
+    assert np.allclose(c, [0.5, 1.0, 2.0])
+
+
+def test_realized_cost_amount_scaled_requires_amounts():
+    """Calling with amount_scaled=true and no amounts must raise."""
+    import pytest
+    costs = {
+        "fraud_loss": 1.0,
+        "false_positive_cost": 0.1,
+        "review_cost": 0.02,
+        "residual_fraud_loss": 0.3,
+        "amount_scaled": True,
+        "fraud_loss_rate": 0.01,
+    }
+    with pytest.raises(ValueError):
+        realized_cost(["approve"], [1], costs)

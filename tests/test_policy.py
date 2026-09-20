@@ -60,3 +60,26 @@ def test_edge_case_c_chosen_cost_is_always_minimum():
     for p_val in [0.0, 0.0286, 0.1, 0.2, 0.5, 1.0]:
         actions, chosen, (c_app, c_rev, c_blk) = choose_actions([p_val], DEFAULT_COSTS)
         assert chosen[0] == min(c_app[0], c_rev[0], c_blk[0])
+
+
+
+def test_amount_scaled_pushes_large_transactions_to_stricter_actions():
+    """Larger amounts should not produce laxer decisions."""
+    base_costs = {
+        "fraud_loss": 1.0,
+        "false_positive_cost": 0.1,
+        "review_cost": 0.02,
+        "residual_fraud_loss": 0.3,
+    }
+    scaled_costs = {**base_costs, "amount_scaled": True, "fraud_loss_rate": 0.01}
+    p = np.array([0.02, 0.02, 0.02])
+    amounts = np.array([10.0, 100.0, 1000.0])
+
+    actions_flat, *_ = choose_actions(p, base_costs, amounts=amounts)
+    actions_scaled, *_ = choose_actions(p, scaled_costs, amounts=amounts)
+
+    # Constant loss -> identical action for all three
+    assert len(set(actions_flat)) == 1
+    # Amount-scaled -> small amount approves, large amount does not
+    assert actions_scaled[0] == "approve"
+    assert actions_scaled[2] in ("review", "block")

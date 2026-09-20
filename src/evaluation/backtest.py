@@ -12,8 +12,13 @@ SEED = 42
 RANDOM_ACTIONS = ["approve", "review", "block"]
 
 
-def realized_cost(actions, y, costs):
-    fl = float(costs["fraud_loss"])
+def realized_cost(actions, y, costs, amounts=None):
+    """Realized cost per transaction.
+
+    If costs['amount_scaled'] is true, fraud_loss is per-row:
+        fraud_loss_i = amounts_i * fraud_loss_rate
+    Otherwise it is the constant from costs['fraud_loss'].
+    """
     fp = float(costs["false_positive_cost"])
     rc = float(costs["review_cost"])
     rfl = float(costs["residual_fraud_loss"])
@@ -24,7 +29,15 @@ def realized_cost(actions, y, costs):
     legit = ~fraud
     cost = np.zeros(len(actions), dtype=float)
 
-    cost[fraud & (actions == "approve")] = fl
+    if costs.get("amount_scaled", False):
+        if amounts is None:
+            raise ValueError("amount_scaled=true requires the amounts array")
+        rate = float(costs["fraud_loss_rate"])
+        fl = np.asarray(amounts, dtype=float) * rate
+    else:
+        fl = np.full(len(actions), float(costs["fraud_loss"]))
+
+    cost[fraud & (actions == "approve")] = fl[fraud & (actions == "approve")]
     cost[fraud & (actions == "review")] = rc + rfl
     cost[fraud & (actions == "block")] = 0.0
 
@@ -46,9 +59,10 @@ def precision_recall_at(df, frac):
 
 def main():
     costs = load_costs()
+    amount_scaled = bool(costs.get("amount_scaled", False))
 
     log = pd.read_parquet(ACTION_LOG)
-    test = pd.read_parquet(TEST)[["transaction_id", "fraud_bool", "month"]]
+    test = pd.read_parquet(TEST)[["transaction_id", "fraud_bool", "month", "amount_proxy"]]
     df = log.merge(test, on="transaction_id", how="left")
     assert len(df) == len(log), "merge dropped rows"
     assert df["fraud_bool"].notna().all(), "merge produced NaN labels"
@@ -56,6 +70,7 @@ def main():
     n = len(df)
     y = df["fraud_bool"].to_numpy()
     p = df["p_fraud"].to_numpy()
+    amounts = df["amount_proxy"].to_numpy()
 
     # Censored counts (dataset-wide)
     labeled = pd.read_parquet(LABELED)
@@ -78,11 +93,11 @@ def main():
         "Cost-sensitive policy": df["action"].to_numpy(),
     }
 
-    approve_all_total = realized_cost(approve_actions, y, costs).sum()
+    approve_all_total = realized_cost(approve_actions, y, costs, amounts=amounts).sum()
 
     rows = []
     for name, actions in scenarios.items():
-        c = realized_cost(actions, y, costs)
+        c = realized_cost(actions, y, costs, amounts=amounts)
         rows.append({
             "Baseline": name,
             "Cost/txn": c.mean(),
@@ -90,7 +105,6 @@ def main():
             "Fraud $ saved vs approve-all": approve_all_total - c.sum(),
         })
 
-    # Ranking metrics on the policy's own scores
     prec1, rec1 = precision_recall_at(df, 0.01)
     prec5, rec5 = precision_recall_at(df, 0.05)
     prec10, rec10 = precision_recall_at(df, 0.10)
@@ -105,7 +119,6 @@ def main():
 
     action_counts = df["action"].value_counts().to_dict()
 
-    # ---- write report ----
     ts = datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M:%S UTC")
     L = []
     L.append("# MVP Backtest Report")
@@ -125,6 +138,13 @@ def main():
         f"`review_cost={costs['review_cost']}`, "
         f"`residual_fraud_loss={costs['residual_fraud_loss']}`"
     )
+    if amount_scaled:
+        L.append(
+            f"- Amount scaling: **enabled**, "
+            f"`fraud_loss(amount) = amount * {costs['fraud_loss_rate']}`"
+        )
+    else:
+        L.append("- Amount scaling: disabled (constant `fraud_loss`)")
     L.append("")
     L.append("## Data Integrity")
     L.append("")
@@ -182,7 +202,10 @@ def main():
     L.append("## Limitations")
     L.append("")
     L.append("- Single delay regime (1 month).")
-    L.append("- Constant `fraud_loss`; no amount-scaled cost in this MVP.")
+    if amount_scaled:
+        L.append("- Amount-scaled `fraud_loss` uses `amount_proxy = proposed_credit_limit`.")
+    else:
+        L.append("- Constant `fraud_loss`; amount-scaled sensitivity not enabled in this run.")
     L.append("- BAF is synthetic data; results are not production estimates.")
     L.append("- Censored labels are excluded, not modelled.")
     L.append("- No hyperparameter tuning, no calibration step, no capacity constraint.")
