@@ -1,0 +1,4 @@
+fraud_loss: 1.0
+false_positive_cost: 0.1
+review_cost: 0.02
+residual_fraud_loss: 0.3

@@ -41,8 +41,8 @@ data/backup/
 # ----------------------------
 # Model artifacts
 # ----------------------------
-artifacts/
-models/
+/artifacts/
+/models/
 checkpoints/
 *.ckpt
 *.pt
