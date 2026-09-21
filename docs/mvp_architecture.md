@@ -182,10 +182,10 @@ false_positive_cost: 0.1
 review_cost: 0.02
 residual_fraud_loss: 0.3
 amount_scaled: true
-fraud_loss_rate: 0.002067377733397323
+fraud_loss_rate: 0.0019187869
 ```
 
-The first four keys are the MVP cost matrix. `amount_scaled` and `fraud_loss_rate` were added after the MVP was validated, to support the amount-scaled sensitivity analysis required by `architecture.md` §9.2. When `amount_scaled: true`, `fraud_loss` becomes per-row: `fraud_loss(amount) = amount * fraud_loss_rate`. The rate was chosen so that `mean(fraud_loss_rate * amount_proxy) = 1.0` on the test set, keeping the comparison with constant `fraud_loss` apples-to-apples. The result was a success stop — the policy's advantage over the strongest baseline improved from 26.4% to 58.8%. See `reports/mvp_backtest.md` for the full sensitivity table.
+The first four keys are the MVP cost matrix. `amount_scaled` and `fraud_loss_rate` were added after the MVP was validated, to support the amount-scaled sensitivity analysis required by `architecture.md` §9.2. When `amount_scaled: true`, `fraud_loss` becomes per-row: `fraud_loss(amount) = amount * fraud_loss_rate`. The rate is derived from **training-window** amounts: `1 / mean(amount_proxy on train) = 1 / 521.1626 = 0.0019187869`. This keeps `mean(fraud_loss_rate * amount_proxy) = 1.0` on train, matching the constant-loss comparison scale without test-window leakage. The result was a success stop — the policy's advantage over the strongest baseline improved from 26.4% to 56.9%, and the result survives full cost sensitivity and bootstrap CIs. See `reports/mvp_backtest.md` for the full sensitivity table.
 
 No split config. No delay config. The MVP uses hardcoded values documented here and in `mvp_2_weeks.md`:
 

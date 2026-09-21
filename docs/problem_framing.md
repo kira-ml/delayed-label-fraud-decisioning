@@ -405,7 +405,7 @@ These are measurable. Presentation quality is important, but it is not a substit
 | Risk | Mitigation |
 |---|---|
 | Public data lacks realistic label delays | Simulate fixed delay regimes; document assumptions |
-| BAF timestamp granularity is insufficient | Verify before modeling; fallback to month-based regimes |
+| BAF timestamp granularity is insufficient | **Resolved.** Month-level only; month-based fallback applied per `evaluation_protocol.md` §6.3 |
 | Temporal leakage | Strict time-aware splits; feature audit |
 | Censored labels bias evaluation | Report censored counts; never treat censored as negative |
 | Unrealistic cost matrix | Run sensitivity analysis |

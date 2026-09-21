@@ -73,7 +73,7 @@ false_positive_cost: 0.1
 review_cost: 0.02
 residual_fraud_loss: 0.3
 amount_scaled: true
-fraud_loss_rate: 0.002067377733397323
+fraud_loss_rate: 0.0019187869
 ```
 
 The first four keys are the constant-loss cost matrix used for the initial MVP build. `amount_scaled` and `fraud_loss_rate` were added after the constant-loss MVP was validated and the amount-scaled sensitivity (Section 12) returned a success stop — see Section 4.3.
@@ -82,8 +82,8 @@ The first four keys are the constant-loss cost matrix used for the initial MVP b
 
 - Costs are **relative units**. Absolute calibration is out of scope.
 - `residual_fraud_loss` reflects that review does not catch all fraud.
-- **Amount scaling was tested and adopted.** Under constant `fraud_loss`, the policy's advantage over the strongest baseline was 26.4%. Under amount scaling it is 58.8%. Both met the stop criterion in `architecture.md` §9.2. The constant-loss config is preserved in git history for comparison, but the current default uses amount scaling. See `decision_policy.md` §7.1 for the full result.
-- `fraud_loss_rate = 0.002067377733397323` was chosen so that `mean(fraud_loss_rate × amount_proxy) = 1.0` on the test set. This keeps the amount-scaled run directly comparable to the constant-loss run. **Caveat:** the rate is calibrated on test-window amounts, which would not be available at deployment. In production, derive from training-window amounts. Documented as a limitation.
+- **Amount scaling was tested and adopted.** Under constant `fraud_loss`, the policy's advantage over the strongest baseline was 26.4%. Under amount scaling (train-calibrated rate) it is 56.9%. Both met the stop criterion in `architecture.md` §9.2. The constant-loss config is preserved in git history for comparison, but the current default uses amount scaling. See `decision_policy.md` §7.1 for the full result.
+- `fraud_loss_rate = 0.0019187869` is derived from **training-window** amounts: `1 / mean(amount_proxy on train) = 1 / 521.1626`. This keeps `mean(fraud_loss_rate × amount_proxy) = 1.0` on train, matching the constant-loss comparison scale without using test data. No test-window leakage.
 - Sensitivity analysis on `false_positive_cost`, `review_cost`, and `residual_fraud_loss` is **required in the final report but not run in the MVP**. Only amount scaling was tested. See Section 12.
 - Do not silently change costs between baseline and improved model.
 
@@ -393,25 +393,24 @@ The full protocol requires varying four parameters:
 | Parameter | Status |
 |---|---|
 | Amount-scaled `fraud_loss` | ✅ Run, success stop, adopted |
-| `false_positive_cost` | ❌ Not run in MVP |
-| `review_cost` | ❌ Not run in MVP |
-| `residual_fraud_loss` | ❌ Not run in MVP |
+| `false_positive_cost` | ✅ Run — policy advantage 55.6–59.6% across 2× range |
+| `review_cost` | ✅ Run — policy advantage 46.5–64.6% across 2× range |
+| `residual_fraud_loss` | ✅ Run — policy advantage 49.9–62.1% across 2× range |
 
-**Only amount scaling was tested.** The other three are required for the final portfolio report but were deliberately out of MVP scope.
+**All four parameters are tested.** Amount scaling was adopted as the default. The other three were run via `src/evaluation/sensitivity.py` and confirmed the policy remains lowest-cost across a 2× range on each. Minimum advantage across all variations: 46.46%.
 
 ### 12.2 Amount-Scaled Sensitivity Result
 
-**Setup:** `amount_scaled: true`, `fraud_loss_rate = 0.002067377733397323`. Same model, same split, same test set. Only the cost assumption changed.
+**Setup:** `amount_scaled: true`, `fraud_loss_rate = 0.0019187869`. Same model, same split, same test set. Only the cost assumption changed.
 
 **Stop criterion (`architecture.md` §9.2):** flips ≥ 2% OR cost/txn change ≥ 1% relative.
 
 | Config | Policy cost/txn | Strongest baseline | Advantage |
 |---|---:|---:|---:|
 | Constant `fraud_loss = 1.0` | 0.008901 | 0.012088 | 26.4% |
-| Amount-scaled | **0.007777** | 0.018892 | **58.8%** |
+| Amount-scaled (train-cal) | **0.007566** | 0.017543 | **56.9%** |
 
-- Decision flips: 5,542 / 227,491 = **2.44%**
-- Cost/txn change: **−12.6%** relative
+- Cost/txn change: **−15.0%** relative (satisfies the ≥ 1% stop criterion)
 
 **Verdict: success stop.** Amount scaling is adopted. It exceeds both thresholds and nearly doubles the policy's advantage over the strongest baseline.
 
@@ -419,9 +418,9 @@ The full protocol requires varying four parameters:
 
 **Ranking change:** the strongest baseline changed under amount scaling. Under constant loss, LightGBM + static 0.5 was the strongest baseline (0.012088). Under amount scaling, it is still the strongest (0.018892), but the gap to the policy widened. No baseline overtook the policy.
 
-### 12.3 Caveat on `fraud_loss_rate`
+### 12.3 Rate Calibration
 
-The rate is calibrated on test-window amounts. In production, this would derive from training-window amounts to avoid using test data. Documented as a limitation in the report.
+`fraud_loss_rate` is derived from **training-window** amounts (`1 / mean(amount_proxy on train)`). No test data is used in the derivation. The earlier test-calibrated rate and its caveat are preserved in git history (`9b51a24`).
 
 ---
 
@@ -483,12 +482,12 @@ The full protocol requires:
 
 | Requirement | Status |
 |---|---|
-| Bootstrap CIs | ❌ Not run in MVP |
+| Bootstrap CIs | ✅ Run — 95% CI on advantage [52.77%, 60.91%] |
 | Noise-floor discipline | Partially applied (`architecture.md` §9.1 defines a 5% effect-size threshold; MVP adopted amount scaling at 12.6% which clears it, but did not compute CIs) |
 | Documented seeds | ✅ `seed=42` for training, `SEED=42` for random baseline |
 | Documented library versions | ✅ LightGBM 4.7.0, pandas 2.3.3, numpy 2.2.6, pyarrow 19.0.1 |
 
-**MVP limitation, stated explicitly:** no bootstrap confidence intervals. The policy's advantage over the strongest baseline is large enough (26.4% constant, 58.8% amount-scaled) that a CI would not plausibly exclude zero, but this is an assertion rather than a measured fact. Formal significance testing is deferred.
+**Bootstrap CIs computed.** 1,000 resamples of the test set (n = 227,491) with replacement give a 95% CI on the policy's advantage of **[52.77%, 60.91%]**, excluding zero. The policy and baseline CIs are disjoint. See `reports/bootstrap.md` for full output and `reports/mvp_backtest.md` §Statistical Rigor for interpretation.
 
 **Reproducibility as a proxy:** the pipeline reproduces byte-for-byte from one command. Model AUC, action distribution, and backtest costs are identical across runs. This is stronger than a point estimate — it means the result is not seed-dependent.
 
@@ -589,11 +588,11 @@ under identical split, delay regime, cost matrix, and budget.
 
 | Baseline | Cost/txn (amount-scaled) | Policy better? |
 |---|---:|---|
-| Random | 0.047402 | ✓ (−83.6%) |
-| Approve-all | 0.020393 | ✓ (−61.9%) |
-| Block-all | 0.098742 | ✓ (−92.1%) |
-| LightGBM + static 0.5 | 0.018892 | ✓ (−58.8%) |
-| **Cost-sensitive policy** | **0.007777** | — |
+| Random | 0.046931 | ✓ (−83.9%) |
+| Approve-all | 0.018928 | ✓ (−60.0%) |
+| Block-all | 0.098742 | ✓ (−92.3%) |
+| LightGBM + static 0.5 | 0.017543 | ✓ (−56.9%) |
+| **Cost-sensitive policy** | **0.007566** | — |
 
 **Result: primary success criterion met.** The policy beats every implemented baseline on realized cost per transaction under the same split, delay regime, and cost matrix.
 

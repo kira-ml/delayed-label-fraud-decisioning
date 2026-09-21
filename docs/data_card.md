@@ -38,7 +38,7 @@ It exists so that:
 | Features | 31 (mixed numeric + categorical) |
 | Fraud rate | ~1.1% (variant-dependent) |
 | Time span | Synthetic, month-based |
-| Time granularity | **TBD — verify before modeling** (see Section 4.6) |
+| Time granularity | **Month-level** (integer `month`, values 0–7); day-level unavailable |
 | Storage | `data/raw/baf/` |
 
 **Why chosen:**
@@ -196,7 +196,7 @@ Before any delay simulation is run, verify:
 **Rule:** Delay regimes may not be finalized until this verification is done.  
 **Fallback:** If only month-level ordering exists, redefine regimes as 1 / 2 / 3 months and update Section 4.2 before modeling.
 
-This is a **blocking pre-modeling task** and appears in the Definition of Done (Section 12).
+**Completed.** BAF exposes month-level granularity only — no day-level timestamp. Per `evaluation_protocol.md` §6.3, delay regimes use the month-based fallback (1 / 2 / 3 months). The MVP runs a single 1-month regime. This was resolved before modeling; no day-based regime is claimed anywhere in the docs.
 
 ---
 
@@ -239,7 +239,7 @@ Consequences:
 
 | Split | T_train | T_val | test_end |
 |---|---|---|---|
-| Week 1 | TBD after EDA | TBD after EDA | TBD after EDA |
+| MVP (month-based) | month 3 | month 5 | month 7 |
 
 Cutoffs are set once, saved to `configs/splits.yaml`, and never changed without a documented reason.
 

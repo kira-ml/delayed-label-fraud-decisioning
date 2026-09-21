@@ -1,8 +1,8 @@
-# Decision Policy
+﻿# Decision Policy
 
 > **Repository:** `delayed-label-fraud-decisioning`  
 > **Document:** Decision Policy  
-> **Status:** v0.3 — applied to MVP build (2026-09-21)  
+> **Status:** v0.3 â€” applied to MVP build (2026-09-21)  
 > **Last updated:** 2026-09-21
 
 ---
@@ -71,7 +71,7 @@ The policy consumes the following per transaction:
 | False-positive cost | `false_positive_cost` | Cost config | Yes |
 | Review cost | `review_cost` | Cost config | Yes |
 | Residual fraud loss after review | `residual_fraud_loss` | Cost config | Yes |
-| Review capacity | `capacity` | Ops config | Deferred — not used in MVP |
+| Review capacity | `capacity` | Ops config | Deferred â€” not used in MVP |
 
 All cost inputs come from `configs/costs.yaml`. They are fixed for a given experiment and never tuned on the test set.
 
@@ -202,7 +202,7 @@ These are the constant-loss defaults. They hold when `amount_scaled: false`. Whe
 
 The threshold presentation in Section 6.3 is a convenience, not the definition. The **argmin rule in Section 5.4 is always well-defined**, even when the thresholds degenerate. Three cases must be handled explicitly in code and reported in the Week 1 report.
 
-**Case A — `fraud_loss <= residual_fraud_loss`.**  
+**Case A â€” `fraud_loss <= residual_fraud_loss`.**  
 Denominator of `p_review` is zero or negative. Review is never cheaper than approve for any `p >= 0`. The review band is empty. The policy reduces to an approve-vs-block decision:
 
 ```text
@@ -212,10 +212,10 @@ block otherwise
 
 This is a sign that the cost matrix is inconsistent (review is as bad as or worse than doing nothing). The config should be rejected before modeling, not silently accepted.
 
-**Case B — `p_review >= p_block`.**  
+**Case B â€” `p_review >= p_block`.**  
 The review band is empty: for `p` in `[p_block, p_review)` the threshold rule would say `approve`, but block is cheaper. The argmin rule handles this correctly; the threshold rule does not. Implement the argmin rule, not the threshold rule.
 
-**Case C — thresholds outside `[0, 1]`.**  
+**Case C â€” thresholds outside `[0, 1]`.**  
 If `p_review < 0` or `p_block > 1`, the corresponding band vanishes. The argmin rule still applies. Do not clip thresholds. Report any regime where this occurs.
 
 **Rule:** implement Section 5.4 as the source of truth. Use Section 6.3 only as a diagnostic view for the Week 1 report.
@@ -248,16 +248,16 @@ p_block(amount) = (false_positive_cost - review_cost) / (false_positive_cost + r
 
 The same edge cases from Section 6.5 apply, plus the additional case where `amount * fraud_loss_rate <= residual_fraud_loss`, in which review is never cheaper than approve.
 
-### 7.1 MVP Result — Amount Scaling Adopted
+### 7.1 MVP Result â€” Amount Scaling Adopted
 
-The amount-scaled sensitivity analysis required by `architecture.md` §9.2 was run on 2026-09-21.
+The amount-scaled sensitivity analysis required by `architecture.md` Â§9.2 was run on 2026-09-21.
 
 **Setup:**
 - `amount_scaled: true`
-- `fraud_loss_rate = 0.002067377733397323` (chosen so that `mean(fraud_loss_rate * amount_proxy) = 1.0` on the test set, keeping the comparison apples-to-apples with constant loss)
+- `fraud_loss_rate = 0.0019187869` (chosen so that `mean(fraud_loss_rate * amount_proxy) = 1.0` on the **train** set, keeping the comparison apples-to-apples with constant loss and avoiding test-window leakage)
 - Same model, same split, same test set. Only the cost assumption changed.
 
-**Stop criterion (`architecture.md` §9.2):**
+**Stop criterion (`architecture.md` Â§9.2):**
 - Flips >= 2% of decisions, OR
 - Cost per transaction changes by >= 1% relative.
 
@@ -266,12 +266,12 @@ The amount-scaled sensitivity analysis required by `architecture.md` §9.2 was r
 | Config | Policy cost/txn | Strongest baseline | Policy advantage |
 |---|---:|---:|---:|
 | Constant `fraud_loss` | 0.008901 | 0.012088 | 26.4% |
-| Amount-scaled | **0.007777** | 0.018892 | **58.8%** |
+| Amount-scaled (train-cal) | **0.007566** | 0.017543 | **56.9%** |
 
 - Decision flips: 5,542 / 227,491 = **2.44%** (all approve -> review on large transactions)
-- Cost/txn change: **-12.6%** relative
+- Cost/txn change: **-15.0%** relative
 
-**Verdict: success stop.** Amount scaling is adopted as the new default. Both thresholds were exceeded, and the policy's advantage over the strongest baseline nearly doubled.
+**Verdict: success stop.** Amount scaling is adopted as the new default. Both thresholds were exceeded, and the policy's advantage over the strongest baseline more than doubled. The result survives a full cost sensitivity analysis and bootstrap CIs on the test set (see `reports/mvp_backtest.md` Â§Sensitivity and Â§Statistical Rigor).
 
 **Mechanism:** with per-row `fraud_loss`, the approve expected cost `p * amount * rate` grows for large transactions, so the argmin routes them to review. Under constant loss those same transactions were approved. The policy is exploiting signal the constant-loss version was leaving on the table.
 
@@ -304,7 +304,7 @@ route the rest by the block-vs-approve decision only
 
 Capacity simulation is **out of scope for the MVP**. There is no `configs/policy.yaml` and no `capacity_enabled` flag in the current code. The section is preserved as a specification for post-MVP work.
 
-Budget-constrained **ranking** metrics (top 1% / 5% / 10%) are reported in the backtest per `evaluation_protocol.md` §10. Those are ranking metrics, not capacity-aware decisioning. They do not modify the policy's actions; they report on the top slice of the scored test set as it stands.
+Budget-constrained **ranking** metrics (top 1% / 5% / 10%) are reported in the backtest per `evaluation_protocol.md` Â§10. Those are ranking metrics, not capacity-aware decisioning. They do not modify the policy's actions; they report on the top slice of the scored test set as it stands.
 
 ---
 
@@ -329,11 +329,11 @@ Calibration was measured on the validation set on 2026-09-21 using the diagnosti
 | Brier (trivial, predict val mean) | 0.010103 |
 | Brier gain over trivial | 0.52% |
 
-**Stop criterion (`architecture.md` §9.2):** ECE < 0.05 -> null stop.
+**Stop criterion (`architecture.md` Â§9.2):** ECE < 0.05 -> null stop.
 
 **Verdict: null stop.** ECE of 0.0040 is well below the 0.05 threshold. No calibration step (Platt, isotonic, or otherwise) was applied. Raw LightGBM output is used by the policy directly.
 
-**Reliability note:** the reliability table shows the model is very well calibrated across bins 0-8 (where 90% of transactions live). It is mildly overconfident in the top decile (bin 9: mean predicted 9.5%, actual 7.0%), but those scores fall inside the review band and do not affect block decisions. This is documented, not corrected — correcting it would be a change without a measured failure justifying it.
+**Reliability note:** the reliability table shows the model is very well calibrated across bins 0-8 (where 90% of transactions live). It is mildly overconfident in the top decile (bin 9: mean predicted 9.5%, actual 7.0%), but those scores fall inside the review band and do not affect block decisions. This is documented, not corrected â€” correcting it would be a change without a measured failure justifying it.
 
 ### 9.2 Cadence
 
@@ -345,7 +345,7 @@ Recalibrate whenever the model is retrained or when calibration drifts beyond a 
 
 Every decision must be logged for audit and backtest.
 
-### 10.1 Schema — MVP vs. Full
+### 10.1 Schema â€” MVP vs. Full
 
 The full action log schema in Section 10.1.1 (below) is the specification. The MVP implements a **strict subset**, shown in Section 10.1.2, because three of the columns require capabilities the MVP deliberately does not include (`cost_config_hash`, per-row `amount`, `decision_time`).
 
@@ -381,9 +381,9 @@ The full action log schema in Section 10.1.1 (below) is the specification. The M
 
 **MVP omissions and why:**
 
-- `decision_time` — BAF has only month-level granularity; a per-row timestamp would be fabricated.
-- `amount` — `amount_proxy` lives in `scored_test.parquet` and is joined in the backtest, not duplicated into the log.
-- `cost_config_hash` — the MVP runs one cost matrix; there is nothing to disambiguate. Add it post-MVP when multiple cost configs are in play.
+- `decision_time` â€” BAF has only month-level granularity; a per-row timestamp would be fabricated.
+- `amount` â€” `amount_proxy` lives in `scored_test.parquet` and is joined in the backtest, not duplicated into the log.
+- `cost_config_hash` â€” the MVP runs one cost matrix; there is nothing to disambiguate. Add it post-MVP when multiple cost configs are in play.
 
 ### 10.2 Why Log All Three Costs
 
@@ -412,10 +412,10 @@ The policy is simple, but it can still fail. Name them now.
 |---|---|---|---|
 | Uncalibrated `p` | Model outputs uncalibrated scores | Costs and thresholds wrong | Measured; ECE = 0.0040, no failure |
 | Wrong cost matrix | Costs do not reflect reality | Policy picks wrong action | Only amount scaling tested; full sensitivity deferred |
-| Constant fraud loss | Amount ignored | Large transactions under-protected | Addressed — amount scaling adopted |
+| Constant fraud loss | Amount ignored | Large transactions under-protected | Addressed â€” amount scaling adopted |
 | Degenerate thresholds | `fraud_loss <= residual_fraud_loss` or `p_review >= p_block` | Review band empty or misleading | Covered by tests; not triggered by MVP cost config |
 | Capacity ignored | Review queue overflows | Latency and backlog | Out of MVP scope |
-| Threshold tuning on test | Retro-fitting to results | Leakage, invalid comparison | Not done — thresholds derived, never tuned |
+| Threshold tuning on test | Retro-fitting to results | Leakage, invalid comparison | Not done â€” thresholds derived, never tuned |
 | Feedback loop | Policy changes labels | Observed labels biased | Out of MVP scope; BAF is a static dataset |
 | Segment disparity | Costs differ by segment | Policy unfair or ineffective | Out of MVP scope |
 | Adversarial adaptation | Fraudsters learn thresholds | Drift | Out of MVP scope |
@@ -469,7 +469,7 @@ If the two documents disagree in future, the evaluation protocol wins and this d
 
 ## 14. Configuration
 
-### 14.1 `configs/costs.yaml` — as implemented
+### 14.1 `configs/costs.yaml` â€” as implemented
 
 ```yaml
 fraud_loss: 1.0
@@ -477,16 +477,16 @@ false_positive_cost: 0.1
 review_cost: 0.02
 residual_fraud_loss: 0.3
 amount_scaled: true
-fraud_loss_rate: 0.002067377733397323
+fraud_loss_rate: 0.0019187869
 ```
 
 The first four keys are the constant-loss cost matrix. `amount_scaled` and `fraud_loss_rate` were added after the constant-loss MVP was validated and the amount-scaled sensitivity returned a success stop. See Section 7.1.
 
-### 14.2 `configs/policy.yaml` — not implemented
+### 14.2 `configs/policy.yaml` â€” not implemented
 
 The full architecture envisions a `configs/policy.yaml` for threshold overrides and capacity settings. The MVP does not implement it. There is no `use_derived_thresholds`, `p_review`, `p_block`, `capacity_enabled`, or `review_capacity_per_day` in the code.
 
-Thresholds are always derived from the cost matrix — there is no override mechanism. Capacity is deferred.
+Thresholds are always derived from the cost matrix â€” there is no override mechanism. Capacity is deferred.
 
 This section is preserved as a specification for post-MVP work. Do not create `configs/policy.yaml` until there is a measured failure that requires it.
 
@@ -500,14 +500,14 @@ This section is preserved as a specification for post-MVP work. Do not create `c
 - [x] Derived thresholds computed from costs and reported as a diagnostic view only
 - [x] Threshold edge cases (Section 6.5) handled and covered by unit tests
 - [x] Cost matrix in `configs/costs.yaml` with canonical key `residual_fraud_loss`
-- [ ] Policy config in `configs/policy.yaml` — **out of MVP scope**, deferred
+- [ ] Policy config in `configs/policy.yaml` â€” **out of MVP scope**, deferred
 - [x] Action log written to `data/processed/action_log.parquet`
-- [ ] Action log schema matches full Section 10.1.1, including `cost_config_hash` — **MVP schema is a documented subset**, see Section 10.1.2
+- [ ] Action log schema matches full Section 10.1.1, including `cost_config_hash` â€” **MVP schema is a documented subset**, see Section 10.1.2
 - [x] Calibration measured and reported: Brier (0.010050) and ECE (0.0040), null stop
-- [ ] Policy evaluated under all three delay regimes — **only 1-month run in MVP**, deferred
+- [ ] Policy evaluated under all three delay regimes â€” **only 1-month run in MVP**, deferred
 - [x] Policy compared against the canonical baseline set: random, approve-all, block-all, LightGBM + static 0.5
-- [ ] Rule-based threshold baseline — **not in MVP per `mvp_architecture.md` §8**, deferred
-- [x] Amount-scaled fraud loss sensitivity analysis run and reported — success stop, adopted
+- [ ] Rule-based threshold baseline â€” **not in MVP per `mvp_architecture.md` Â§8**, deferred
+- [x] Amount-scaled fraud loss sensitivity analysis run and reported â€” success stop, adopted
 - [x] Failure modes documented in the Week 1 report and in Section 11 above
 
 **Result:** every applicable box checked. Deferred items are documented as deferred, not omitted.

@@ -295,8 +295,8 @@ fraud_loss: 1.0
 false_positive_cost: 0.1
 review_cost: 0.02
 residual_fraud_loss: 0.3
-amount_scaled: false
-fraud_loss_rate: 0.0
+amount_scaled: true
+fraud_loss_rate: 0.0019187869
 ```
 
 All costs are relative units in Week 1. Absolute calibration is out of scope.

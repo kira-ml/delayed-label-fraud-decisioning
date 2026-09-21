@@ -6,6 +6,13 @@
 > **Last updated:** YYYY-MM-DD
 
 ---
+> **Superseded.** This document is the original 2-week MVP plan (v0.1).
+> The MVP was built with three deviations: (1) amount-scaled `fraud_loss`
+> was adopted instead of deferred; (2) the baseline set is 5 (rule-based
+> threshold deferred) rather than 4; (3) ECE, bootstrap CIs, and full cost
+> sensitivity were run beyond the original MVP scope. The as-built
+> architecture is `mvp_architecture.md` v0.2. This file is retained as the
+> original plan and is not the source of truth for what exists in the repo.
 
 ## 1. Purpose
 
@@ -255,7 +262,7 @@ You show one table:
 
 You then say:
 
-> Fraud decisions must be made before labels arrive. I framed this as a cost-sensitive decision problem, not a classification problem. Under a 1-month delayed-label regime with a chronological split, the cost-sensitive policy achieves lower realized cost per transaction than approve-all and the static-threshold LightGBM baseline. Limitations: single delay regime, no amount-scaled costs, synthetic data. Next steps: additional regimes, amount-scaled costs, capacity-aware policy.
+> Fraud decisions must be made before labels arrive. I framed this as a cost-sensitive decision problem, not a classification problem. Under a 1-month delayed-label regime with a chronological split, the cost-sensitive policy achieves a 56.9% reduction in realized cost per transaction vs. the strongest baseline (LightGBM + static 0.5), with a 95% bootstrap CI of [52.8%, 60.9%]. The result survives full cost sensitivity across a 2× range on each cost parameter. Limitations: single delay regime, amount scaling uses `proposed_credit_limit` as a proxy, synthetic data, censored labels excluded. Next steps: additional delay regimes, capacity-aware policy, rule-based baseline.
 
 That is the entire presentation. It is enough.
 
