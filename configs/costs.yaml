@@ -3,4 +3,4 @@ false_positive_cost: 0.1
 review_cost: 0.02
 residual_fraud_loss: 0.3
 amount_scaled: true
-fraud_loss_rate: 0.002067377733397323
+fraud_loss_rate: 0.0019187869
