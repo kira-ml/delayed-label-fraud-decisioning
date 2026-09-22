@@ -1,4 +1,4 @@
-# Application Guide
+﻿# Application Guide
 
 > **Repository:** `delayed-label-fraud-decisioning`  
 > **Course:** Introduction to Machine Learning - Final Group Project  
@@ -38,7 +38,7 @@ It complements:
 
 | Field | Value |
 |---|---|
-| URL | https://delayed-label-fraud-decisioning-gefp9s9mbkfdyzhvsecdm.streamlit.app |
+| URL | https://delayed-label-fraud-decisioning-gefp9s9mbkfdyzhhvescdm.streamlit.app |
 | Platform | Streamlit Community Cloud |
 | Python version | 3.11 |
 

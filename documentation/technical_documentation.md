@@ -1,4 +1,4 @@
-# Technical Documentation
+﻿# Technical Documentation
 
 > **Repository:** `delayed-label-fraud-decisioning`  
 > **Course:** Introduction to Machine Learning - Final Group Project  
@@ -109,84 +109,84 @@ attribution. See [`docs/data_card.md`](../docs/data_card.md) section 2.
 
 ```
 delayed-label-fraud-decisioning/
-├── README.md
-├── requirements.txt
-├── conftest.py                     # pytest path bootstrap
-├── app/
-│   └── streamlit_app.py            # deployed application
-├── configs/
-│   └── costs.yaml                  # cost matrix
-├── data/                           # gitignored
-│   ├── original/
-│   │   └── Base.csv
-│   ├── interim/
-│   └── processed/
-├── notebooks/
-│   ├── 01_eda.ipynb
-│   ├── 02_preprocessing.ipynb
-│   ├── 03_model_training.ipynb
-│   └── 04_evaluation.ipynb
-├── models/
-│   ├── best_model.pkl
-│   ├── preprocessing.pkl
-│   ├── feature_columns.json
-│   ├── feature_defaults.json
-│   └── feature_importances.json
-├── docs/                           # design and methodology
-│   ├── problem_framing.md
-│   ├── data_card.md
-│   ├── decision_policy.md
-│   ├── evaluation_protocol.md
-│   ├── architecture.md
-│   ├── mvp_architecture.md
-│   ├── roadmap.md
-│   └── daily_log/
-├── documentation/                  # course-required deliverables
-│   ├── data_dictionary.md
-│   ├── app_guide.md
-│   ├── technical_documentation.md
-│   ├── contribution_record.md
-│   └── ownership_declaration.md
-├── paper/
-│   ├── paper_imrad.md
-│   ├── paper.docx
-│   └── paper.pdf
-├── reports/
-│   ├── model_comparison.md         # primary course deliverable
-│   ├── mvp_backtest.md             # supplementary deliverable
-│   ├── cv_results.json
-│   ├── sensitivity.md
-│   └── bootstrap.md
-├── src/
-│   ├── common.py
-│   ├── pipeline.py
-│   ├── data/
-│   │   ├── load.py
-│   │   ├── primary_split.py
-│   │   ├── simulate_delay.py
-│   │   └── split.py
-│   ├── models/
-│   │   ├── preprocess.py
-│   │   ├── train_baseline.py
-│   │   ├── train_compare.py
-│   │   ├── evaluate_compare.py
-│   │   └── score.py
-│   ├── policy/
-│   │   └── decide.py
-│   └── evaluation/
-│       ├── backtest.py
-│       ├── calibration.py
-│       ├── sensitivity.py
-│       └── bootstrap.py
-└── tests/
-    ├── test_app_validation.py
-    ├── test_backtest.py
-    ├── test_data_schema.py
-    ├── test_model.py
-    ├── test_pipeline_integration.py
-    ├── test_policy.py
-    ├── test_preprocessing.py
-    └── test_reproducibility.py
+â”œâ”€â”€ README.md
+â”œâ”€â”€ requirements.txt
+â”œâ”€â”€ conftest.py                     # pytest path bootstrap
+â”œâ”€â”€ app/
+â”‚   â””â”€â”€ streamlit_app.py            # deployed application
+â”œâ”€â”€ configs/
+â”‚   â””â”€â”€ costs.yaml                  # cost matrix
+â”œâ”€â”€ data/                           # gitignored
+â”‚   â”œâ”€â”€ original/
+â”‚   â”‚   â””â”€â”€ Base.csv
+â”‚   â”œâ”€â”€ interim/
+â”‚   â””â”€â”€ processed/
+â”œâ”€â”€ notebooks/
+â”‚   â”œâ”€â”€ 01_eda.ipynb
+â”‚   â”œâ”€â”€ 02_preprocessing.ipynb
+â”‚   â”œâ”€â”€ 03_model_training.ipynb
+â”‚   â””â”€â”€ 04_evaluation.ipynb
+â”œâ”€â”€ models/
+â”‚   â”œâ”€â”€ best_model.pkl
+â”‚   â”œâ”€â”€ preprocessing.pkl
+â”‚   â”œâ”€â”€ feature_columns.json
+â”‚   â”œâ”€â”€ feature_defaults.json
+â”‚   â””â”€â”€ feature_importances.json
+â”œâ”€â”€ docs/                           # design and methodology
+â”‚   â”œâ”€â”€ problem_framing.md
+â”‚   â”œâ”€â”€ data_card.md
+â”‚   â”œâ”€â”€ decision_policy.md
+â”‚   â”œâ”€â”€ evaluation_protocol.md
+â”‚   â”œâ”€â”€ architecture.md
+â”‚   â”œâ”€â”€ mvp_architecture.md
+â”‚   â”œâ”€â”€ roadmap.md
+â”‚   â””â”€â”€ daily_log/
+â”œâ”€â”€ documentation/                  # course-required deliverables
+â”‚   â”œâ”€â”€ data_dictionary.md
+â”‚   â”œâ”€â”€ app_guide.md
+â”‚   â”œâ”€â”€ technical_documentation.md
+â”‚   â”œâ”€â”€ contribution_record.md
+â”‚   â””â”€â”€ ownership_declaration.md
+â”œâ”€â”€ paper/
+â”‚   â”œâ”€â”€ paper_imrad.md
+â”‚   â”œâ”€â”€ paper.docx
+â”‚   â””â”€â”€ paper.pdf
+â”œâ”€â”€ reports/
+â”‚   â”œâ”€â”€ model_comparison.md         # primary course deliverable
+â”‚   â”œâ”€â”€ mvp_backtest.md             # supplementary deliverable
+â”‚   â”œâ”€â”€ cv_results.json
+â”‚   â”œâ”€â”€ sensitivity.md
+â”‚   â””â”€â”€ bootstrap.md
+â”œâ”€â”€ src/
+â”‚   â”œâ”€â”€ common.py
+â”‚   â”œâ”€â”€ pipeline.py
+â”‚   â”œâ”€â”€ data/
+â”‚   â”‚   â”œâ”€â”€ load.py
+â”‚   â”‚   â”œâ”€â”€ primary_split.py
+â”‚   â”‚   â”œâ”€â”€ simulate_delay.py
+â”‚   â”‚   â””â”€â”€ split.py
+â”‚   â”œâ”€â”€ models/
+â”‚   â”‚   â”œâ”€â”€ preprocess.py
+â”‚   â”‚   â”œâ”€â”€ train_baseline.py
+â”‚   â”‚   â”œâ”€â”€ train_compare.py
+â”‚   â”‚   â”œâ”€â”€ evaluate_compare.py
+â”‚   â”‚   â””â”€â”€ score.py
+â”‚   â”œâ”€â”€ policy/
+â”‚   â”‚   â””â”€â”€ decide.py
+â”‚   â””â”€â”€ evaluation/
+â”‚       â”œâ”€â”€ backtest.py
+â”‚       â”œâ”€â”€ calibration.py
+â”‚       â”œâ”€â”€ sensitivity.py
+â”‚       â””â”€â”€ bootstrap.py
+â””â”€â”€ tests/
+    â”œâ”€â”€ test_app_validation.py
+    â”œâ”€â”€ test_backtest.py
+    â”œâ”€â”€ test_data_schema.py
+    â”œâ”€â”€ test_model.py
+    â”œâ”€â”€ test_pipeline_integration.py
+    â”œâ”€â”€ test_policy.py
+    â”œâ”€â”€ test_preprocessing.py
+    â””â”€â”€ test_reproducibility.py
 ```
 
 ---
@@ -352,7 +352,7 @@ Opens at `http://localhost:8501`.
 ### 7.2 Deployed
 
 ```
-https://delayed-label-fraud-decisioning-gefp9s9mbkfdyzhvsecdm.streamlit.app
+https://delayed-label-fraud-decisioning-gefp9s9mbkfdyzhhvescdm.streamlit.app
 ```
 
 Deployed via Streamlit Community Cloud. The build uses Python 3.11.
