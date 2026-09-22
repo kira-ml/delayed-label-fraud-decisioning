@@ -4,10 +4,11 @@ A three-algorithm classification study on fraud detection with a supplementary
 cost-sensitive decision policy evaluated under delayed, censored, and biased
 labels.
 
-> **Course:** Introduction to Machine Learning — Final Group Project
-> **Institution:** National University Philippines
-> **Instructor:** Ken Oliver Caparros
-> **Authors:** [Group member names]
+> **Course:** Introduction to Machine Learning - Final Group Project  
+> **Institution:** National University Philippines  
+> **Instructor:** Ken Oliver Caparros  
+> **Lead Author:** Ken Ira Lacson Talingting 
+> **Co-Authors:** [Group member names]
 
 ---
 
@@ -58,37 +59,48 @@ operational action under an explicit cost structure.
 
 ## Headline Result
 
-### Primary — Three-Algorithm Comparison
+### Primary - Three-Algorithm Comparison
 
 Three traditional algorithms are compared under identical data, preprocessing,
-and cross-validation conditions on the training split.
+and cross-validation conditions (5-fold expanding-window by month) on the
+training split.
 
-| Algorithm | Primary Metric (Macro F1) | Precision (Fraud) | Recall (Fraud) | ROC-AUC |
+| Algorithm | Primary Metric (Macro F1, mean +/- SD) | Precision (Fraud) | Recall (Fraud) | ROC-AUC |
 |---|---:|---:|---:|---:|
-| Logistic Regression | TBD | TBD | TBD | TBD |
-| Random Forest | TBD | TBD | TBD | TBD |
-| LightGBM | TBD | TBD | TBD | TBD |
+| Logistic Regression | 0.4783 +/- 0.0201 | 0.0392 | 0.7993 | 0.8792 |
+| Random Forest | 0.4977 +/- 0.0004 | 0.1400 | 0.0003 | 0.8386 |
+| LightGBM | **0.5337 +/- 0.0100** | 0.2666 | 0.0430 | 0.8804 |
 
-*Numbers pending final model training. The selected model is justified in the
-IMRaD paper using validation performance, interpretability, speed, and
-practical suitability.*
+**Selected model:** LightGBM, on mean CV Macro F1. Final test performance is
+reported once on the untouched test split:
 
-### Supplementary — Cost-Sensitive Policy
+| Metric | Value |
+|---|---:|
+| Macro F1 | 0.5336 |
+| Accuracy | 0.9852 |
+| Precision (fraud) | 0.3096 |
+| Recall (fraud) | 0.0424 |
+| ROC-AUC | 0.8766 |
+| Confusion matrix | TN 201,861 / FP 272 / FN 2,756 / TP 122 |
+
+Full CV and test results: [`reports/model_comparison.md`](reports/model_comparison.md).
+
+### Supplementary - Cost-Sensitive Policy
 
 Under a 1-month delayed-label regime with a chronological train / validation
 / test split, the cost-sensitive policy reduces realized cost per transaction
-by **56.87%** relative to the strongest baseline, with a 95% bootstrap
-confidence interval of **[52.77%, 60.91%]**.
+by **57.1%** relative to the strongest baseline (LightGBM + static 0.5), with
+a 95% bootstrap confidence interval of **[53.16%, 61.24%]**.
 
 | Baseline | Cost per transaction |
 |---|---:|
-| Random | 0.046931 |
-| Approve-all | 0.018928 |
-| Block-all | 0.098742 |
-| LightGBM + static 0.5 | 0.017543 |
-| **Cost-sensitive policy (ours)** | **0.007566** |
+| Random | see `reports/mvp_backtest.md` |
+| Approve-all | see `reports/mvp_backtest.md` |
+| Block-all | see `reports/mvp_backtest.md` |
+| LightGBM + static 0.5 (strongest baseline) | 0.017749 |
+| **Cost-sensitive policy (ours)** | **0.007621** |
 
-The result is robust to a 2× variation in each cost parameter
+The result is robust to a 2x variation in each cost parameter
 (`false_positive_cost`, `review_cost`, `residual_fraud_loss`); the minimum
 advantage across all variations is **46.46%**.
 
@@ -101,27 +113,28 @@ This supplementary analysis is documented in
 
 ## Approach
 
-### Primary — Three-Algorithm Classification
+### Primary - Three-Algorithm Classification
 
-- **Dataset:** Bank Account Fraud (BAF) `Base.csv` — 1,000,000 rows, 32 raw
+- **Dataset:** Bank Account Fraud (BAF) `Base.csv` - 1,000,000 rows, 32 raw
   features, ~1.1% fraud rate.
 - **Target:** `fraud_bool` (binary).
-- **Split:** chronological 80/20 train/test, with 5-fold time-series
-  cross-validation on the training data for model selection and tuning.
+- **Split:** chronological 80/20 train/test (train months 0-5, test months
+  6-7), with **5-fold expanding-window cross-validation by month** on the
+  training data for model selection and tuning.
 - **Preprocessing:** fit on training data only; applied unchanged to test.
   Missing-value handling, categorical encoding, and scaling are documented
-  in [`docs/data_card.md`](docs/data_card.md) §9.
+  in [`docs/data_card.md`](docs/data_card.md) section 11.
 - **Primary metric:** Macro F1, chosen because the class distribution is
   heavily imbalanced and both false positives and false negatives carry
   operational cost. Supporting metrics: per-class precision, recall, F1,
   confusion matrix, and ROC-AUC.
 - **Algorithms compared:** Logistic Regression, Random Forest, LightGBM.
-  Each is a permitted traditional algorithm; each is tuned with a small
-  documented grid; each uses identical folds and preprocessing.
-- **Selected model:** justified in the IMRaD paper on performance,
-  interpretability, speed, and practical suitability.
+  Each is a permitted traditional algorithm; each uses one fixed
+  configuration; each uses identical folds and preprocessing.
+- **Selected model:** LightGBM, justified in `reports/model_comparison.md`
+  on performance, interpretability, speed, and practical suitability.
 
-### Supplementary — Decision Policy
+### Supplementary - Decision Policy
 
 The classification output feeds an operational policy that minimizes
 expected cost:
@@ -145,13 +158,13 @@ amount-scaled cost model.
 A Streamlit application loads the saved best model and the same preprocessing
 pipeline used during training.
 
-**Input:** validated form fields (or CSV upload) for transaction features.
-**Output:** predicted class, predicted probability, and — where the selected
-algorithm supports it — a confidence indicator.
+**Input:** validated form fields (or CSV upload) for transaction features.  
+**Output:** predicted class, predicted probability, and the cost-sensitive
+action (`approve` / `review` / `block`).  
 **Error handling:** missing, invalid, and out-of-range inputs are rejected
 with clear error messages; the app does not crash.
 
-- **Deployed URL:** [TBD — to be added after deployment]
+- **Deployed URL:** https://delayed-label-fraud-decisioning-gefp9s9mbkfdyzhhvescdm.streamlit.app
 - **Local setup:** see [`documentation/technical_documentation.md`](documentation/technical_documentation.md)
 - **App guide:** see [`documentation/app_guide.md`](documentation/app_guide.md)
 
@@ -162,11 +175,19 @@ with clear error messages; the app does not crash.
 ### Full pipeline
 
 ```bash
+# Primary (course deliverable: 3-algorithm comparison + deployed model)
+python -m src.pipeline --primary
+
+# Supplementary (project depth: cost-sensitive policy under delayed labels)
 python -m src.pipeline
+
+# Both, in order
+python -m src.pipeline --all
 ```
 
-Runs, in order: load → simulate delay → split → train → score → decide →
-backtest.
+Primary runs: load -> primary_split -> train_compare -> evaluate_compare.  
+Supplementary runs: load -> simulate_delay -> split -> train_baseline ->
+score -> decide -> backtest.
 
 ### Supplementary analyses
 
@@ -175,16 +196,18 @@ python -m src.evaluation.sensitivity   # writes reports/sensitivity.md
 python -m src.evaluation.bootstrap     # writes reports/bootstrap.md
 ```
 
+Or, in one command after the supplementary pipeline:
+
+```bash
+python -m src.pipeline --analyses
+```
+
 ### Tests
 
 ```bash
-pytest
-# 13 passed in ~1.4s
+pytest -q
+# 60 passed
 ```
-
-The pipeline reproduces byte-for-byte. Given `data/raw/baf/Base.csv` plus
-`configs/costs.yaml` and the fixed seeds, every number in the report
-regenerates.
 
 ### Environment
 
@@ -197,9 +220,24 @@ python -m pip install --upgrade pip
 pip install -r requirements.txt
 ```
 
-Pinned library versions: Python 3.10, LightGBM 4.7.0, pandas 2.3.3,
-numpy 2.2.6, pyarrow 19.0.1, scikit-learn 1.7.2, PyYAML 6.0.3, Streamlit
-[TBD], matplotlib, seaborn, pytest.
+**Python 3.11 is required.** Do not use 3.14; several pinned dependencies
+lack prebuilt wheels for it.
+
+`pyarrow` is used only by the pipeline when writing Parquet files. It is not
+required by the deployed Streamlit app and is not in `requirements.txt`. To
+run the pipeline locally from a fresh environment, install it separately:
+
+```bash
+pip install "pyarrow>=15.0,<20.0"
+```
+
+Verified library versions: Python 3.11, numpy 2.2.6, pandas 2.3.3,
+pyarrow 19.0.1, scikit-learn 1.7.2, LightGBM 4.7.0, Streamlit 1.64.0,
+joblib 1.6.0, PyYAML 6.0.3, matplotlib 3.8+, pytest 8.1+.
+
+The pipeline reproduces byte-for-byte. Given `data/original/Base.csv` plus
+`configs/costs.yaml` and the fixed seed (`42`), every number in the reports
+regenerates.
 
 ---
 
@@ -210,8 +248,8 @@ numpy 2.2.6, pyarrow 19.0.1, scikit-learn 1.7.2, PyYAML 6.0.3, Streamlit
 | Document | Purpose |
 |---|---|
 | [`documentation/data_dictionary.md`](documentation/data_dictionary.md) | Every feature: name, type, unit, description, allowed values |
-| [`documentation/technical_documentation.md`](documentation/technical_documentation.md) | Install, run, input format, app guide, limitations, troubleshooting |
-| [`documentation/app_guide.md`](documentation/app_guide.md) | Streamlit usage and expected units |
+| [`documentation/technical_documentation.md`](documentation/technical_documentation.md) | Install, run, input format, limitations, troubleshooting |
+| [`documentation/app_guide.md`](documentation/app_guide.md) | Streamlit usage, examples, expected outputs |
 | [`documentation/contribution_record.md`](documentation/contribution_record.md) | Member names, tasks, actual contributions |
 | [`documentation/ownership_declaration.md`](documentation/ownership_declaration.md) | Signed ownership and authorship declaration |
 | [`paper/paper_imrad.md`](paper/paper_imrad.md) | IMRaD draft (DOCX + PDF versions in `paper/`) |
@@ -232,7 +270,7 @@ numpy 2.2.6, pyarrow 19.0.1, scikit-learn 1.7.2, PyYAML 6.0.3, Streamlit
 
 | Report | Contents |
 |---|---|
-| [`reports/model_comparison.md`](reports/model_comparison.md) | Primary: 3-algorithm comparison, CV results, final test results |
+| [`reports/model_comparison.md`](reports/model_comparison.md) | Primary: 3-algorithm CV comparison, final test results, selection justification, failure analysis |
 | [`reports/mvp_backtest.md`](reports/mvp_backtest.md) | Supplementary: cost-sensitive policy backtest |
 | [`reports/sensitivity.md`](reports/sensitivity.md) | Supplementary: full cost sensitivity table |
 | [`reports/bootstrap.md`](reports/bootstrap.md) | Supplementary: 95% confidence intervals on cost per transaction |
@@ -263,8 +301,9 @@ results.
 - **Honest.** Failures and non-findings are reported, not hidden.
 - **Stopping rules.** Each phase has a data-driven stop criterion.
 
-Forbidden metrics: raw accuracy, AUC-only claims, F1 without context.
-AUC is reported informationally but never used as the sole success criterion.
+Forbidden metrics: raw accuracy as the sole criterion, AUC-only claims, F1
+without context. AUC is reported informationally but never used as the sole
+success criterion.
 
 See [`docs/evaluation_protocol.md`](docs/evaluation_protocol.md) for the full
 protocol.
@@ -291,7 +330,11 @@ delayed-label-fraud-decisioning/
 │   ├── 03_model_training.ipynb
 │   └── 04_evaluation.ipynb
 ├── models/
-│   └── best_model.pkl
+│   ├── best_model.pkl
+│   ├── preprocessing.pkl
+│   ├── feature_columns.json
+│   ├── feature_defaults.json
+│   └── feature_importances.json
 ├── docs/
 │   ├── problem_framing.md
 │   ├── data_card.md
@@ -316,17 +359,38 @@ delayed-label-fraud-decisioning/
 │   ├── model_comparison.md
 │   ├── mvp_backtest.md
 │   ├── sensitivity.md
-│   └── bootstrap.md
+│   ├── bootstrap.md
+│   └── cv_results.json
 ├── src/
 │   ├── common.py
 │   ├── pipeline.py
-│   ├── data/{load, simulate_delay, split}.py
-│   ├── models/{train_baseline, score, train_compare}.py
-│   ├── policy/decide.py
-│   └── evaluation/{backtest, calibration, sensitivity, bootstrap}.py
+│   ├── data/
+│   │   ├── load.py
+│   │   ├── primary_split.py
+│   │   ├── simulate_delay.py
+│   │   └── split.py
+│   ├── models/
+│   │   ├── preprocess.py
+│   │   ├── train_baseline.py
+│   │   ├── train_compare.py
+│   │   ├── evaluate_compare.py
+│   │   └── score.py
+│   ├── policy/
+│   │   └── decide.py
+│   └── evaluation/
+│       ├── backtest.py
+│       ├── calibration.py
+│       ├── sensitivity.py
+│       └── bootstrap.py
 └── tests/
+    ├── test_app_validation.py
+    ├── test_backtest.py
+    ├── test_data_schema.py
+    ├── test_model.py
+    ├── test_pipeline_integration.py
     ├── test_policy.py
-    └── test_backtest.py
+    ├── test_preprocessing.py
+    └── test_reproducibility.py
 ```
 
 ---
@@ -335,13 +399,13 @@ delayed-label-fraud-decisioning/
 
 | # | Deliverable | Status |
 |---|---|---|
-| 1 | Deployable application (Streamlit URL + local) | In progress |
-| 2 | Source code (repo link + ZIP) | Available |
-| 3 | Technical documentation (README + PDF/DOCX) | In progress |
+| 1 | Deployable application (Streamlit URL + local) | Done |
+| 2 | Source code (repo link + ZIP) | Done |
+| 3 | Technical documentation | Done |
 | 4 | Dataset package (original, processed, data dictionary, source, license) | In progress |
-| 5 | IMRaD style paper (DOCX + PDF) | In progress |
-| 6 | Contribution record | In progress |
-| 7 | Ownership and authorship declaration (signed PDF) | In progress |
+| 5 | IMRaD style paper (DOCX + PDF) | Paper team |
+| 6 | Contribution record | Missing |
+| 7 | Ownership and authorship declaration (signed PDF) | Missing |
 
 ---
 
@@ -374,7 +438,7 @@ and the addition has its own stop criterion.
   title  = {Delayed-Label Fraud Decisioning: A Three-Algorithm Classification
             Study with a Cost-Sensitive Policy under Delayed and Censored
             Labels},
-  author = {[Author names]},
+  author = {Talingting, Ken Ira Lacson and [Co-author names]},
   year   = {2026},
   note   = {Introduction to Machine Learning final project,
             National University Philippines}
@@ -385,11 +449,14 @@ and the addition has its own stop criterion.
 
 ## Authors
 
-[Group member names] — Introduction to Machine Learning final project,
+**Lead Author:** Ken Ira Lacson Talingting  
+**Co-Authors:** [Group member names]
+
+Introduction to Machine Learning final project,
 National University Philippines.
 
 **Instructor:** Ken Oliver Caparros
 
 ## License
 
-TBD — will be added before public release.
+TBD - will be added before public release.
