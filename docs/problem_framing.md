@@ -6,7 +6,7 @@
 > **Instructor:** Ken Oliver Caparros  
 > **Document:** Problem framing / project charter  
 > **Status:** v0.3 — aligned with course requirements and three-algorithm comparison  
-> **Last updated:** YYYY-MM-DD
+> **Last updated:** 2026-09-22
 
 ---
 

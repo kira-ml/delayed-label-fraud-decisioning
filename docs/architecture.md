@@ -3,7 +3,7 @@
 > **Repository:** `delayed-label-fraud-decisioning`  
 > **Document:** Architecture (Week 1 MVP)  
 > **Status:** v0.3 — Week 1 MVP with data-driven stop criteria  
-> **Last updated:** YYYY-MM-DD
+> **Last updated:** 2026-09-22
 
 ---
 

@@ -3,7 +3,7 @@
 > **Repository:** `delayed-label-fraud-decisioning`  
 > **Document:** MVP plan for course presentation and submission  
 > **Status:** v0.1 — active build plan  
-> **Last updated:** YYYY-MM-DD
+> **Last updated:** 2026-09-22
 
 ---
 > **Superseded.** This document is the original 2-week MVP plan (v0.1).

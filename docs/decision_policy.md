@@ -1,4 +1,4 @@
-﻿# Decision Policy
+# Decision Policy
 
 > **Repository:** `delayed-label-fraud-decisioning`  
 > **Course:** Introduction to Machine Learning — Final Group Project  
@@ -6,7 +6,7 @@
 > **Instructor:** Ken Oliver Caparros  
 > **Document:** Decision Policy  
 > **Status:** v0.4 — supplementary analysis aligned with course submission  
-> **Last updated:** YYYY-MM-DD
+> **Last updated:** 2026-09-22
 
 ---
 
@@ -660,10 +660,10 @@ document does not track those deliverables.
 
 | Date | Change | Reason |
 |---|---|---|
-| YYYY-MM-DD | Initial decision policy | Project start |
-| YYYY-MM-DD | Added threshold edge cases; made amount-scaled loss a required sensitivity; added `cost_config_hash` to log schema; declared canonical `residual_fraud_loss` key; aligned baselines | Align with problem framing, data card, and evaluation protocol |
+| 2026-09-22 | Initial decision policy | Project start |
+| 2026-09-22 | Added threshold edge cases; made amount-scaled loss a required sensitivity; added `cost_config_hash` to log schema; declared canonical `residual_fraud_loss` key; aligned baselines | Align with problem framing, data card, and evaluation protocol |
 | 2026-09-21 | Updated status to v0.3; recorded amount-scaled sensitivity as adopted (§7.1); recorded ECE diagnostic as null stop (§9.1); documented action log as a subset of the full schema (§10.1.2); marked capacity and multi-regime as deferred (§8.3, §15); noted `configs/policy.yaml` was not implemented | Reconcile document with the built MVP |
-| YYYY-MM-DD | Reframed as supplementary analysis (§1.1); added course metadata and correct instructor; updated internal links to new document paths; renamed "MVP" to "current build" throughout; restructured DoD into Supplementary (Implemented), Supplementary (Deferred), and Primary (Tracked Elsewhere) | Align with course submission structure |
+| 2026-09-22 | Reframed as supplementary analysis (§1.1); added course metadata and correct instructor; updated internal links to new document paths; renamed "MVP" to "current build" throughout; restructured DoD into Supplementary (Implemented), Supplementary (Deferred), and Primary (Tracked Elsewhere) | Align with course submission structure |
 
 ---
 

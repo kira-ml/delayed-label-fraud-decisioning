@@ -6,7 +6,7 @@
 > **Instructor:** Ken Oliver Caparros  
 > **Document:** Evaluation Protocol  
 > **Status:** v0.4 — restructured around three-algorithm comparison with supplementary cost-sensitive analysis  
-> **Last updated:** YYYY-MM-DD
+> **Last updated:** 2026-09-22
 
 ---
 
@@ -743,7 +743,7 @@ matrix. See `reports/mvp_backtest.md` for the full table.
 
 | Date | Change | Reason |
 |---|---|---|
-| YYYY-MM-DD | Initial evaluation protocol | Project start |
-| YYYY-MM-DD | Added cost matrix, temporal backtest, canonical baselines, forbidden metrics | Align with Week 1 MVP |
-| YYYY-MM-DD | Recorded amount-scaled sensitivity as adopted; recorded calibration null stop; documented MVP deviations | Reconcile with built MVP |
-| YYYY-MM-DD | Restructured into primary (three-algorithm classification) and supplementary (cost-sensitive policy); added Macro F1 justification; added 5-fold time-series CV; added preprocessing and tuning rules; added test-set discipline; separated DoD into primary and supplementary | Align with course requirements |
+| 2026-09-22 | Initial evaluation protocol | Project start |
+| 2026-09-22 | Added cost matrix, temporal backtest, canonical baselines, forbidden metrics | Align with Week 1 MVP |
+| 2026-09-22 | Recorded amount-scaled sensitivity as adopted; recorded calibration null stop; documented MVP deviations | Reconcile with built MVP |
+| 2026-09-22 | Restructured into primary (three-algorithm classification) and supplementary (cost-sensitive policy); added Macro F1 justification; added 5-fold time-series CV; added preprocessing and tuning rules; added test-set discipline; separated DoD into primary and supplementary | Align with course requirements |

@@ -6,7 +6,7 @@
 > **Instructor:** Ken Oliver Caparros  
 > **Document:** Architecture — as-built system  
 > **Status:** v0.4 — restructured around the course-required three-algorithm classification pipeline  
-> **Last updated:** YYYY-MM-DD
+> **Last updated:** 2026-09-22
 
 ---
 
@@ -759,6 +759,6 @@ Nothing in the as-built system contradicts the full spec.
 
 | Date | Change | Reason |
 |---|---|---|
-| YYYY-MM-DD | Initial MVP architecture | Project start |
+| 2026-09-22 | Initial MVP architecture | Project start |
 | 2026-09-21 | MVP complete: 9 pipeline scripts, 2 test files, 1 diagnostic; amount-scaled sensitivity adopted; ECE null stop recorded | Reconcile with built MVP |
-| YYYY-MM-DD | Restructured into two-layer architecture (primary course pipeline + supplementary cost-sensitive pipeline); added EDA, preprocessing, three-algorithm comparison, Streamlit app, and IMRaD paper to primary scope; added repository layout matching required submission structure; added primary and supplementary build orders; split DoD into primary and supplementary | Align with course requirements |
+| 2026-09-22 | Restructured into two-layer architecture (primary course pipeline + supplementary cost-sensitive pipeline); added EDA, preprocessing, three-algorithm comparison, Streamlit app, and IMRaD paper to primary scope; added repository layout matching required submission structure; added primary and supplementary build orders; split DoD into primary and supplementary | Align with course requirements |

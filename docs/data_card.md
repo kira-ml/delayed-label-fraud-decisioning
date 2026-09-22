@@ -6,7 +6,7 @@
 > **Instructor:** Ken Oliver Caparros  
 > **Document:** Data Card  
 > **Status:** v0.3 — aligned with course requirements and three-algorithm comparison  
-> **Last updated:** YYYY-MM-DD
+> **Last updated:** 2026-09-22
 
 ---
 
@@ -577,9 +577,9 @@ python -m src.pipeline
 
 | Date | Change | Reason |
 |---|---|---|
-| YYYY-MM-DD | Initial data card | Project start |
-| YYYY-MM-DD | Fixed delay per regime; added granularity check; added per-regime censored reporting | Align with Week 1 MVP |
-| YYYY-MM-DD | Reframed primary task as classification with 3-algorithm comparison; added §3, §5, §10; separated primary and supplementary splits; pointed to data dictionary; documented class imbalance handling per algorithm | Align with course requirements |
+| 2026-09-22 | Initial data card | Project start |
+| 2026-09-22 | Fixed delay per regime; added granularity check; added per-regime censored reporting | Align with Week 1 MVP |
+| 2026-09-22 | Reframed primary task as classification with 3-algorithm comparison; added §3, §5, §10; separated primary and supplementary splits; pointed to data dictionary; documented class imbalance handling per algorithm | Align with course requirements |
 
 ---
 

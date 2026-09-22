@@ -6,7 +6,7 @@
 > **Instructor:** Ken Oliver Caparros  
 > **Document:** Roadmap  
 > **Status:** v0.3 — restructured around course deliverables with supplementary depth  
-> **Last updated:** YYYY-MM-DD
+> **Last updated:** 2026-09-22
 
 ---
 
@@ -516,6 +516,6 @@ defined before work begins.
 
 | Date | Change | Reason |
 |---|---|---|
-| YYYY-MM-DD | Initial roadmap | Project start |
-| YYYY-MM-DD | Aligned with Week 1 MVP and stop criteria | Project planning |
-| YYYY-MM-DD | Restructured into primary (course deliverables) and supplementary (project depth); added phases P1–P6 with Definition of Done; moved supplementary work to a status summary; added gating rules; updated risks and DoD | Align with course requirements |
+| 2026-09-22 | Initial roadmap | Project start |
+| 2026-09-22 | Aligned with Week 1 MVP and stop criteria | Project planning |
+| 2026-09-22 | Restructured into primary (course deliverables) and supplementary (project depth); added phases P1–P6 with Definition of Done; moved supplementary work to a status summary; added gating rules; updated risks and DoD | Align with course requirements |
