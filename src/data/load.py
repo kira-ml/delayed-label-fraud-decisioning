@@ -8,19 +8,31 @@ Produces data/interim/transactions.parquet with:
 from pathlib import Path
 import pandas as pd
 
-from src.common import set_seed
+from src.common import DATA_RAW, DATA_INTERIM, set_seed
 
-RAW_PATH = Path("data/original/Base.csv")
-OUT_PATH = Path("data/interim/transactions.parquet")
+# Canonical path first (course-required layout), then the historical fallback
+CANDIDATE_PATHS = [
+    DATA_RAW / "Base.csv",            # data/original/Base.csv  <- canonical
+    Path("data/raw/baf/Base.csv"),    # legacy path from data_card.md v0.2
+]
+OUT_PATH = DATA_INTERIM / "transactions.parquet"
 
 
-def load_raw(path: Path = RAW_PATH) -> pd.DataFrame:
-    if not path.exists():
-        raise FileNotFoundError(
-            f"Raw dataset not found at {path}. "
-            "Download the BAF Base.csv from the Kaggle link in docs/data_card.md §2.1."
-        )
-    return pd.read_csv(path)
+def _find_raw() -> Path:
+    for p in CANDIDATE_PATHS:
+        if p.exists():
+            return p
+    searched = "\n  ".join(str(p) for p in CANDIDATE_PATHS)
+    raise FileNotFoundError(
+        "Raw BAF dataset not found. Searched:\n  "
+        f"{searched}\n"
+        "Download Base.csv from the Kaggle link in docs/data_card.md §2.1 "
+        "and place it at data/original/Base.csv."
+    )
+
+
+def load_raw(path: Path | None = None) -> pd.DataFrame:
+    return pd.read_csv(path or _find_raw())
 
 
 def normalize(df: pd.DataFrame) -> pd.DataFrame:
@@ -39,6 +51,7 @@ def main() -> None:
     df = load_raw()
     df = normalize(df)
     df.to_parquet(OUT_PATH, index=False)
+    print(f"[load] Read {_find_raw()}")
     print(f"[load] Wrote {len(df):,} rows x {df.shape[1]} cols to {OUT_PATH}")
     print(f"[load] Fraud rate: {df['fraud_bool'].mean():.4%}")
     print(f"[load] Months: {sorted(df['month'].unique())}")

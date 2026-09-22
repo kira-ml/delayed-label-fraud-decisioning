@@ -8,17 +8,14 @@ from pathlib import Path
 import numpy as np
 import pandas as pd
 import yaml
+from src.common import load_costs, COSTS_PATH, DATA_PROCESSED
 
-SCORED_PATH = Path("data/processed/scored_test.parquet")
-COSTS_PATH = Path("configs/costs.yaml")
-OUT_PATH = Path("data/processed/action_log.parquet")
-
+SCORED_PATH = DATA_PROCESSED / "scored_test.parquet"
+OUT_PATH    = DATA_PROCESSED / "action_log.parquet"
 ACTIONS = np.array(["approve", "review", "block"])
 
 
-def load_costs(path: Path = COSTS_PATH) -> dict:
-    with open(path) as f:
-        return yaml.safe_load(f)
+
 
 
 def choose_actions(p: np.ndarray,
