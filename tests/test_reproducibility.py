@@ -30,11 +30,15 @@ def test_lightgbm_deterministic():
     X = df[get_feature_columns(df)].select_dtypes(include=np.number)
     y = df["fraud_bool"]
 
-    m1 = lgb.LGBMClassifier(n_estimators=50, random_state=SEED, verbose=-1)
+    m1 = lgb.LGBMClassifier(
+        n_estimators=50, random_state=SEED, verbose=-1, num_threads=1
+    )
     m1.fit(X, y)
     p1 = m1.predict_proba(X)[:, 1]
 
-    m2 = lgb.LGBMClassifier(n_estimators=50, random_state=SEED, verbose=-1)
+    m2 = lgb.LGBMClassifier(
+        n_estimators=50, random_state=SEED, verbose=-1, num_threads=1
+    )
     m2.fit(X, y)
     p2 = m2.predict_proba(X)[:, 1]
 

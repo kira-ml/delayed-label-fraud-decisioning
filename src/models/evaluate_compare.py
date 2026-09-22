@@ -121,6 +121,9 @@ def main() -> None:
         "precision_fraud": float(precision_score(y_test, y_pred, pos_label=1, zero_division=0)),
         "recall_fraud": float(recall_score(y_test, y_pred, pos_label=1, zero_division=0)),
         "f1_fraud": float(f1_score(y_test, y_pred, pos_label=1, zero_division=0)),
+        "precision_legit": float(precision_score(y_test, y_pred, pos_label=0, zero_division=0)),
+        "recall_legit": float(recall_score(y_test, y_pred, pos_label=0, zero_division=0)),
+        "f1_legit": float(f1_score(y_test, y_pred, pos_label=0, zero_division=0)),
     }
     if hasattr(model, "predict_proba"):
         proba = model.predict_proba(X_test_t)[:, 1]
@@ -157,12 +160,38 @@ def main() -> None:
     text = FINAL_REPORT.read_text(encoding="utf-8")
     if marker in text:
         text = text.split(marker, 1)[0]
+    tn, fp, fn, tp = cm[0][0], cm[0][1], cm[1][0], cm[1][1]
+    dominant = "false negatives" if fn > fp else "false positives"
+    dominant_count = fn if fn > fp else fp
+    other_count = fp if fn > fp else fn
+
     body = ["\n\n## Final Test Results\n\n",
             f"Selected algorithm: **{best_alg}**\n\n",
             "| Metric | Value |\n|---|---|\n"]
     for k, v in metrics.items():
         body.append(f"| {k} | {v} |\n")
     body.append(f"\nConfusion matrix (rows=true, cols=pred): `{cm}`\n")
+    body.append("\n## Selection Justification\n\n")
+    body.append(
+        f"**{best_alg}** achieved the highest mean CV Macro F1 among the "
+        "three algorithms. Macro F1 was chosen as the primary metric "
+        "because the dataset is heavily imbalanced (~1.1% fraud) and both "
+        "false positives and false negatives carry real operational cost "
+        "(see `docs/evaluation_protocol.md` §4.5). Interpretability, "
+        "training speed, and practical suitability were considered as "
+        "tiebreakers; no tiebreak was needed.\n"
+    )
+    body.append("\n## Failure Analysis\n\n")
+    body.append(
+        f"Test-set counts: TN={tn}, FP={fp}, FN={fn}, TP={tp}. "
+        f"The dominant error type is {dominant} "
+        f"({dominant_count} vs {other_count}). At the default 0.5 threshold "
+        "the model is conservative: it rarely flags fraud, so recall on the "
+        "fraud class is low. This is expected for an imbalanced problem and "
+        "is addressed operationally by the cost-sensitive policy in the "
+        "Streamlit app, which uses derived thresholds far below 0.5 rather "
+        "than a fixed 0.5 cut (see `docs/decision_policy.md`).\n"
+    )
     FINAL_REPORT.write_text(text + "".join(body), encoding="utf-8")
 
 

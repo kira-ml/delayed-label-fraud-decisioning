@@ -48,13 +48,12 @@ def primary_test():
     return pd.read_parquet("data/processed/primary_test.parquet")
 
 
-def test_primary_test_no_leak_columns(primary_test):
-    """Test set must not contain feature-engineering columns from the train set."""
-    for c in FEATURE_EXCLUDE:
-        if c == "fraud_bool":
-            continue  # target is expected
-        # these should never appear as model features
-        assert c in primary_test.columns or c not in primary_test.columns
+def test_primary_test_features_exclude_leak_columns(primary_test):
+    """Model features must not include any FEATURE_EXCLUDE column."""
+    from src.models.preprocess import get_feature_columns
+    features = set(get_feature_columns(primary_test))
+    leaked = features & set(FEATURE_EXCLUDE)
+    assert not leaked, f"leak columns present in features: {leaked}"
 
 
 def test_primary_test_fraud_rate(primary_test):

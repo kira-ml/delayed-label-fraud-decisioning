@@ -49,6 +49,7 @@ SUPPLEMENTARY_STEPS: list[tuple[str, Callable[[], None]]] = [
 ]
 
 PRIMARY_STEPS: list[tuple[str, Callable[[], None]]] = [
+    ("load",             load.main),
     ("primary_split",    primary_split.main),
     ("train_compare",    train_compare.main),
     ("evaluate_compare", evaluate_compare.main),

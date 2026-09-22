@@ -80,6 +80,9 @@ def evaluate_fold(model, X_tr, y_tr, X_va, y_va, algorithm: str) -> dict:
         "precision_fraud": precision_score(y_va, y_pred, pos_label=1, zero_division=0),
         "recall_fraud": recall_score(y_va, y_pred, pos_label=1, zero_division=0),
         "f1_fraud": f1_score(y_va, y_pred, pos_label=1, zero_division=0),
+        "precision_legit": precision_score(y_va, y_pred, pos_label=0, zero_division=0),
+        "recall_legit": recall_score(y_va, y_pred, pos_label=0, zero_division=0),
+        "f1_legit": f1_score(y_va, y_pred, pos_label=0, zero_division=0),
     }
     if hasattr(model, "predict_proba"):
         try:
@@ -95,17 +98,21 @@ def main() -> None:
     train = pd.read_parquet(TRAIN_PATH)
     features = get_feature_columns(train)
 
-    tscv = TimeSeriesSplit(n_splits=N_SPLITS)
+    months = sorted(train["month"].unique())
+    n_folds = min(N_SPLITS, len(months) - 1)
     results: dict[str, list[dict]] = {alg: [] for alg in ALGORITHMS}
 
-    for fold, (tr_idx, va_idx) in enumerate(tscv.split(train), 1):
-        X_tr = train.iloc[tr_idx][features]
-        y_tr = train.iloc[tr_idx]["fraud_bool"]
-        X_va = train.iloc[va_idx][features]
-        y_va = train.iloc[va_idx]["fraud_bool"]
+    for fold in range(n_folds):
+        tr_months = months[:fold + 1]
+        va_months = [months[fold + 1]]
+        X_tr = train[train["month"].isin(tr_months)][features]
+        y_tr = train[train["month"].isin(tr_months)]["fraud_bool"]
+        X_va = train[train["month"].isin(va_months)][features]
+        y_va = train[train["month"].isin(va_months)]["fraud_bool"]
 
-        print(f"\n--- Fold {fold}/{N_SPLITS} "
-              f"(train={len(X_tr):,}, val={len(X_va):,}) ---")
+        print(f"\n--- Fold {fold + 1}/{n_folds} "
+              f"(train months {tr_months}, val month {va_months[0]}) "
+              f"train={len(X_tr):,}, val={len(X_va):,} ---")
         for alg in ALGORITHMS:
             params = PARAM_GRIDS[alg][0]
             model = make_model(alg, params)
@@ -118,22 +125,44 @@ def main() -> None:
 
     # Markdown report
     lines = ["# Model Comparison: Primary 3-Algorithm Study\n",
-             f"- CV strategy: {N_SPLITS}-fold `TimeSeriesSplit`",
+             f"- CV strategy: {n_folds}-fold expanding-window by month "
+             "(train months 0..k, validate month k+1)",
              f"- Training rows: {len(train):,}",
              f"- Fraud rate: {train['fraud_bool'].mean():.4%}\n",
-             "## Cross-Validation Results\n",
-             "| Algorithm | Macro F1 (mean ± SD) | Accuracy | Precision (fraud) | Recall (fraud) | ROC-AUC |",
-             "|---|---|---|---|---|---|"]
+             "## Hyperparameters\n",
+             "| Algorithm | Configuration |",
+             "|---|---|"]
     for alg in ALGORITHMS:
-        f1s   = [r["macro_f1"] for r in results[alg]]
-        accs  = [r["accuracy"] for r in results[alg]]
-        precs = [r["precision_fraud"] for r in results[alg]]
-        recs  = [r["recall_fraud"] for r in results[alg]]
-        aucs  = [r.get("roc_auc", float("nan")) for r in results[alg]]
+        lines.append(f"| {alg} | `{PARAM_GRIDS[alg][0]}` |")
+    lines.extend([
+        "",
+        "No hyperparameter tuning was performed. One fixed configuration "
+        "per algorithm, identical across all folds, was used so the "
+        "comparison is fair and reproducible "
+        "(see `docs/evaluation_protocol.md` §4.4).",
+        "",
+        "## Cross-Validation Results\n",
+        "| Algorithm | Macro F1 (mean ± SD) | Accuracy | "
+        "Precision (fraud) | Recall (fraud) | F1 (fraud) | "
+        "Precision (legit) | Recall (legit) | F1 (legit) | ROC-AUC |",
+        "|---|---|---|---|---|---|---|---|---|---|",
+    ])
+    for alg in ALGORITHMS:
+        f1s  = [r["macro_f1"] for r in results[alg]]
+        accs = [r["accuracy"] for r in results[alg]]
+        pf   = [r["precision_fraud"] for r in results[alg]]
+        rf   = [r["recall_fraud"] for r in results[alg]]
+        ff   = [r["f1_fraud"] for r in results[alg]]
+        pl   = [r["precision_legit"] for r in results[alg]]
+        rl   = [r["recall_legit"] for r in results[alg]]
+        fl   = [r["f1_legit"] for r in results[alg]]
+        aucs = [r.get("roc_auc", float("nan")) for r in results[alg]]
         lines.append(
             f"| {alg} | {np.mean(f1s):.4f} ± {np.std(f1s):.4f} | "
-            f"{np.mean(accs):.4f} | {np.mean(precs):.4f} | "
-            f"{np.mean(recs):.4f} | {np.nanmean(aucs):.4f} |"
+            f"{np.mean(accs):.4f} | {np.mean(pf):.4f} | "
+            f"{np.mean(rf):.4f} | {np.mean(ff):.4f} | "
+            f"{np.mean(pl):.4f} | {np.mean(rl):.4f} | {np.mean(fl):.4f} | "
+            f"{np.nanmean(aucs):.4f} |"
         )
     REPORT_PATH.write_text("\n".join(lines), encoding="utf-8")
     print(f"\n[train_compare] Wrote {REPORT_PATH}")

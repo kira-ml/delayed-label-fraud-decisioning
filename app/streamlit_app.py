@@ -675,14 +675,12 @@ def manual_form(features, defaults, model, pre, costs_override) -> None:
                 min_value=0, max_value=120,
                 value=int(row.get("customer_age", 35)),
             )
+        cats = getattr(pre, "categories_", {}) or {}
+        payment_opts = list(cats.get("payment_type", [])) or ["AA", "AB", "AC", "AD", "AE"]
+        employ_opts  = list(cats.get("employment_status", [])) or ["CA", "CB", "CC", "CD", "CE", "CF", "CG"]
         with c2:
-            payment_type = st.selectbox(
-                "payment_type", ["AA", "AB", "AC", "AD", "AE"]
-            )
-            employment_status = st.selectbox(
-                "employment_status",
-                ["CA", "CB", "CC", "CD", "CE", "CF", "CG"],
-            )
+            payment_type = st.selectbox("payment_type", payment_opts)
+            employment_status = st.selectbox("employment_status", employ_opts)
         submitted = st.form_submit_button("Predict")
 
     if submitted:
@@ -700,10 +698,7 @@ def manual_form(features, defaults, model, pre, costs_override) -> None:
             return
         try:
             preds, proba = predict(model, pre, df_row)
-            amt = (
-                df_row["amount_proxy"].values
-                if "amount_proxy" in df_row.columns else None
-            )
+            amt = np.array([float(proposed_credit_limit)])
             routing = route_actions(proba, amt, costs_override)
             label = "FRAUD" if preds[0] == 1 else "LEGITIMATE"
             action = routing["actions"][0]
@@ -763,6 +758,8 @@ def main() -> None:
             except Exception as e:
                 st.error(f"Could not read CSV: {e}")
                 return
+            if "amount_proxy" not in df.columns and "proposed_credit_limit" in df.columns:
+                df["amount_proxy"] = df["proposed_credit_limit"].astype(float)
             errs = validate_input(df, features)
             if errs:
                 for e in errs:

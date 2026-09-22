@@ -3,7 +3,7 @@ from pathlib import Path
 import pandas as pd
 import pytest
 
-REQUIRED_ARTIFACTS = [
+SUPPLEMENTARY_ARTIFACTS = [
     "data/interim/transactions.parquet",
     "data/interim/labeled.parquet",
     "data/processed/train.parquet",
@@ -11,18 +11,36 @@ REQUIRED_ARTIFACTS = [
     "data/processed/test.parquet",
     "data/processed/scored_test.parquet",
     "data/processed/action_log.parquet",
+    "reports/mvp_backtest.md",
+]
+
+PRIMARY_ARTIFACTS = [
     "data/processed/primary_train.parquet",
     "data/processed/primary_test.parquet",
     "models/best_model.pkl",
     "models/preprocessing.pkl",
     "reports/model_comparison.md",
-    "reports/mvp_backtest.md",
 ]
 
 
-@pytest.mark.parametrize("path", REQUIRED_ARTIFACTS)
-def test_artifact_exists(path):
-    assert Path(path).exists(), f"missing artifact: {path}"
+@pytest.mark.parametrize("path", SUPPLEMENTARY_ARTIFACTS)
+def test_supplementary_artifact_exists(path):
+    assert Path(path).exists(), f"missing supplementary artifact: {path}"
+
+
+@pytest.mark.parametrize("path", PRIMARY_ARTIFACTS)
+def test_primary_artifact_exists(path):
+    assert Path(path).exists(), f"missing primary artifact: {path}"
+
+
+@pytest.mark.parametrize("path", SUPPLEMENTARY_ARTIFACTS)
+def test_supplementary_artifact_exists(path):
+    assert Path(path).exists(), f"missing supplementary artifact: {path}"
+
+
+@pytest.mark.parametrize("path", PRIMARY_ARTIFACTS)
+def test_primary_artifact_exists(path):
+    assert Path(path).exists(), f"missing primary artifact: {path}"
 
 
 def test_action_log_schema():
