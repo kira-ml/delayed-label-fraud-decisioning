@@ -1,34 +1,50 @@
 # Roadmap
 
 > **Repository:** `delayed-label-fraud-decisioning`  
+> **Course:** Introduction to Machine Learning — Final Group Project  
+> **Institution:** National University Philippines  
+> **Instructor:** Ken Oliver Caparros  
 > **Document:** Roadmap  
-> **Status:** v0.2 — aligned with Week 1 MVP and stop criteria  
+> **Status:** v0.3 — restructured around course deliverables with supplementary depth  
 > **Last updated:** YYYY-MM-DD
 
 ---
 
 ## 1. Purpose
 
-This document defines the weekly plan for the project.
+This document defines the execution plan for the project across two layers:
+
+1. **Primary (course requirement)** — Three-algorithm classification study,
+   EDA, Streamlit application, and IMRaD paper.
+2. **Supplementary (project depth)** — Cost-sensitive decision policy under
+   delayed labels, already built and documented.
 
 It exists to:
 
-- Keep Week 1 focused on the minimum end-to-end loop
-- Prevent scope creep into later weeks before Week 1 is measured
-- Make every Week 2+ addition conditional on a measured Week 1 result
-- Give each week a clear Definition of Done and a clear stop criterion
+- Keep the course-required deliverables on schedule
+- Prevent scope creep beyond what the course requires
+- Make every additional task conditional on a measured result or a course
+  requirement
+- Give each phase a clear Definition of Done and, where appropriate, a stop
+  criterion
 
-**Rule:** No week starts before the previous week's stop criteria are evaluated and reported.
+**Rule:** No phase starts before the previous phase's Definition of Done is
+satisfied.
 
 ---
 
 ## 2. Governing Principles
 
-1. **Pain-point-driven.** Every addition must trace back to the fraud decision problem: decide now, when labels arrive later.
-2. **Scope discipline.** Anything not required to reduce realized cost per transaction under the same split, delay regime, cost matrix, and budget is out of scope.
-3. **Stop-criteria gated.** Every phase has a stop criterion in `architecture.md` Section 9. Weeks do not continue past a stop condition.
-4. **Measured failure required.** A Week N+1 addition is only allowed if a specific Week N result is measurably insufficient.
-5. **One change at a time.** Weeks 2–4 add one improvement each, not a bundle.
+1. **Course-first.** The three-algorithm comparison, EDA, Streamlit app, and
+   IMRaD paper are the priority. The supplementary cost-sensitive analysis
+   is already done and documented.
+2. **Pain-point-driven.** Every addition must trace back to the fraud
+   decision problem: decide now, when labels arrive later.
+3. **Scope discipline.** Anything not required by the course or by a
+   measured failure is out of scope.
+4. **Reproducibility.** Fixed seeds, documented versions, one-command
+   reproduction.
+5. **Honest reporting.** Failures and non-findings are reported, not hidden.
 
 If any of these is violated, the roadmap is not being followed.
 
@@ -36,283 +52,470 @@ If any of these is violated, the roadmap is not being followed.
 
 ## 3. Scope Summary
 
-### In scope for the project
+### In scope — Primary (Course Requirement)
 
-- Chronological transaction replay from a static dataset
-- Simulated delayed and censored labels under fixed regimes
+- Exploratory data analysis with ≥5 meaningful visualizations
+- Data preparation: missing values, duplicates, outliers, encoding, scaling,
+  feature selection, class imbalance handling
+- **Exactly three traditional algorithms:** Logistic Regression, Random
+  Forest, LightGBM
+- Fair experimental design: same split, same preprocessing, same 5-fold
+  time-series CV, same primary metric (Macro F1)
+- Documented hyperparameter tuning
+- Model selection based on validation results
+- Final evaluation once on the untouched test set
+- Deployable Streamlit application
+- IMRaD paper in IEEE format
+- Technical documentation, data dictionary, contribution record, ownership
+  declaration
+
+### In scope — Supplementary (Project Depth, Complete)
+
+- Chronological transaction replay from BAF
+- Simulated delayed and censored labels (1-month regime)
 - Chronological train / validation / test splits
-- A calibrated fraud probability model
-- A cost-sensitive decision policy with three actions: `approve`, `review`, `block`
-- A cost-based temporal backtest
+- Cost-sensitive decision policy over `approve` / `review` / `block`
+- Cost-based temporal backtest
+- Calibration measurement (Brier, ECE)
+- Sensitivity analysis on all four cost parameters
+- Bootstrap confidence intervals
 - Reproducible evaluation
 
-### Out of scope for all weeks unless a measured failure justifies otherwise
+### Out of scope
 
 - Streaming infrastructure (Kafka, RabbitMQ, Faust)
 - Service layer (FastAPI, Uvicorn)
-- Dashboards (Streamlit, Grafana, Dash)
 - Online learning (SGD, Passive-Aggressive)
 - PU learning
 - Delayed-label correction models
 - Drift detectors
 - Graph neural networks or graph features
 - Federated learning
-- Deep learning
-- Docker / Kubernetes
+- **Neural networks, deep learning, transformers, LLMs, AutoML**
+- Docker / Kubernetes / CI/CD
 - MLflow / W&B / DVC
 - Model registry, feature store, hyperparameter search frameworks
-
-Each item on this list is allowed only if:
-
-1. A specific Week 1 result is measurably insufficient, and
-2. The addition has its own stop criterion in the same format as `architecture.md` Section 9.2, written before work starts.
+- Multiple delay regimes (only 1-month regime in current build)
+- Capacity-aware decisioning
+- Rule-based threshold baseline
 
 ---
 
-## 4. Week 1 — Baseline End-to-End Loop
+## 4. Primary Roadmap — Course Deliverables
 
-**Goal:** Prove the full loop works end-to-end with the simplest possible components.
+This is the primary schedule. All course requirements must be satisfied
+before the submission deadline.
 
-**Primary deliverable:** `reports/week1_backtest.md`, produced by a single reproducible command.
+### Phase P1 — Exploratory Data Analysis
 
-### Tasks
+**Goal:** Understand the dataset and produce findings that drive
+preprocessing, feature selection, algorithm choice, and evaluation strategy.
 
-1. **Verify BAF timestamp granularity** (blocking, per `data_card.md` Section 4.6)
-   - Confirm day-level, month-level, or synthesized
-   - Finalize day-based or month-based delay regimes
-   - Record the result in `data_card.md`
+**Deliverable:** `notebooks/01_eda.ipynb` and an EDA summary section in the
+IMRaD paper.
 
-2. **Load and normalize BAF**
-   - `src/data/load.py` produces `data/interim/transactions.parquet`
-   - Schema matches `data_card.md` Section 3
+**Tasks:**
 
-3. **Simulate delayed labels**
-   - `src/data/simulate_delay.py`
-   - Fixed Δ per regime: 7 / 30 / 90 days (or month-level fallback)
-   - Censored labels marked, not treated as negative
-   - `configs/delay.yaml` written
+1. Load `data/original/Base.csv`
+2. Report dimensions, dtypes, feature definitions, summary statistics
+3. Audit missing values, duplicates, inconsistent entries, impossible values
+4. Plot univariate distributions of important variables
+5. Analyze feature–target relationships (correlation, association)
+6. Report class distribution and imbalance concerns
+7. Investigate outliers (distinguish errors from legitimate extremes)
+8. Produce **≥5 meaningful visualizations**, each with a written finding
+9. Write an EDA findings summary that informs preprocessing, feature
+   selection, algorithm choice, or evaluation strategy
 
-4. **Chronological splits**
-   - `src/data/split.py`
-   - Train / validation / test split by `decision_time`, with `label_time` maturation constraint
-   - `configs/splits.yaml` written
-   - Censored counts reported per split and per regime
+**Definition of Done:**
 
-5. **Train baseline model**
-   - `src/models/train_baseline.py`
-   - LightGBM binary classifier
-   - Early stopping on validation
-   - Model, feature list, training config saved to `artifacts/`
+- [ ] EDA notebook runs end-to-end
+- [ ] ≥5 visualizations, each with a written finding
+- [ ] Every finding maps to a decision (preprocessing, feature, algorithm,
+      or evaluation)
+- [ ] Summary section ready to paste into the IMRaD paper
 
-6. **Score test set**
-   - `src/models/score.py`
-   - Attaches `p_fraud` to each test transaction
-
-7. **Apply decision policy**
-   - `src/policy/decide.py`
-   - Argmin of expected cost, three actions
-   - Cost matrix fixed in `configs/costs.yaml` with canonical key `residual_fraud_loss`
-   - Policy config in `configs/policy.yaml`
-
-8. **Write action log**
-   - `src/policy/log_actions.py`
-   - Schema from `decision_policy.md` Section 10, including all three expected costs and `cost_config_hash`
-
-9. **Run cost-based backtest**
-   - `src/evaluation/backtest.py`
-   - Join labels only when `label_time <= test_end`
-   - Report censored counts per split and per regime
-   - Compute realized cost, fraud dollars saved, precision@N, recall@N
-   - Compute calibration: Brier and ECE
-   - Compare against the canonical baselines
-   - Run amount-scaled fraud loss sensitivity analysis
-
-10. **Write Week 1 report**
-    - `reports/week1_backtest.md` using the format in `evaluation_protocol.md` Section 13
-    - Include all stopping decisions from `architecture.md` Section 9.5
-
-### Canonical baselines compared
-
-1. Random decision
-2. Approve-all
-3. Block-all
-4. Rule-based threshold
-5. LightGBM + static threshold
-6. Cost-sensitive policy using the same LightGBM probabilities
-
-### Week 1 Definition of Done
-
-Task checklist in `architecture.md` Section 8, plus:
-
-- Every stop criterion in `architecture.md` Section 9.2 evaluated and reported
-- Every don't-stop condition in `architecture.md` Section 9.4 satisfied
-- `reports/week1_backtest.md` written
-- One command reproduces the entire pipeline
-
-### Week 1 stop criterion
-
-Apply `architecture.md` Section 9.3. The project stops here if:
-
-- All Week 1 tasks are done
-- Every phase has hit a Success / Null / Scope stop
-- No measured failure remains that is not explicitly listed as future work
-- Any further change would fall inside the noise band or below the effect size
-
-If the stop condition is met, do not start Week 2. Report and stop.
+**Stop criterion:** EDA is complete when every required audit (missing,
+duplicates, distributions, relationships, imbalance, outliers) has a written
+finding and every finding has a decision.
 
 ---
 
-## 5. Week 2 — Calibration and Cost-Sensitive Model
+### Phase P2 — Data Preparation
 
-**Gate:** Only starts if Week 1 produced a measured failure that Week 2 can address.
+**Goal:** Build a preprocessing pipeline that is fit on training data only
+and applied unchanged to test data.
 
-Possible measured failures that justify Week 2:
+**Deliverable:** `notebooks/02_preprocessing.ipynb` and
+`models/preprocessing.pkl`.
 
-- ECE >= 0.05 after one calibration attempt in Week 1
-- Cost-sensitive training outperforms the plain LightGBM baseline in a pilot
-- Calibration improves realized cost by >= 5% relative
+**Tasks:**
 
-If none of these hold, skip Week 2 and go to the final report.
+1. Handle missing values (documented per column)
+2. Handle duplicates (documented)
+3. Handle outliers (documented as errors vs. legitimate extremes)
+4. Encode categoricals per algorithm:
+   - Logistic Regression: one-hot
+   - Random Forest: ordinal
+   - LightGBM: native categorical
+5. Scale numerics per algorithm:
+   - Logistic Regression: StandardScaler
+   - Random Forest, LightGBM: none
+6. Select features (driven by EDA findings)
+7. Handle class imbalance:
+   - Logistic Regression: `class_weight='balanced'`
+   - Random Forest: `class_weight='balanced_subsample'`
+   - LightGBM: `is_unbalance=True`
+8. Save the pipeline to `models/preprocessing.pkl`
+9. Document leakage prevention: preprocessing fit only on training folds
 
-### Candidate work
+**Definition of Done:**
 
-- Measure calibration more carefully: reliability diagram, per-regime ECE
-- Compare Platt scaling against isotonic regression as a sensitivity analysis
-- Train a cost-sensitive LightGBM variant using sample weights derived from the cost matrix
-- Re-evaluate under the same split, delay regime, cost matrix, and budget
+- [ ] Preprocessing notebook runs end-to-end
+- [ ] Every preprocessing decision traced to an EDA finding or course
+      requirement
+- [ ] Pipeline saved and loadable
+- [ ] Leakage audit completed
 
-### Week 2 stop criterion
-
-Define before work starts, in the same format as `architecture.md` Section 9.2. Report it in `reports/week2_calibration.md`.
-
-If neither calibration nor cost-sensitive training improves realized cost per transaction beyond the noise band and effect size, stop and go to the final report.
-
-### Out of scope for Week 2
-
-- Online learning
-- PU learning
-- Delayed-label correction
-- Drift detection
-- Feature engineering beyond what is needed to fix a measured failure
+**Stop criterion:** preprocessing is complete when the same fitted pipeline
+can be applied to any test row without recomputation.
 
 ---
 
-## 6. Week 3 — Policy and Sensitivity
+### Phase P3 — Three-Algorithm Training
 
-**Gate:** Only starts if Week 2 produced a measured change in policy behavior, or if Week 1 flagged amount-scaled cost as a material sensitivity.
+**Goal:** Train Logistic Regression, Random Forest, and LightGBM under
+identical conditions.
 
-### Candidate work
+**Deliverable:** `notebooks/03_model_training.ipynb` and
+`src/models/train_compare.py`.
 
-- Report the amount-scaled cost sensitivity results in more depth
-- Vary `false_positive_cost`, `review_cost`, and `residual_fraud_loss` across a range
-- Report whether the ranking of baselines changes under different cost matrices
-- Optionally, run a capacity simulation as a **separate** experiment
+**Tasks:**
 
-### Week 3 stop criterion
+1. Define the chronological 80/20 split:
+   - Train: months 0–5
+   - Test: months 6–7
+2. Define 5-fold time-series CV on the training split
+3. For each algorithm:
+   - Define a small hyperparameter grid
+   - Run grid search within the CV folds
+   - Record mean ± SD of Macro F1 across folds
+   - Record supporting metrics: accuracy, per-class precision/recall/F1,
+     ROC-AUC
+4. Report results for all three algorithms in a single comparison table
 
-Define before work starts. Report it in `reports/week3_policy.md`.
+**Definition of Done:**
 
-If the policy ranking of baselines does not change under any reasonable cost range, the Week 1 conclusion is robust. Stop and go to the final report.
+- [ ] Three algorithms trained under identical folds and preprocessing
+- [ ] Hyperparameter grids documented
+- [ ] Cross-validation results table complete with mean ± SD
+- [ ] Comparison documented in `reports/model_comparison.md`
 
-### Out of scope for Week 3
+**Stop criterion:** the phase is complete when all three algorithms have CV
+results reported on the same metric and folds. No further tuning after the
+test set is touched.
 
-- Learned policies (bandits, RL)
-- Capacity-aware scheduling as the default policy
+---
+
+### Phase P4 — Final Evaluation and Model Selection
+
+**Goal:** Select the best model and evaluate it once on the untouched test
+set.
+
+**Deliverable:** `notebooks/04_evaluation.ipynb`,
+`src/models/evaluate_compare.py`, `models/best_model.pkl`, and the results
+section of the IMRaD paper.
+
+**Tasks:**
+
+1. Select the best model based on validation Macro F1, with interpretability,
+   speed, and practical suitability as tiebreakers
+2. Justify the selection in writing
+3. Retrain the selected model on the full training split
+4. Evaluate **once** on the untouched test set
+5. Report:
+   - Macro F1 (primary)
+   - Accuracy
+   - Per-class precision, recall, F1
+   - Confusion matrix
+   - ROC-AUC (informational)
+6. Write failure analysis (which errors dominate, what they mean)
+7. Save the final model to `models/best_model.pkl`
+
+**Definition of Done:**
+
+- [ ] Selected model justified in writing
+- [ ] Final model trained on full training split
+- [ ] Test evaluated exactly once
+- [ ] All required metrics reported
+- [ ] Confusion matrix included
+- [ ] Failure analysis written
+
+**Stop criterion:** the phase is complete when the test set has been
+evaluated once and no further tuning is permitted.
+
+---
+
+### Phase P5 — Deployable Application
+
+**Goal:** Build a working Streamlit application that loads the saved best
+model and preprocessing pipeline.
+
+**Deliverable:** `app/streamlit_app.py`, deployed URL, and setup
+instructions.
+
+**Tasks:**
+
+1. Build a Streamlit form for transaction feature input
+2. Load `models/best_model.pkl` and `models/preprocessing.pkl`
+3. Apply the same preprocessing used at training time
+4. Display predicted class and predicted probability
+5. Show the model name and short feature explanations
+6. Handle missing, invalid, and out-of-range inputs gracefully
+7. Display understandable error messages
+8. Test with valid, invalid, and boundary inputs
+9. Deploy to Streamlit Cloud
+10. Write setup instructions and app guide
+
+**Definition of Done:**
+
+- [ ] App runs locally with `streamlit run app/streamlit_app.py`
+- [ ] App loads the same model and preprocessing reported in the paper
+- [ ] All three input categories tested: valid, invalid, boundary
+- [ ] Deployed URL works
+- [ ] `documentation/app_guide.md` and
+      `documentation/technical_documentation.md` written
+
+**Stop criterion:** the phase is complete when the deployed URL works and
+the local version reproduces the same predictions.
+
+---
+
+### Phase P6 — IMRaD Paper and Documentation
+
+**Goal:** Write the complete IMRaD paper in IEEE format and finish all
+documentation.
+
+**Deliverable:** `paper/paper.docx`, `paper/paper.pdf`,
+`documentation/data_dictionary.md`,
+`documentation/technical_documentation.md`,
+`documentation/contribution_record.md`,
+`documentation/ownership_declaration.md`.
+
+**Tasks:**
+
+1. Write the paper in IMRaD sections:
+   - Title, abstract, keywords
+   - Introduction (problem, objective, significance, related work)
+   - Methods (dataset, EDA procedure, preprocessing, three algorithms,
+     tuning, metrics)
+   - Results (EDA findings, comparison table, validation, final test,
+     confusion matrix, app evidence)
+   - Discussion (why selected model performed best, errors, tradeoffs)
+   - Conclusion and recommendations
+   - References (IEEE numbered, in order of appearance)
+   - Appendices (data dictionary, contribution record, signed declaration)
+2. Use IEEE conference paper format
+3. Cite sources in the order they first appear with bracketed numbers
+4. Create the data dictionary
+5. Create the technical documentation
+6. Create the contribution record
+7. Create the ownership and authorship declaration
+8. Sign the declaration (instructor + all group members)
+
+**Definition of Done:**
+
+- [ ] `paper/paper.docx` and `paper/paper.pdf` complete
+- [ ] IEEE numbered citations match the reference list
+- [ ] All required deliverables present
+- [ ] Declaration signed by instructor and all members
+
+**Stop criterion:** the project is complete when all seven required
+deliverables are submitted and the declared URLs and files open successfully.
+
+---
+
+## 5. Supplementary Roadmap — Project Depth
+
+This layer is already built and documented. It is preserved here for
+reference and for future work.
+
+### Status Summary
+
+| Component | Status |
+|---|---|
+| `src/data/load.py` | ✅ Complete |
+| `src/data/simulate_delay.py` | ✅ Complete |
+| `src/data/split.py` | ✅ Complete |
+| `src/models/train_baseline.py` | ✅ Complete |
+| `src/models/score.py` | ✅ Complete |
+| `src/policy/decide.py` | ✅ Complete |
+| `src/evaluation/backtest.py` | ✅ Complete |
+| `src/evaluation/calibration.py` | ✅ Complete |
+| `src/evaluation/sensitivity.py` | ✅ Complete |
+| `src/evaluation/bootstrap.py` | ✅ Complete |
+| `src/pipeline.py` | ✅ Complete |
+| `tests/test_policy.py`, `tests/test_backtest.py` | ✅ 13 tests passing |
+| `reports/mvp_backtest.md` | ✅ Complete |
+| `reports/sensitivity.md` | ✅ Complete |
+| `reports/bootstrap.md` | ✅ Complete |
+
+### Key Result
+
+Under a 1-month delayed-label regime, the cost-sensitive policy reduces
+realized cost per transaction by **56.87%** relative to the strongest
+baseline, with a 95% bootstrap confidence interval of **[52.77%, 60.91%]**.
+
+### Deferred Supplementary Work
+
+These are not part of the course submission. Each is a candidate for future
+work and each would require its own stop criterion, in the same format as
+`docs/architecture.md` §9.2.
+
+- Additional delay regimes (2-month, 3-month)
+- Rule-based threshold baseline
+- Capacity-aware decisioning
+- Rolling-window evaluation
+- Cost-sensitive training
+- Calibration application (only if ECE drifts beyond 0.05)
 - Fairness-aware policy constraints
+- Drift detection
+
+**Rule for adding deferred work:** the addition must address a specific
+measured failure, and its stop criterion must be written before work starts.
 
 ---
 
-## 7. Week 4 — One Optional Improvement and Final Report
+## 6. Timeline
 
-**Gate:** Only starts if Week 1–3 produced a measured failure that Week 4 can address.
+The primary roadmap is scheduled across four working phases. The timeline is
+flexible and gated by Definition of Done, not by calendar dates.
 
-### Candidate improvements (pick exactly one)
+| Phase | Focus | Primary deliverable |
+|---|---|---|
+| P1 | Exploratory data analysis | `notebooks/01_eda.ipynb` |
+| P2 | Data preparation | `notebooks/02_preprocessing.ipynb`, `models/preprocessing.pkl` |
+| P3 | Three-algorithm training | `notebooks/03_model_training.ipynb`, `reports/model_comparison.md` |
+| P4 | Final evaluation and selection | `notebooks/04_evaluation.ipynb`, `models/best_model.pkl` |
+| P5 | Deployable application | `app/streamlit_app.py`, deployed URL |
+| P6 | IMRaD paper and documentation | `paper/paper.docx`, `paper/paper.pdf` |
 
-- Online learning (SGD, Passive-Aggressive) as an update mechanism
-- PU learning with censored negatives
-- Delayed-label correction model
-
-### Rules for choosing one
-
-- The chosen improvement must address a specific measured failure from Weeks 1–3
-- It must come with its own stop criterion, defined before work starts
-- It must be evaluated against the Week 1 baseline under the same split, delay regime, cost matrix, and budget
-- If the improvement does not exceed the noise band and effect size, it is reported as a non-finding
-
-### Final report contents
-
-- Problem, pain point, and root cause
-- ML formulation and decision policy
-- Data, delay simulation, and splits
-- Canonical baselines
-- Primary metrics and sensitivity analyses
-- Every stopping decision from Weeks 1–4
-- Failure cases and limitations
-- Reproduction instructions
-
-### Demo
-
-- Notebook or Markdown report
-- No dashboards, no service layer
+Phases P1–P4 run in sequence. Phase P5 can start as soon as P4 produces a
+saved model. Phase P6 can start in parallel once P3 produces validation
+results.
 
 ---
 
-## 8. What Is Not on This Roadmap
+## 7. What Is Not on This Roadmap
 
 Explicitly deferred and not scheduled:
 
-- Dashboards (Streamlit, Grafana, Dash)
-- Service layer (FastAPI, Uvicorn)
-- Streaming infrastructure (Kafka, RabbitMQ, Faust)
+- Neural networks, deep learning, transformers, LLMs, AutoML
+- Streaming infrastructure
+- Service layer
+- Online learning
+- PU learning
+- Delayed-label correction
+- Drift detectors
+- Graph neural networks
+- Federated learning
 - Docker / Kubernetes / CI/CD
 - Model registry, feature store, hyperparameter search frameworks
-- Deployment of any kind
+- Capacity-aware scheduling as the default policy
+- Fairness-aware policy constraints
+- Bandit or RL policies
 
-These are not "future work" in this project. They are excluded unless a measured result makes them necessary and a stop criterion justifies the addition.
-
----
-
-## 9. Gating Rule
-
-For any addition not already in Week 1:
-
-1. Name the measured failure it addresses.
-2. Write its stop criterion before starting work.
-3. Run it under the same split, delay regime, cost matrix, and budget as the Week 1 baseline.
-4. Report the result, including non-findings.
-5. If it does not exceed the noise band and effect size, do not adopt it.
-
-If any of these steps is skipped, the addition is not part of the project.
+These are excluded from the course submission. Each may be revisited after
+submission if a measured failure justifies it and a stop criterion is
+defined before work begins.
 
 ---
 
-## 10. Risks and Mitigations
+## 8. Gating Rules
+
+### 8.1 Primary Gates
+
+- Phase P2 does not start until P1 is done.
+- Phase P3 does not start until P2 is done (preprocessing pipeline saved).
+- Phase P4 does not start until P3 is done (all three algorithms compared).
+- Phase P5 does not start until P4 is done (best model saved).
+- Phase P6 does not start until P3 is done (validation results available).
+- The test set is used **once**, in P4. No exceptions.
+
+### 8.2 Supplementary Gates
+
+- No supplementary work starts until primary phases P1–P4 are complete.
+- Any new supplementary addition must have its own stop criterion written
+  before work starts.
+- If a supplementary addition does not exceed the noise band and effect
+  size, it is reported as a non-finding and not adopted.
+
+---
+
+## 9. Risks and Mitigations
 
 | Risk | Mitigation |
 |---|---|
-| BAF timestamp granularity blocks delay simulation | Verify first; fall back to month-based regimes |
-| Censored labels bias the test set | Report censored counts; never treat as negative |
-| Cost matrix is unrealistic | Run sensitivity analysis; report which conclusions depend on it |
-| Scope creep into Week 2+ features | Gate each week on a measured Week 1–3 failure |
-| Overfitting to one delay regime | Report per regime; never average across regimes |
-| Stop criteria ignored | Report every stopping decision in `week1_backtest.md` |
+| Class imbalance biases model selection | Macro F1 as primary; per-class metrics reported |
+| Data leakage through preprocessing | Preprocessing fit on training folds only |
+| Test set contamination | Test used once, after model selection |
+| Algorithm comparison unfair | Same split, preprocessing, folds, metric |
+| EDA produces decorative charts | Every figure must lead to a finding or decision |
+| Streamlit app crashes on invalid input | Validate inputs; test boundary cases |
+| Paper exceeds or falls short of length | IEEE format, 6–10 pages excluding appendices |
+| Missing deliverable at submission | Checklist tracks all 7 required deliverables |
+| Documentation drift | If docs disagree with code, code wins and docs are updated |
 
 ---
 
-## 11. Definition of Done for the Roadmap
+## 10. Definition of Done for the Roadmap
 
-- [ ] Week 1 tasks completed and reported
-- [ ] Every stop criterion from `architecture.md` Section 9 evaluated
-- [ ] Each Week 2+ addition gated by a measured failure
-- [ ] Each Week 2+ addition has a written stop criterion
-- [ ] Non-findings reported, not hidden
-- [ ] Final report written
-- [ ] Reproduction instructions verified
+### 10.1 Primary
+
+- [ ] Phase P1 complete: EDA notebook with ≥5 meaningful visualizations
+- [ ] Phase P2 complete: preprocessing pipeline saved and documented
+- [ ] Phase P3 complete: three-algorithm comparison with CV results
+- [ ] Phase P4 complete: final test evaluation once
+- [ ] Phase P5 complete: Streamlit app deployed and tested
+- [ ] Phase P6 complete: IMRaD paper and all documentation submitted
+- [ ] All 7 required deliverables present and openable
+- [ ] Ownership declaration signed by instructor and all members
+- [ ] Repository and ZIP archive accessible
+
+### 10.2 Supplementary
+
+- [x] All supplementary pipeline scripts implemented
+- [x] Supplementary reports written
+- [x] Tests passing (13 tests)
+- [x] Reproducibility verified byte-for-byte
 
 ---
 
-## 12. Guiding Rule
+## 11. Guiding Rules
 
-> Each week is justified by a measured result, not by the desire to build more.
+### 11.1 Primary
 
-> If a week cannot point to a number that made it necessary, it does not happen.
+> The course deliverables come first. Anything that does not contribute to
+> the three-algorithm comparison, the Streamlit app, the EDA, or the IMRaD
+> paper is deferred.
+
+> The test set is used **once**. Any result that touches it before model
+> selection is invalid.
+
+### 11.2 Supplementary
+
+> Each supplementary addition is justified by a measured result, not by the
+> desire to build more.
+
+> If a supplementary addition cannot point to a number that made it
+> necessary, it does not happen.
+
+---
+
+## 12. Changelog
+
+| Date | Change | Reason |
+|---|---|---|
+| YYYY-MM-DD | Initial roadmap | Project start |
+| YYYY-MM-DD | Aligned with Week 1 MVP and stop criteria | Project planning |
+| YYYY-MM-DD | Restructured into primary (course deliverables) and supplementary (project depth); added phases P1–P6 with Definition of Done; moved supplementary work to a status summary; added gating rules; updated risks and DoD | Align with course requirements |
