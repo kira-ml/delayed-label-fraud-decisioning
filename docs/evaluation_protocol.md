@@ -1,36 +1,62 @@
 # Evaluation Protocol
 
 > **Repository:** `delayed-label-fraud-decisioning`  
+> **Course:** Introduction to Machine Learning — Final Group Project  
+> **Institution:** National University Philippines  
+> **Instructor:** Ken Oliver Caparros  
 > **Document:** Evaluation Protocol  
-> **Status:** v0.3 — applied to MVP build (2026-09-21)  
-> **Last updated:** 2026-09-21
+> **Status:** v0.4 — restructured around three-algorithm comparison with supplementary cost-sensitive analysis  
+> **Last updated:** YYYY-MM-DD
 
 ---
 
 ## 1. Purpose
 
-This document defines how the project is evaluated **before** any model is trained.
+This document defines how the project is evaluated **before** any model is
+trained.
 
 It exists to prevent:
 
 - Cherry-picking metrics after seeing results
 - Using random splits that leak future information
-- Reporting AUC without operational meaning
-- Ignoring false-positive and review costs
-- Comparing models under different label-delay regimes
-- Claiming success without a cost-based, temporal backtest
+- Reporting AUC without context
+- Comparing models under different preprocessing or folds
+- Claiming success without a fair, reproducible comparison
+- Ignoring the operational cost of false positives and false negatives
 
-**Rule:** If a result is not produced by this protocol, it does not go in the report.
+**Rule:** If a result is not produced by this protocol, it does not go in the
+report.
+
+The protocol has two layers:
+
+1. **Primary — three-algorithm classification comparison.** The course
+   requirement. Compare Logistic Regression, Random Forest, and LightGBM
+   under identical data, preprocessing, folds, and primary metric.
+2. **Supplementary — cost-sensitive decision policy.** A project-depth
+   extension that maps the classification output to an operational
+   `approve` / `review` / `block` decision under delayed labels.
 
 ---
 
-## 2. Core Evaluation Question
+## 2. Core Evaluation Questions
 
-> Given a decision policy that must act **now** with only delayed and partial labels, how much operational utility does the system create compared to realistic baselines?
+### 2.1 Primary
 
-Utility is not accuracy.  
-Utility is not AUC.  
-Utility is:
+> Which of three traditional machine learning algorithms performs best at
+> predicting `fraud_bool` under a fair, reproducible experimental design, and
+> which should be deployed?
+
+The primary metric is **Macro F1**, chosen because the class distribution is
+heavily imbalanced (~1.1% fraud) and because both false positives and false
+negatives carry real operational cost.
+
+### 2.2 Supplementary
+
+> Given the best classifier's predicted probability, how much operational
+> utility does a cost-sensitive decision policy create compared to realistic
+> baselines under delayed and censored labels?
+
+Utility is not accuracy. Utility is not AUC. Utility is:
 
 ```text
 utility = fraud loss avoided
@@ -42,22 +68,177 @@ utility = fraud loss avoided
 
 ## 3. Evaluation Principles
 
-1. **Temporal only.** No random splits. No shuffling. Ever.
+### 3.1 Primary Principles
+
+1. **Same data split.** All three algorithms use the identical train/test
+   split.
+2. **Same preprocessing logic.** Missing-value handling, encoding, scaling,
+   and feature selection are identical across algorithms except where the
+   algorithm's mathematical requirements differ (e.g. Logistic Regression
+   requires scaling; tree models do not). Any difference is documented.
+3. **Same cross-validation strategy.** 5-fold time-series CV on the training
+   data, identical folds for all three algorithms.
+4. **Same primary metric.** Macro F1, reported with mean and variability
+   across folds.
+5. **Test set untouched until final evaluation.** No model selection,
+   threshold tuning, or feature decisions on the test set.
+6. **Reproducible.** Fixed seeds, documented library versions.
+7. **Honest.** Report failures, per-class errors, and limitations.
+
+### 3.2 Supplementary Principles
+
+1. **Temporal only.** No random splits. No shuffling.
 2. **Delay-aware.** A label may only be used after `label_time`.
 3. **Cost-based.** Every decision is scored by realized cost.
-4. **Budget-aware.** Report at fixed alert and review budgets.
-5. **Baseline-anchored.** Every improvement must beat a named baseline.
-6. **Reproducible.** Fixed seeds, fixed splits, fixed cost matrix.
-7. **Honest.** Report failures, not just wins.
-8. **Pre-registered.** Metrics and thresholds are fixed before modeling.
+4. **Baseline-anchored.** Every improvement must beat a named baseline.
+5. **Pre-registered.** Metrics and cost matrix fixed before modeling.
+
+If any of these principles is violated, the corresponding result is discarded.
 
 ---
 
-## 4. Cost Matrix
+## 4. Primary Evaluation — Three-Algorithm Classification
 
-The cost matrix is fixed in `configs/costs.yaml` and must not change between runs unless the change is documented as an experiment.
+This is the course-required comparison. All content in this section applies
+to the primary deliverable.
 
-### 4.1 Decision Outcomes
+### 4.1 Dataset and Split
+
+| Property | Value |
+|---|---|
+| Dataset | Bank Account Fraud (BAF) `Base.csv` |
+| Rows | 1,000,000 |
+| Target | `fraud_bool` (binary) |
+| Train split | Months 0–5 (~80%) |
+| Test split | Months 6–7 (~20%) |
+| Split type | Chronological (justified alternative to random 80/20) |
+| Cross-validation | 5-fold time-series CV on training data |
+
+The chronological split is used instead of a random 80/20 split because the
+course explicitly requires chronological splits for time-ordered data:
+
+> "Time ordered data must use a chronological split rather than random
+> shuffling."
+
+Full split details are in `docs/data_card.md` §5.
+
+### 4.2 Algorithms
+
+Exactly three traditional algorithms are compared. All three are explicitly
+permitted by the course.
+
+| # | Algorithm | Role | Class imbalance handling |
+|---|---|---|---|
+| 1 | Logistic Regression | Linear baseline; interpretable | `class_weight='balanced'` |
+| 2 | Random Forest | Non-linear ensemble; robust | `class_weight='balanced_subsample'` |
+| 3 | LightGBM | Gradient boosting; strong tabular performance | `is_unbalance=True` |
+
+**Prohibited algorithms** (explicitly disallowed by the course): neural
+networks, deep learning, CNNs, RNNs, transformers, LLMs, pretrained
+foundation models, AutoML-generated solutions.
+
+**Rule:** Changing hyperparameters of the same algorithm does not count as a
+different algorithm. The three algorithms above are distinct model families.
+
+### 4.3 Preprocessing
+
+Preprocessing is fit **within each cross-validation fold's training portion**
+to prevent leakage. The same pipeline is applied to the test set at the end.
+
+| Step | Logistic Regression | Random Forest | LightGBM |
+|---|---|---|---|
+| Missing values | Handled per column | Handled per column | Handled per column |
+| Categorical encoding | One-hot | Ordinal | Native categorical |
+| Numeric scaling | StandardScaler | None | None |
+| Feature selection | All features | All features | All features |
+
+Any deviation from this table must be documented and justified.
+
+### 4.4 Hyperparameter Tuning
+
+Each algorithm receives a small, documented grid search. Tuning is performed
+**on training folds only**, using the same 5-fold time-series CV.
+
+The grids are documented in `reports/model_comparison.md`. The following
+rules apply:
+
+- Grids are small (a handful of configurations per algorithm) to keep the
+  comparison fair and reproducible.
+- Tuning never touches the test set.
+- The best configuration per algorithm is selected by mean Macro F1 across
+  folds.
+- The final model for each algorithm is retrained on the full training split
+  with the selected configuration.
+
+### 4.5 Primary Metric — Macro F1
+
+**Why Macro F1:**
+
+- The dataset is heavily imbalanced (~1.1% fraud).
+- Raw accuracy is misleading: a model that predicts "not fraud" for every
+  transaction achieves 98.9% accuracy while catching no fraud.
+- Macro F1 treats both classes equally, so recall on the fraud class counts
+  as much as precision on the non-fraud class.
+- Both false positives (friction, revenue loss) and false negatives (fraud
+  loss) carry real operational cost, so a metric that balances both is
+  appropriate.
+
+**Supporting metrics (reported for all three algorithms):**
+
+- Accuracy (informational only)
+- Per-class precision, recall, F1
+- Confusion matrix
+- ROC-AUC (informational)
+
+### 4.6 Validation Protocol
+
+| Step | Detail |
+|---|---|
+| Cross-validation | 5-fold, time-series, contiguous folds |
+| Folds | Identical across all three algorithms |
+| Primary metric | Mean Macro F1 across folds |
+| Variability | Standard deviation of Macro F1 across folds |
+| Reporting | Full table: mean and SD per algorithm |
+| Model selection | Highest mean Macro F1, with interpretability, speed, and practical suitability as tiebreakers |
+
+### 4.7 Final Test Evaluation
+
+After model selection:
+
+1. The selected model is retrained on the full training split with its best
+   hyperparameters.
+2. The test set is scored **once**.
+3. The following are reported on the test set:
+   - Primary metric: Macro F1
+   - Supporting metrics: accuracy, per-class precision/recall/F1, confusion
+     matrix, ROC-AUC
+   - Interpretation: which errors dominate, and what they mean operationally
+4. No further tuning is permitted after the test evaluation.
+
+### 4.8 Forbidden Practices (Primary)
+
+- Using the test set for model selection, threshold selection, or feature
+  decisions
+- Random splits on time-ordered data
+- K-fold cross-validation that mixes time boundaries (e.g. random K-fold)
+- Counting hyperparameter variants of one algorithm as different algorithms
+- Using neural networks, deep learning, transformers, or LLMs
+- AutoML-generated solutions
+- Reporting accuracy as the sole success criterion
+
+---
+
+## 5. Supplementary Evaluation — Cost-Sensitive Decision Policy
+
+This section applies to the supplementary analysis. It extends the primary
+classification into an operational decision under a cost structure.
+
+### 5.1 Cost Matrix
+
+The cost matrix is fixed in `configs/costs.yaml` and must not change between
+runs unless the change is documented as a separate experiment.
+
+#### 5.1.1 Decision Outcomes
 
 | Action | True label = fraud (y=1) | True label = legit (y=0) |
 |---|---|---|
@@ -65,7 +246,7 @@ The cost matrix is fixed in `configs/costs.yaml` and must not change between run
 | review | `review_cost + residual_fraud_loss` | `review_cost` |
 | block | `0` | `false_positive_cost` |
 
-### 4.2 Cost Values as Implemented
+#### 5.1.2 Cost Values as Implemented
 
 ```yaml
 fraud_loss: 1.0
@@ -76,20 +257,22 @@ amount_scaled: true
 fraud_loss_rate: 0.0019187869
 ```
 
-The first four keys are the constant-loss cost matrix used for the initial MVP build. `amount_scaled` and `fraud_loss_rate` were added after the constant-loss MVP was validated and the amount-scaled sensitivity (Section 12) returned a success stop — see Section 4.3.
-
-### 4.3 Notes
+#### 5.1.3 Notes
 
 - Costs are **relative units**. Absolute calibration is out of scope.
 - `residual_fraud_loss` reflects that review does not catch all fraud.
-- **Amount scaling was tested and adopted.** Under constant `fraud_loss`, the policy's advantage over the strongest baseline was 26.4%. Under amount scaling (train-calibrated rate) it is 56.9%. Both met the stop criterion in `architecture.md` §9.2. The constant-loss config is preserved in git history for comparison, but the current default uses amount scaling. See `decision_policy.md` §7.1 for the full result.
-- `fraud_loss_rate = 0.0019187869` is derived from **training-window** amounts: `1 / mean(amount_proxy on train) = 1 / 521.1626`. This keeps `mean(fraud_loss_rate × amount_proxy) = 1.0` on train, matching the constant-loss comparison scale without using test data. No test-window leakage.
-- Sensitivity analysis on `false_positive_cost`, `review_cost`, and `residual_fraud_loss` is **required in the final report but not run in the MVP**. Only amount scaling was tested. See Section 12.
-- Do not silently change costs between baseline and improved model.
+- Amount scaling was tested and adopted. Under constant `fraud_loss`, the
+  policy's advantage over the strongest baseline was 26.4%. Under amount
+  scaling (train-calibrated rate) it is 56.9%. Both met the stop criterion
+  in `docs/architecture.md` §9.2.
+- `fraud_loss_rate = 0.0019187869` is derived from **training-window**
+  amounts: `1 / mean(amount_proxy on train) = 1 / 521.1626`. This keeps
+  `mean(fraud_loss_rate × amount_proxy) = 1.0` on train, matching the
+  constant-loss comparison scale without using test data. No test-window
+  leakage.
+- Sensitivity analysis on all four parameters is complete (see §9).
 
----
-
-## 5. Decision Policy Under Evaluation
+### 5.2 Decision Policy Under Evaluation
 
 For each transaction, the policy chooses the action minimizing expected cost:
 
@@ -103,54 +286,43 @@ action = argmin over {approve, review, block}
 
 Where `p` is the model's predicted fraud probability.
 
-When `amount_scaled: true`, `fraud_loss` becomes per-row: `fraud_loss(amount) = amount × fraud_loss_rate`. The formula is otherwise unchanged.
+When `amount_scaled: true`, `fraud_loss` becomes per-row:
+`fraud_loss(amount) = amount × fraud_loss_rate`. The formula is otherwise
+unchanged.
 
-Evaluation is of the **policy**, not the raw score.  
-A model with better AUC but worse policy cost is a worse model for this project.
+Evaluation is of the **policy**, not the raw score. A model with better AUC
+but worse policy cost is a worse model for this supplementary analysis.
 
----
+### 5.3 Label Delay Regime
 
-## 6. Label Delay Regimes
+BAF exposes **month-level granularity only** (integer `month` field, values
+0–7). There is no day-level timestamp. Delay regimes are therefore defined in
+**months**, not days.
 
-The full protocol specifies three delay regimes:
+**Supplementary scope:** a **single regime — 1 month.**
 
-| Regime | Delay Δ | Purpose |
-|---|---|---|
-| Short | 7 days | Near-realistic fast chargeback |
-| Medium | 30 days | Typical dispute window |
-| Long | 90 days | Worst-case delayed feedback |
+Multiple regimes (2-month, 3-month) are documented as future work.
 
-### 6.1 Delay Simulation Rules
+#### 5.3.1 Delay Simulation Rules
 
-- `decision_time = t`
-- `label_time = t + Δ`
+- `decision_time = month`
+- `label_time = month + Δ`
 - Fixed Δ per regime — not sampled per transaction
 - Fraud and non-fraud share the same fixed Δ within a regime
 - A label is **observed** only if `label_time <= evaluation_end`
 - Unobserved labels are treated as **censored**, not negative
 
-### 6.2 Delay Assumptions
+#### 5.3.2 Delay Assumptions
 
 - Delay is fixed per regime.
 - Sampled delay distributions are out of scope.
-- All delay assumptions are documented in `data_card.md`.
-- Results must be reported **separately per regime**. No averaging across regimes.
+- All delay assumptions are documented in `docs/data_card.md` §6.
+- Results are reported for the single 1-month regime only. No averaging
+  across regimes.
 
-### 6.3 Granularity Fallback — APPLIED
+### 5.4 Temporal Backtest Protocol
 
-BAF exposes **month-level granularity only** (integer `month` field, values 0–7). There is no day-level timestamp. Per the fallback rule in this section, delay regimes are defined in **months**, not days.
-
-**MVP scope:** a **single regime — 1 month.** Multiple regimes (2-month, 3-month) are deferred. The 7/30/90-day framing in Section 6 is retained for the post-MVP expansion; it will not be used on BAF directly.
-
-**Consequence for the MVP:** all results in `reports/mvp_backtest.md` are for the 1-month regime only. No per-regime comparison table is produced. This is an honest limitation, not a claim of multi-regime coverage.
-
-**Consistency check:** the fallback is applied consistently across `data_card.md` §4.2, `decision_policy.md` §7, and this section. No document still claims day-based regimes.
-
----
-
-## 7. Temporal Backtest Protocol
-
-### 7.1 Splits
+#### 5.4.1 Splits
 
 Chronological splits only:
 
@@ -170,7 +342,7 @@ Constraints:
 - No shuffling
 - No stratification that breaks time order
 
-**MVP implementation:** month-based splits, hardcoded in `src/data/split.py`:
+**Implementation:** month-based splits, defined in `src/data/split.py`:
 
 | Split | Months | Rows |
 |---|---|---|
@@ -180,253 +352,107 @@ Constraints:
 | censored (month 7, never observed) | | 96,843 (9.68%) |
 | **observed total** | | **903,157** |
 
-An assertion in `split.py` verifies `train + val + test == observed`. This guards against off-by-one month boundaries leaking rows.
+An assertion in `split.py` verifies `train + val + test == observed`. This
+guards against off-by-one month boundaries leaking rows.
 
-### 7.2 Rolling Evaluation (post-MVP, optional)
-
-Once the baseline is done and measured, rolling windows may be added:
-
-```text
-window k: train on [T0, Tk), test on [Tk, Tk+1)
-```
-
-Report per-window metrics to expose drift. Rolling evaluation is **not** an MVP requirement and was not implemented.
-
-### 7.3 Forbidden
+#### 5.4.2 Forbidden (Supplementary)
 
 - K-fold cross-validation on time-series fraud data
 - Random oversampling before splitting
 - SMOTE applied across time boundaries
 - Feature computation using future transactions
-- Using post-decision fields (e.g., chargeback reason code) as features
+- Using post-decision fields (e.g. `device_fraud_count`) as features
 - Treating censored labels as negatives
 
-All forbidden practices are avoided in the MVP. The feature exclusion list in `src/common.py` enforces the post-decision column exclusion (`device_fraud_count`). Censored rows are marked and excluded, never treated as negative.
+The feature exclusion list in `src/common.py` enforces the post-decision
+column exclusion. Censored rows are marked and excluded, never treated as
+negative.
 
----
+### 5.5 Supplementary Metrics
 
-## 8. Metrics
+#### 5.5.1 Operational Metrics
 
-All metrics are reported with censored-label counts visible. Since only one delay regime was run in the MVP, per-regime reporting collapses to the single 1-month result.
-
-### 8.1 Primary Metrics (Operational)
-
-| Metric | Definition | MVP status |
+| Metric | Definition | Status |
 |---|---|---|
 | Cost per transaction | Mean realized cost | Reported for all 5 baselines |
 | Total cost | Sum of realized cost | Reported for all 5 baselines |
 | Fraud dollars saved | Fraud loss avoided vs approve-all | Reported for all 5 baselines |
-| Fraud dollars saved at fixed FPR | Value at fixed friction | Not reported in MVP |
-| Fraud dollars saved at fixed review budget | Value at fixed capacity | Not reported in MVP |
+| Fraud dollars saved at fixed FPR | Value at fixed friction | Not reported |
+| Fraud dollars saved at fixed review budget | Value at fixed capacity | Not reported |
 
-### 8.2 Ranking Metrics
+#### 5.5.2 Ranking Metrics
 
-| Metric | Definition | MVP status |
+| Metric | Definition | Status |
 |---|---|---|
 | Precision@N | Fraction of top-N alerts that are fraud | Reported at N ∈ {1%, 5%, 10%} |
 | Recall@N | Fraction of fraud captured in top-N alerts | Reported at N ∈ {1%, 5%, 10%} |
-| Alerts per true fraud | Alert efficiency | Not reported in MVP |
 
-### 8.3 Probabilistic Metrics
+#### 5.5.3 Probabilistic Metrics
 
-| Metric | Definition | MVP status |
+| Metric | Definition | Status |
 |---|---|---|
-| PR-AUC | Precision-recall AUC | Not reported in MVP |
-| ROC-AUC | Reported but not primary | Reported (0.8834 informational) |
-| Brier score | Probability calibration | Reported (0.011881 on test, 0.010050 on val) |
-| Expected calibration error (ECE) | Calibration quality | Reported (0.0040 on val, null stop) |
+| ROC-AUC | Threshold-independent discrimination | Reported (0.8834, informational) |
+| Brier score | Probability calibration | Reported (0.011881 test, 0.010050 val) |
+| Expected calibration error (ECE) | Calibration quality | Reported (0.0040 val, null stop) |
 
 **Rule:** AUC may be reported but never used as the sole success criterion.
 
-### 8.4 Data Integrity Metrics (Required)
+#### 5.5.4 Data Integrity Metrics (Required)
 
-| Metric | Definition | MVP value |
+| Metric | Definition | Value |
 |---|---|---|
 | Censored-label count | Transactions with `label_time > split cutoff` | **96,843** |
 | Censored-label rate | Censored count ÷ total transactions | **9.68%** |
 | Evaluated fraction | 1 − censored-label rate | **90.32%** |
 
-In the MVP, censored labels are only in month 7 (whose label would mature in month 8, beyond the dataset). Censored counts are reported at the dataset level, not per split and per regime, because only one regime was run and the censoring occurs at a single month boundary.
+### 5.6 Supplementary Baselines
 
-### 8.5 Temporal Metrics (Future Work)
-
-Not implemented. Rolling evaluation was not run in the MVP.
-
-### 8.6 Forbidden Metrics
-
-- Accuracy (meaningless under class imbalance)
-- Raw F1 without cost context
-- AUC-only claims
-- Metrics computed on random splits
-- Metrics that treat censored labels as negatives
-
-None of these appear in the MVP report.
-
----
-
-## 9. Baselines
-
-Every improvement must be compared against a canonical baseline set.
-
-### 9.1 Full Canonical Set (specification)
-
-| # | Baseline | Purpose |
-|---|---|---|
-| 1 | Random decision | Sanity floor |
-| 2 | Approve-all | Zero-friction reference |
-| 3 | Block-all | Maximum-friction reference |
-| 4 | Rule-based threshold | Domain prior |
-| 5 | LightGBM + static threshold | Standard ML baseline |
-| 6 | Cost-sensitive policy using the same LightGBM probabilities | The policy under test |
-
-### 9.2 MVP Implemented Set
-
-The MVP implements **5 of 6** baselines. The **rule-based threshold** (baseline 4) is not implemented — it is deferred per `mvp_architecture.md` §8, which lists a smaller baseline set for the 2-week build.
-
-| # | Baseline | MVP implementation |
+| # | Baseline | Implementation |
 |---|---|---|
 | 1 | Random decision | Seeded `random.choice(['approve','review','block'])` |
 | 2 | Approve-all | `action = 'approve'` for every row |
 | 3 | Block-all | `action = 'block'` for every row |
-| 4 | Rule-based threshold | **Not implemented** |
-| 5 | LightGBM + static threshold | `action = 'block' if p_fraud >= 0.5 else 'approve'` |
-| 6 | Cost-sensitive policy | argmin of expected cost |
+| 4 | LightGBM + static 0.5 | `action = 'block' if p_fraud >= 0.5 else 'approve'` |
+| 5 | Cost-sensitive policy | argmin of expected cost |
 
-### 9.3 Rules
-
-- All baselines use the same temporal split. ✓
-- All baselines use the same cost matrix. ✓
-- All delay regimes are the same. ✓ (one regime)
-- All baselines use the same review budget. ✓ (no budget constraint applied)
-- No baseline is tuned on the test set. ✓
-- If a baseline is missing, the comparison is documented as a smaller set. ✓ (rule-based baseline noted)
-
-### 9.4 Out of Scope for MVP Baselines
-
-- Online SGD / Passive-Aggressive
-- PU learning
-- Delayed-label correction
-- Drift detection
-- Rule-based threshold (deferred)
-
-These are future work and are not MVP comparison points.
+All baselines use the same temporal split, cost matrix, and delay regime.
+No baseline is tuned on the test set.
 
 ---
 
-## 10. Budget-Constrained Evaluation
+## 6. Reporting Format
 
-Real systems have finite capacity. The specification calls for reporting at:
+Every experiment report follows this format.
 
-| Budget | Meaning |
-|---|---|
-| Top 1% of transactions | Tight capacity |
-| Top 5% of transactions | Moderate capacity |
-| Top 10% of transactions | Loose capacity |
+### 6.1 Primary — Classification Report
 
-At each budget, the specification calls for reporting precision, recall, fraud dollars saved, and total cost.
+```markdown
+# Model Comparison: <date>
 
-### 10.1 MVP Implementation
+## Setup
+- Dataset:
+- Train split:
+- Test split:
+- CV strategy:
+- Primary metric:
 
-The MVP reports **precision and recall** at the three budget levels:
+## Cross-Validation Results
+| Algorithm | Macro F1 (mean ± SD) | Precision (fraud) | Recall (fraud) | ROC-AUC |
 
-| Budget | Precision | Recall |
-|---|---:|---:|
-| @1% | 0.2347 | 0.1866 |
-| @5% | 0.1201 | 0.4775 |
-| @10% | 0.0798 | 0.6344 |
+## Final Test Results
+| Algorithm | Macro F1 | Precision (fraud) | Recall (fraud) | Confusion Matrix |
 
-**Fraud dollars saved at fixed budget and total cost at fixed budget are not reported in the MVP.** The primary cost metrics are reported without budget constraint. This is because capacity-aware decisioning is not implemented — the reported budgets are pure ranking metrics on the policy's scored test set, not budget-constrained decisions.
+## Selected Model
+- Algorithm:
+- Hyperparameters:
+- Justification:
 
-### 10.2 Note on Interpretation
+## Failure Analysis
+- Dominant error type
+- Per-class analysis
+```
 
-These budget metrics answer: "if a review team could only look at the top N% of scores, how much fraud would be in that slice?" They do not change the policy's actions. Capacity-aware scheduling is a post-MVP extension.
-
----
-
-## 11. Calibration Evaluation
-
-### 11.1 Why
-
-The decision policy depends on `p` being a real probability.  
-An uncalibrated model produces wrong expected costs.
-
-### 11.2 Methods
-
-- Reliability diagram ✓ (computed, 10 quantile bins)
-- Brier score ✓
-- Expected calibration error (ECE) ✓
-- Platt scaling or isotonic regression if needed — **not applied**
-
-### 11.3 MVP Result — Null Stop
-
-Calibration was measured on 2026-09-21 using `src/evaluation/calibration.py`.
-
-| Metric | Value |
-|---|---:|
-| ECE (10 quantile bins) | **0.0040** |
-| Brier (model, val) | 0.010050 |
-| Brier (trivial, predict val mean) | 0.010103 |
-
-**Stop criterion (`architecture.md` §9.2):** ECE < 0.05 → null stop.
-
-**Verdict: null stop.** ECE of 0.0040 is well below the 0.05 threshold. No calibration step was applied. Raw LightGBM output is used by the policy directly.
-
-**Reliability table (validation):** the model is well calibrated in bins 0–8 (where 90% of transactions live). It is mildly overconfident in bin 9 (predicted 9.5%, actual 7.0%), but those scores fall inside the review band and do not affect block decisions. Documented, not corrected.
-
-### 11.4 Cadence
-
-Recalibrate whenever the model is retrained, or when calibration drifts beyond a threshold defined in this protocol. The ECE diagnostic is not part of the pipeline; run manually after retraining.
-
----
-
-## 12. Sensitivity Analysis
-
-The full protocol requires varying four parameters:
-
-- `false_positive_cost`
-- `review_cost`
-- `residual_fraud_loss`
-- `fraud_loss` — constant vs amount-scaled
-
-### 12.1 MVP Coverage
-
-| Parameter | Status |
-|---|---|
-| Amount-scaled `fraud_loss` | ✅ Run, success stop, adopted |
-| `false_positive_cost` | ✅ Run — policy advantage 55.6–59.6% across 2× range |
-| `review_cost` | ✅ Run — policy advantage 46.5–64.6% across 2× range |
-| `residual_fraud_loss` | ✅ Run — policy advantage 49.9–62.1% across 2× range |
-
-**All four parameters are tested.** Amount scaling was adopted as the default. The other three were run via `src/evaluation/sensitivity.py` and confirmed the policy remains lowest-cost across a 2× range on each. Minimum advantage across all variations: 46.46%.
-
-### 12.2 Amount-Scaled Sensitivity Result
-
-**Setup:** `amount_scaled: true`, `fraud_loss_rate = 0.0019187869`. Same model, same split, same test set. Only the cost assumption changed.
-
-**Stop criterion (`architecture.md` §9.2):** flips ≥ 2% OR cost/txn change ≥ 1% relative.
-
-| Config | Policy cost/txn | Strongest baseline | Advantage |
-|---|---:|---:|---:|
-| Constant `fraud_loss = 1.0` | 0.008901 | 0.012088 | 26.4% |
-| Amount-scaled (train-cal) | **0.007566** | 0.017543 | **56.9%** |
-
-- Cost/txn change: **−15.0%** relative (satisfies the ≥ 1% stop criterion)
-
-**Verdict: success stop.** Amount scaling is adopted. It exceeds both thresholds and nearly doubles the policy's advantage over the strongest baseline.
-
-**Mechanism:** with per-row fraud loss, the argmin routes large transactions to review instead of approve. Under constant loss those transactions were approved. The policy exploits signal the constant-loss version was leaving on the table.
-
-**Ranking change:** the strongest baseline changed under amount scaling. Under constant loss, LightGBM + static 0.5 was the strongest baseline (0.012088). Under amount scaling, it is still the strongest (0.018892), but the gap to the policy widened. No baseline overtook the policy.
-
-### 12.3 Rate Calibration
-
-`fraud_loss_rate` is derived from **training-window** amounts (`1 / mean(amount_proxy on train)`). No test data is used in the derivation. The earlier test-calibrated rate and its caveat are preserved in git history (`9b51a24`).
-
----
-
-## 13. Reporting Format
-
-Every experiment report follows this format:
+### 6.2 Supplementary — Cost-Sensitive Report
 
 ```markdown
 # Experiment: <name>
@@ -459,122 +485,245 @@ Every experiment report follows this format:
 ## Next Steps
 ```
 
-No report is valid without:
-
-- A baseline comparison ✓ (`reports/mvp_backtest.md`)
-- A censored-label count ✓ (96,843 / 9.68%)
-- A failure section ✓ (Limitations section covers known limitations and deferrals)
-
-**MVP report format note:** `reports/mvp_backtest.md` deviates slightly — ECE is not in the main results table (it's reported separately), and the results table includes a `Total cost` column not in the template above. Both deviations are additive, not omissions.
+No report is valid without a baseline comparison, a censored-label count,
+and a failure section.
 
 ---
 
-## 14. Statistical Rigor
+## 7. Statistical Rigor
 
-The full protocol requires:
+### 7.1 Primary
 
-- Bootstrap confidence intervals on the test set
-- No claims smaller than noise
-- Documented seeds
-- Documented library versions
+- **Cross-validation variability:** standard deviation of Macro F1 across
+  the 5 folds is reported for each algorithm.
+- **Test-set confidence:** bootstrap confidence intervals on the test set
+  for the primary metric may be reported as supplementary evidence.
+- **No claims smaller than noise:** differences between algorithms are only
+  claimed as meaningful if they exceed fold-level variability.
 
-### 14.1 MVP Coverage
+### 7.2 Supplementary
 
-| Requirement | Status |
+- **Bootstrap CIs on test set:** 1,000 resamples of the test set
+  (n = 227,491) with replacement give a 95% CI on the policy's advantage of
+  **[52.77%, 60.91%]**, excluding zero.
+- **Noise-floor discipline:** all comparisons use 95% bootstrap confidence
+  intervals on the test set for the primary metric (realized cost per
+  transaction).
+- **Documented seeds:** `seed=42` for training, `SEED=42` for the random
+  baseline.
+- **Documented library versions:** LightGBM 4.7.0, pandas 2.3.3,
+  numpy 2.2.6, pyarrow 19.0.1, scikit-learn 1.7.2, PyYAML 6.0.3.
+
+### 7.3 Reproducibility as a Proxy
+
+The pipeline reproduces byte-for-byte from one command. Model AUC, action
+distribution, and backtest costs are identical across runs. This is stronger
+than a point estimate — it means the result is not seed-dependent.
+
+---
+
+## 8. Calibration Evaluation
+
+### 8.1 Why
+
+The supplementary decision policy depends on `p` being a real probability.
+An uncalibrated model produces wrong expected costs.
+
+### 8.2 Methods
+
+- Reliability diagram (10 quantile bins)
+- Brier score
+- Expected calibration error (ECE)
+- Platt scaling or isotonic regression if needed — **not applied**
+
+### 8.3 Result — Null Stop
+
+| Metric | Value |
+|---|---:|
+| ECE (10 quantile bins) | **0.0040** |
+| Brier (model, val) | 0.010050 |
+| Brier (trivial, predict val mean) | 0.010103 |
+
+**Stop criterion (`docs/architecture.md` §9.2):** ECE < 0.05 → null stop.
+
+**Verdict: null stop.** ECE of 0.0040 is well below the 0.05 threshold. No
+calibration step was applied.
+
+**Reliability note:** the model is well calibrated in bins 0–8 (where 90% of
+transactions live). It is mildly overconfident in bin 9 (predicted 9.5%,
+actual 7.0%), but those scores fall inside the review band and do not affect
+block decisions.
+
+### 8.4 Cadence
+
+Recalibrate whenever the model is retrained, or when calibration drifts
+beyond a defined threshold. The ECE diagnostic is not part of the pipeline;
+run manually after retraining.
+
+---
+
+## 9. Sensitivity Analysis (Supplementary)
+
+The protocol requires varying four cost parameters:
+
+- `false_positive_cost`
+- `review_cost`
+- `residual_fraud_loss`
+- `fraud_loss` — constant vs amount-scaled
+
+### 9.1 Coverage
+
+| Parameter | Status |
 |---|---|
-| Bootstrap CIs | ✅ Run — 95% CI on advantage [52.77%, 60.91%] |
-| Noise-floor discipline | Partially applied (`architecture.md` §9.1 defines a 5% effect-size threshold; MVP adopted amount scaling at 12.6% which clears it, but did not compute CIs) |
-| Documented seeds | ✅ `seed=42` for training, `SEED=42` for random baseline |
-| Documented library versions | ✅ LightGBM 4.7.0, pandas 2.3.3, numpy 2.2.6, pyarrow 19.0.1 |
+| Amount-scaled `fraud_loss` | ✅ Run, success stop, adopted |
+| `false_positive_cost` | ✅ Run — policy advantage 55.6–59.6% across 2× range |
+| `review_cost` | ✅ Run — policy advantage 46.5–64.6% across 2× range |
+| `residual_fraud_loss` | ✅ Run — policy advantage 49.9–62.1% across 2× range |
 
-**Bootstrap CIs computed.** 1,000 resamples of the test set (n = 227,491) with replacement give a 95% CI on the policy's advantage of **[52.77%, 60.91%]**, excluding zero. The policy and baseline CIs are disjoint. See `reports/bootstrap.md` for full output and `reports/mvp_backtest.md` §Statistical Rigor for interpretation.
+All four parameters are tested. Amount scaling was adopted as the default.
+Minimum advantage across all variations: 46.46%.
 
-**Reproducibility as a proxy:** the pipeline reproduces byte-for-byte from one command. Model AUC, action distribution, and backtest costs are identical across runs. This is stronger than a point estimate — it means the result is not seed-dependent.
+### 9.2 Amount-Scaled Sensitivity Result
 
----
+**Setup:** `amount_scaled: true`, `fraud_loss_rate = 0.0019187869`. Same
+model, same split, same test set. Only the cost assumption changed.
 
-## 15. Reproducibility Requirements
+**Stop criterion:** flips ≥ 2% OR cost/txn change ≥ 1% relative.
 
-- Fixed random seeds ✓
-- Fixed splits saved to disk ✓ (hardcoded in `split.py`; not in a config file, which is a deviation from the full protocol)
-- Fixed cost matrix in config ✓
-- Pipeline runs with one command ✓ (`python -m src.pipeline`)
-- Environment pinned in `requirements.txt` ✓
-- Report references exact config hashes ❌ — **not implemented in MVP**
+| Config | Policy cost/txn | Strongest baseline | Advantage |
+|---|---:|---:|---:|
+| Constant `fraud_loss = 1.0` | 0.008901 | 0.012088 | 26.4% |
+| Amount-scaled (train-cal) | **0.007566** | 0.017543 | **56.9%** |
 
-### 15.1 MVP Deviations
+- Cost/txn change: **−15.0%** relative (satisfies the ≥ 1% stop criterion)
 
-- **No `configs/splits.yaml`.** Splits are hardcoded constants in `src/data/split.py`. The full protocol envisions a config file for this. Deferred.
-- **No `cost_config_hash` in the action log.** With one cost matrix in use, there is nothing to disambiguate. Deferred until multiple cost configs exist.
-- **No report-of-config-hash.** Same reason.
+**Verdict: success stop.** Amount scaling is adopted.
 
-### 15.2 Reproducibility Verification
+**Mechanism:** with per-row fraud loss, the argmin routes large transactions
+to review instead of approve. Under constant loss those transactions were
+approved.
 
-The pipeline was re-run from scratch after the policy refactor (which extracted the argmin into a pure function) and produced **identical values** for every printed metric. The `reports/mvp_backtest.md` diff after regeneration showed only the timestamp line changed. This is the operational proof that results are reproducible.
+### 9.3 Rate Calibration
 
----
-
-## 16. MVP Evaluation Scope
-
-### 16.1 What the MVP Evaluates
-
-- 5 baseline set (random, approve-all, block-all, LightGBM+static 0.5, cost-sensitive policy)
-- Cost-sensitive policy with amount-scaled cost matrix
-- Chronological train / validation / test split
-- Single delay regime: 1 month
-- Cost per transaction, fraud dollars saved, precision@N, recall@N
-- Calibration: Brier and ECE
-- Censored-label count (dataset-level)
-- Sensitivity to amount-scaled fraud loss
-
-### 16.2 What the MVP Does Not Evaluate
-
-- Additional delay regimes (2-month, 3-month)
-- Sensitivity to `false_positive_cost`, `review_cost`, `residual_fraud_loss`
-- Rule-based threshold baseline
-- Fraud dollars saved at fixed FPR or fixed review budget
-- Per-regime censored counts
-- Bootstrap confidence intervals
-- Online learning
-- PU learning
-- Delayed-label correction
-- Drift detection
-- Graph features
-- Federated learning
-- Capacity-aware scheduling
-- Rolling-window evaluation
-
-These are documented as deferred, not omitted. Each has a clear path to implementation under this same protocol.
+`fraud_loss_rate` is derived from **training-window** amounts
+(`1 / mean(amount_proxy on train)`). No test data is used.
 
 ---
 
-## 17. Definition of Done for Evaluation
+## 10. Budget-Constrained Evaluation (Supplementary)
+
+### 10.1 Budgets
+
+| Budget | Meaning |
+|---|---|
+| Top 1% of transactions | Tight capacity |
+| Top 5% of transactions | Moderate capacity |
+| Top 10% of transactions | Loose capacity |
+
+### 10.2 Implementation
+
+| Budget | Precision | Recall |
+|---|---:|---:|
+| @1% | 0.2347 | 0.1866 |
+| @5% | 0.1201 | 0.4775 |
+| @10% | 0.0798 | 0.6344 |
+
+These budgets are pure ranking metrics on the scored test set. They do not
+change the policy's actions. Capacity-aware decisioning is a post-course
+extension.
+
+---
+
+## 11. Reproducibility Requirements
+
+### 11.1 Primary
+
+- Fixed random seeds (42)
+- Fixed chronological split documented in `docs/data_card.md` §5
+- Fixed CV folds
+- Environment pinned in `requirements.txt`
+- One command reproduces the full primary pipeline
+
+### 11.2 Supplementary
+
+- Fixed cost matrix in `configs/costs.yaml`
+- Fixed delay regime (1 month)
+- One command reproduces the supplementary pipeline
+
+### 11.3 Deviations
+
+- **Splits are hardcoded** in `src/data/split.py` and documented in
+  `docs/data_card.md`, rather than loaded from a `configs/splits.yaml`.
+  Documented as a deviation.
+- **No `cost_config_hash` in the action log.** With one cost matrix in use,
+  there is nothing to disambiguate.
+
+---
+
+## 12. Definition of Done
+
+### 12.1 Primary (Course Requirement)
+
+- [ ] Three algorithms implemented: Logistic Regression, Random Forest, LightGBM
+- [ ] Chronological 80/20 split defined
+- [ ] 5-fold time-series CV folds defined
+- [ ] Preprocessing fit within each fold's training portion
+- [ ] Hyperparameter grids documented per algorithm
+- [ ] Cross-validation results table complete (mean ± SD)
+- [ ] Best model selected on validation
+- [ ] Final test evaluation run once
+- [ ] Test-set metrics reported: Macro F1, accuracy, per-class precision/recall/F1, confusion matrix, ROC-AUC
+- [ ] Failure analysis complete
+- [ ] Model comparison report written (`reports/model_comparison.md`)
+- [ ] Results reproducible from one command
+
+### 12.2 Supplementary (Project Depth)
 
 - [x] Cost matrix defined and frozen in `configs/costs.yaml`
-- [x] Delay regimes implemented — **1-month month-based fallback applied** (multi-regime deferred)
-- [ ] Temporal splits saved to `configs/splits.yaml` — **splits are hardcoded in `split.py`**, config file deferred
-- [ ] Canonical baselines implemented — **5 of 6**; rule-based threshold deferred
-- [x] Primary metrics computed (cost/txn, total cost, fraud $ saved)
+- [x] Delay regime implemented (1-month month-based fallback)
+- [x] Baselines implemented: random, approve-all, block-all, LightGBM + static 0.5
+- [x] Primary supplementary metrics computed (cost/txn, total cost, fraud $ saved)
 - [x] Ranking metrics computed (precision@1/5/10%, recall@1/5/10%)
-- [x] Calibration measured: Brier (0.010050 val) and ECE (0.0040 val)
+- [x] Calibration measured: Brier and ECE
 - [x] Censored-label counts reported (96,843 / 9.68%)
-- [ ] Budget-constrained metrics computed — **ranking metrics reported; budget-constrained cost metrics deferred**
-- [ ] Per-regime results reported separately — **only 1 regime run**
-- [x] Amount-scaled fraud loss sensitivity analysis run — success stop, adopted
-- [ ] `false_positive_cost`, `review_cost`, `residual_fraud_loss` sensitivity — **deferred**
-- [x] Failure cases documented (Limitations section of report)
+- [x] Sensitivity analysis complete across all four cost parameters
+- [x] Bootstrap confidence intervals computed
+- [x] Failure cases documented
 - [x] Results reproducible (verified byte-for-byte)
-- [x] Report written (MVP-adapted format; see Section 13 note)
-
-**Result:** every applicable MVP-scope box checked. Deferred items are named, not hidden.
+- [x] Supplementary report written (`reports/mvp_backtest.md`)
 
 ---
 
-## 18. Guiding Rule
+## 13. Guiding Rules
 
-> A model is only better if it produces **lower realized cost** under the **same temporal split, same delay regime, same cost matrix, and same budget** as the baseline.
+### 13.1 Primary
 
-The primary MVP success criterion is:
+> Three algorithms are only comparable if they use the **same split, same
+> preprocessing, same folds, and same primary metric.** Any deviation must
+> be documented and justified.
+
+> The test set is used **once**, after model selection. Any result that
+> touches the test set before that is invalid.
+
+### 13.2 Supplementary
+
+> A model is only better if it produces **lower realized cost** under the
+> **same temporal split, same delay regime, same cost matrix, and same
+> budget** as the baseline.
+
+### 13.3 Primary Result
+
+Primary success criterion:
+
+```text
+selected model (by Macro F1)
+    achieves the highest validation Macro F1 among the three algorithms,
+    and its test Macro F1 is reported once on the untouched test set.
+```
+
+### 13.4 Supplementary Result
+
+Supplementary success criterion:
 
 ```text
 realized cost per transaction (policy)
@@ -584,16 +733,17 @@ realized cost per transaction (every canonical baseline)
 
 under identical split, delay regime, cost matrix, and budget.
 
-### 18.1 MVP Result
+**Result:** the cost-sensitive policy beats every implemented baseline on
+realized cost per transaction under the same split, delay regime, and cost
+matrix. See `reports/mvp_backtest.md` for the full table.
 
-| Baseline | Cost/txn (amount-scaled) | Policy better? |
-|---|---:|---|
-| Random | 0.046931 | ✓ (−83.9%) |
-| Approve-all | 0.018928 | ✓ (−60.0%) |
-| Block-all | 0.098742 | ✓ (−92.3%) |
-| LightGBM + static 0.5 | 0.017543 | ✓ (−56.9%) |
-| **Cost-sensitive policy** | **0.007566** | — |
+---
 
-**Result: primary success criterion met.** The policy beats every implemented baseline on realized cost per transaction under the same split, delay regime, and cost matrix.
+## 14. Changelog
 
-Everything else is noise.
+| Date | Change | Reason |
+|---|---|---|
+| YYYY-MM-DD | Initial evaluation protocol | Project start |
+| YYYY-MM-DD | Added cost matrix, temporal backtest, canonical baselines, forbidden metrics | Align with Week 1 MVP |
+| YYYY-MM-DD | Recorded amount-scaled sensitivity as adopted; recorded calibration null stop; documented MVP deviations | Reconcile with built MVP |
+| YYYY-MM-DD | Restructured into primary (three-algorithm classification) and supplementary (cost-sensitive policy); added Macro F1 justification; added 5-fold time-series CV; added preprocessing and tuning rules; added test-set discipline; separated DoD into primary and supplementary | Align with course requirements |

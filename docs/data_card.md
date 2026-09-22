@@ -1,29 +1,42 @@
 # Data Card
 
 > **Repository:** `delayed-label-fraud-decisioning`  
+> **Course:** Introduction to Machine Learning — Final Group Project  
+> **Institution:** National University Philippines  
+> **Instructor:** Ken Oliver Caparros  
 > **Document:** Data Card  
-> **Status:** v0.2 — aligned with Week 1 MVP  
+> **Status:** v0.3 — aligned with course requirements and three-algorithm comparison  
 > **Last updated:** YYYY-MM-DD
 
 ---
 
 ## 1. Purpose
 
-This document describes every dataset used in the project, its schema, how label delay is simulated, how temporal splits are constructed, and which biases and leakage risks exist.
+This document describes the dataset used in the project, its schema, how the
+primary classification split is constructed, how label delay is simulated for
+the supplementary analysis, and which biases and leakage risks exist.
 
 It exists so that:
 
-- The delay simulation assumptions are **explicit and falsifiable**
-- Temporal splits are **documented before modeling**
+- The dataset source, license, and unit of analysis are **explicit**
+- The primary classification split is **documented before modeling**
+- The supplementary delay simulation assumptions are **falsifiable**
 - Leakage risks are **named, not discovered later**
 - Any reviewer can reproduce the exact data setup
 - Results can be interpreted with the correct caveats
 
-**Rule:** No model result is valid unless the data used to produce it is documented here.
+**Rule:** No model result is valid unless the data used to produce it is
+documented here.
+
+The complete feature-by-feature schema — names, types, units, allowed values,
+and descriptions — is documented in
+[`documentation/data_dictionary.md`](../documentation/data_dictionary.md).
+This data card focuses on the modeling-relevant subset and the evaluation
+design.
 
 ---
 
-## 2. Datasets
+## 2. Dataset
 
 ### 2.1 Primary Dataset — Bank Account Fraud (BAF) Suite
 
@@ -31,133 +44,248 @@ It exists so that:
 |---|---|
 | Name | Bank Account Fraud (BAF) Suite |
 | Version | v1 (NeurIPS 2022) |
-| Source | https://arxiv.org/abs/2211.13358 |
-| License | CC BY 4.0 (verify before redistribution) |
-| Format | CSV / Parquet |
-| Rows | ~1M per variant |
-| Features | 31 (mixed numeric + categorical) |
-| Fraud rate | ~1.1% (variant-dependent) |
-| Time span | Synthetic, month-based |
-| Time granularity | **Month-level** (integer `month`, values 0–7); day-level unavailable |
-| Storage | `data/raw/baf/` |
+| Source | Jesus et al., "Turning the Tables: Biased, Imbalanced, Dynamic Tabular Datasets for ML Evaluation," NeurIPS 2022 |
+| Source URL | https://arxiv.org/abs/2211.13358 |
+| Dataset URL | https://www.kaggle.com/datasets/sgpjesus/bank-account-fraud-dataset-neurips-2022 |
+| License | CC BY 4.0 |
+| Format | CSV |
+| Rows | 1,000,000 |
+| Raw columns | 32 (including target) |
+| Post-load columns | 34 (after adding `transaction_id` and `amount_proxy`) |
+| Target | `fraud_bool` (binary: 0 = legitimate, 1 = fraud) |
+| Time column | `month`, integer, values 0–7 |
+| Time granularity | **Month-level only** — no day-level timestamp |
+| Overall fraud rate | 1.1029% |
+| Storage | `data/raw/baf/Base.csv` |
 
 **Why chosen:**
 
-- Public, citable, and designed for fraud research
-- Realistic feature set (tabular, mixed types)
-- Suitable for temporal and delay experiments
-- Manageable size for a student project
-- Includes temporal ordering suitable for backtest
+- Public, citable, licensed for academic use (CC BY 4.0)
+- Designed specifically for fraud detection research (NeurIPS 2022)
+- Tabular with mixed numeric and categorical features
+- Contains a temporal ordering (`month`) suitable for chronological evaluation
+- Manageable size for a student project (1M rows, 32 features)
+- Realistic class imbalance (~1.1% fraud)
 
 **Known limitations:**
 
 - Synthetic, not real bank data
 - Fraud rate may not match production distributions
-- No real chargeback timestamps — delay must be simulated
-- Timestamp granularity is unverified (see Section 4.6)
+- No real chargeback timestamps — delay must be simulated for the
+  supplementary analysis
+- Month-level granularity only (no day-level timestamps)
+- Fraud patterns in the test window drift slightly upward relative to the
+  train window (see §6.4)
 
-### 2.2 Secondary Dataset — IEEE-CIS Fraud Detection (optional)
+### 2.2 Secondary Dataset — Not Used
 
-| Field | Value |
-|---|---|
-| Name | IEEE-CIS Fraud Detection |
-| Source | Kaggle |
-| License | Competition rules — verify before redistribution |
-| Format | CSV |
-| Rows | ~590K train transactions |
-| Features | ~400 (transaction + identity) |
-| Fraud rate | ~3.5% |
-| Time span | 2017-11-30 to 2017-12-31 |
-| Storage | `data/raw/ieee_cis/` |
-
-**Why optional:**
-
-- Rich features, useful for feature engineering later
-- No identity graph in Week 1
-- Short time span limits rolling evaluation
-- License restricts redistribution
-
-**Week 1 rule:** Use BAF only. Add IEEE-CIS only if BAF is insufficient.
+The IEEE-CIS Fraud Detection dataset was considered as an optional secondary
+source but is **not used** in this submission. BAF alone is sufficient for the
+three-algorithm comparison and the supplementary decision analysis.
 
 ---
 
-## 3. Schema (Post-Load)
+## 3. Primary Classification Framing
+
+This is the framing used for the course-required three-algorithm comparison.
+
+### 3.1 Prediction Task
+
+```text
+Given X_t (features available at transaction time),
+predict y_t ∈ {0, 1}   where 1 = fraud
+```
+
+This is a standard supervised binary classification problem on tabular data.
+
+### 3.2 Unit of Analysis
+
+One row = one transaction. Each transaction has a unique `transaction_id`
+(assigned at load time as the original row index in `Base.csv`).
+
+### 3.3 Intended Users
+
+A fraud operations team that needs a ranked list of high-risk transactions.
+The model output (`p_fraud`) is used to prioritize manual review and, in the
+supplementary analysis, to drive an automated `approve` / `review` / `block`
+decision.
+
+### 3.4 Why Machine Learning Is Appropriate
+
+- The relationship between transaction features and fraud is non-linear and
+  involves many weak signals that interact.
+- Rule-based systems require constant manual maintenance and do not adapt to
+  drift.
+- The dataset is large enough (1M rows) to train and validate traditional
+  classifiers reliably.
+- Prior work in fraud detection has demonstrated that traditional ML models
+  (logistic regression, tree ensembles, gradient boosting) achieve strong
+  performance on tabular fraud data.
+
+---
+
+## 4. Schema
+
+### 4.1 Post-Load Schema
 
 After `src/data/load.py`, every transaction has this canonical schema.
 
-| Column | Type | Available at decision time? | Notes |
-|---|---|---|---|
-| `transaction_id` | string | Yes | Unique per transaction |
-| `decision_time` | timestamp | Yes | When decision must be made |
-| `amount` | float | Yes | Transaction value |
-| `customer_id` | string | Yes | Account identifier |
-| `merchant_id` | string | Yes | Merchant identifier |
-| `device_id` | string | Yes | Device fingerprint |
-| `payment_method` | categorical | Yes | Card, ACH, etc. |
-| `feature_*` | mixed | Yes | Model inputs |
-| `y_true` | int | No | Ground truth fraud label |
-| `label_time` | timestamp | No | When label becomes observable |
+| Column | Type | Available at decision time? | Role | Notes |
+|---|---|---|---|---|
+| `transaction_id` | int | Yes | Join key | Original row index in `Base.csv` |
+| `month` | int | Yes | Time index | Values 0–7; used for splits only, never as a feature |
+| `fraud_bool` | int | No | Target | Ground truth fraud label |
+| `amount_proxy` | float | Yes | Cost input | `proposed_credit_limit`; used as a transaction amount proxy |
+| `feature_*` | mixed | Yes | Model inputs | Remaining BAF features |
+| `label_month` | int | No | Derived | `month + 1`; used only in the supplementary delay analysis |
+| `observed` | bool | No | Derived | `label_month <= 7`; used only in the supplementary delay analysis |
 
-**Critical rules:**
+### 4.2 Excluded Columns
 
-- `y_true` and `label_time` are **never** features
-- No column with a name like `chargeback_*`, `dispute_*`, `case_*` is used as a feature
-- All features must be obtainable at or before `decision_time`
-- Timestamps are stored in UTC
+The following columns are **never** used as model features.
 
-If BAF does not expose `customer_id`, `merchant_id`, or `device_id` directly, they must be omitted from the canonical schema and this document updated before modeling.
+| Column | Reason |
+|---|---|
+| `transaction_id` | Row identifier; carries no generalizable signal |
+| `fraud_bool` | The target |
+| `month` | Time index; using it would leak the split |
+| `label_month` | Derived from `month`; same leakage risk |
+| `observed` | Derived; encodes the delay simulation, not the transaction |
+| `amount_proxy` | Reserved as a cost input for the supplementary analysis |
+| `device_fraud_count` | Post-decision risk field; may include future fraud events |
+
+The exclusion list is enforced in code via `FEATURE_EXCLUDE` in
+`src/common.py`.
+
+### 4.3 Feature Types
+
+| Type | Count | Handling |
+|---|---|---|
+| Numeric | 26 | Used as-is; scaling applied for Logistic Regression only |
+| Categorical | 5 | Encoded per algorithm (see `docs/data_card.md` §11) |
+| Identifier | 1 | `transaction_id` excluded |
+| Target | 1 | `fraud_bool` excluded from features |
+| Time/derived | 4 | `month`, `label_month`, `observed`, `amount_proxy` excluded |
+
+The five categorical columns are:
+
+- `payment_type`
+- `employment_status`
+- `housing_status`
+- `source`
+- `device_os`
+
+### 4.4 Feature Definitions
+
+The complete feature-by-feature definitions, including units, allowed values,
+and source-time availability, are documented in
+[`documentation/data_dictionary.md`](../documentation/data_dictionary.md).
+
+The data dictionary is a **required deliverable** and is the authoritative
+reference for feature definitions. This section lists only the
+modeling-relevant subset.
+
+### 4.5 Summary Statistics
+
+| Statistic | Value |
+|---|---|
+| Total rows | 1,000,000 |
+| Total raw columns | 32 |
+| Total post-load columns | 34 |
+| Fraud rows | 11,029 (1.1029%) |
+| Non-fraud rows | 988,971 (98.8971%) |
+| Months | 0–7 (8 values) |
+| Rows per month | Approximately 125,000 (uniform) |
+
+Per-split summary statistics are documented in §5.
 
 ---
 
-## 4. Label Delay Simulation
+## 5. Primary Classification Split
 
-Public fraud datasets do not provide realistic chargeback timestamps. Delay must be simulated.
+### 5.1 Split Strategy
 
-### 4.1 Simulation Rule
+The course requires an 80/20 training/testing split unless a justified
+alternative is provided. A **chronological split** is used here, which is a
+documented justified alternative because:
+
+- Fraud data is temporal; random splits leak future information.
+- The dataset includes a `month` index, so chronological ordering is
+  available.
+- The course explicitly requires chronological splits for time-ordered data:
+  "Time ordered data must use a chronological split rather than random
+  shuffling."
+
+### 5.2 Split Boundaries
+
+The chronological split is defined as:
+
+| Split | Months | Approximate share | Purpose |
+|---|---|---|---|
+| Train | 0, 1, 2, 3, 4, 5 | ~80% | Fit model, cross-validation, model selection |
+| Test | 6, 7 | ~20% | Final evaluation only, once |
+
+Exact row counts are documented in §5.4.
+
+### 5.3 Cross-Validation
+
+Model selection and hyperparameter tuning use **5-fold time-series
+cross-validation** on the training data.
+
+- Folds are contiguous in time (no shuffling).
+- Each fold's validation set is strictly after its training set.
+- Mean and variability across folds are reported for all three algorithms.
+- Preprocessing is fit **within** each fold's training portion to prevent
+  leakage.
+
+### 5.4 Row Counts
+
+| Split | Months | Rows | Fraud rate |
+|---|---|---:|---:|
+| Train | 0, 1, 2, 3, 4, 5 | TBD | TBD |
+| Test | 6, 7 | TBD | TBD |
+| **Total** | | **1,000,000** | **1.1029%** |
+
+*Rows per month are approximately uniform. Exact counts will be filled in
+after the EDA notebook produces the month-by-month breakdown.*
+
+### 5.5 Test Set Discipline
+
+The test set is used **exactly once**, after the best model is selected on
+validation. No tuning, threshold selection, or feature decisions are made on
+the test set.
+
+---
+
+## 6. Supplementary Label Delay Simulation
+
+This section applies to the supplementary cost-sensitive decision analysis,
+not to the primary three-algorithm comparison. It exists to document the
+delay simulation used in `reports/mvp_backtest.md`.
+
+### 6.1 Simulation Rule
 
 For each transaction:
 
 ```text
-decision_time = t
-label_time    = t + Δ
+decision_time = month
+label_time    = month + Δ
 ```
 
-Week 1 rule: **Δ is fixed per regime**, not sampled per transaction. This keeps the Week 1 evaluation reproducible and simple.
+Δ is fixed per regime, not sampled per transaction.
 
-Sampled delay distributions are explicitly **out of scope for Week 1** and may be added in Week 2+ if a measured Week 1 result justifies them.
+### 6.2 Delay Regime
 
-### 4.2 Delay Regimes
+BAF exposes month-level granularity only. Day-based regimes (7 / 30 / 90 days)
+are not supported by the data. The delay regime is therefore **1 month**.
 
-Every experiment is run under three regimes.
+| Regime | Δ | Purpose |
+|---|---|---|
+| MVP | 1 month | Single regime run in the current build |
 
-| Regime | Δ (fraud) | Δ (non-fraud) | Purpose |
-|---|---|---|---|
-| Short | 7 days | 7 days | Fast chargeback |
-| Medium | 30 days | 30 days | Typical dispute window |
-| Long | 90 days | 90 days | Worst-case delayed feedback |
+Multiple delay regimes (2-month, 3-month) are documented as future work.
 
-Week 1 rule:
-
-- Fraud and non-fraud use the **same fixed Δ within a regime**
-- Each regime is evaluated **separately**
-- Results are **never averaged across regimes**
-
-If the BAF timestamp granularity does not support day-level offsets, the regimes are redefined as month-based (1 / 2 / 3 months) and this section is updated. The fallback must be documented before modeling.
-
-### 4.3 Delay Distribution
-
-Week 1: fixed delay per regime (Section 4.2).
-
-Week 2+ optional extension (not required):
-
-```text
-Δ_fraud     ~ LogNormal(mu, sigma)  truncated to [1, 120] days
-Δ_nonfraud  = observation_window     (fixed, e.g., 90 days)
-```
-
-Any change to the delay distribution must be documented here and must not be tuned to improve results.
-
-### 4.4 Censoring Rule
+### 6.3 Censoring Rule
 
 A label is **observed** only if:
 
@@ -165,181 +293,238 @@ A label is **observed** only if:
 label_time <= evaluation_end
 ```
 
-Labels whose `label_time` falls after the cutoff are treated as **censored**, not as negative.
+Labels whose `label_time` falls after the cutoff are treated as **censored**,
+not as negative.
 
-Week 1 treatment of censored labels:
+Treatment of censored labels:
 
 - Excluded from training
 - Excluded from evaluation
-- **Count reported per split and per delay regime**
+- Count reported
+- Never treated as `y = 0`
 
-Censored labels are never treated as `y = 0`.
+### 6.4 Supplementary Split
 
-### 4.5 Assumptions
+Under the delay simulation, the split is:
 
-- Fraud labels and non-fraud labels share the same fixed delay in Week 1
+| Split | Months | Rows | Fraud rate |
+|---|---|---:|---:|
+| Train | 0, 1, 2 | 397,039 | ~1.10% |
+| Validation | 3, 4 | 278,627 | 1.0207% |
+| Test | 5, 6 | 227,491 | 1.2576% |
+| Censored (month 7, never observed) | 7 | 96,843 | — |
+| **Observed total** | | **903,157** | |
+| **Grand total** | | **1,000,000** | **1.1029%** |
+
+An assertion in `src/data/split.py` verifies
+`train + val + test == observed` to guard against off-by-one month boundaries.
+
+**Observed drift:** the test window fraud rate (1.2576%) is slightly higher
+than the train window (~1.10%). This is documented as a limitation, not
+corrected — correction would amount to tuning on the test set.
+
+### 6.5 Delay Assumptions
+
+- Fraud and non-fraud labels share the same fixed Δ within a regime
 - Non-fraud labels are assumed fully observed after `label_time`
 - Fraud labels are assumed correct once observed
 - Delay is independent of features
 - Delay is independent of model decisions
 
-**These assumptions are known to be unrealistic.** They are documented so the sensitivity of results to each can be tested later. None are resolved in Week 1.
+**These assumptions are known to be unrealistic.** They are documented so
+the sensitivity of results to each can be tested later. None are resolved
+in the current build.
 
-### 4.6 BAF Timestamp Granularity Verification (Blocking)
+### 6.6 Granularity Verification (Completed)
 
-Before any delay simulation is run, verify:
-
-- Does BAF expose a usable day-level timestamp, or only a month index?
-- Is there a per-row `decision_time` field, or must it be synthesized?
-- If synthesized, what is the rule, and does it preserve ordering within a month?
-
-**Rule:** Delay regimes may not be finalized until this verification is done.  
-**Fallback:** If only month-level ordering exists, redefine regimes as 1 / 2 / 3 months and update Section 4.2 before modeling.
-
-**Completed.** BAF exposes month-level granularity only — no day-level timestamp. Per `evaluation_protocol.md` §6.3, delay regimes use the month-based fallback (1 / 2 / 3 months). The MVP runs a single 1-month regime. This was resolved before modeling; no day-based regime is claimed anywhere in the docs.
+BAF exposes **month-level granularity only** — no day-level timestamp. Per
+`docs/evaluation_protocol.md` §6.3, the delay regime uses the month-based
+fallback (1 month). This was resolved before modeling; no day-based regime
+is claimed anywhere in the docs.
 
 ---
 
-## 5. Temporal Splits
+## 7. Leakage Risks
 
-### 5.1 Chronological Split
-
-| Split | Rule | Purpose |
-|---|---|---|
-| Train | `decision_time < T_train` **and** `label_time <= T_train` | Fit model |
-| Validation | `T_train <= decision_time < T_val` **and** `label_time <= T_val` | Early stopping, calibration |
-| Test | `decision_time >= T_val` **and** `label_time <= test_end` | Final evaluation |
-
-### 5.2 Label Maturation Rule
-
-The same rule applies to every split:
-
-```text
-A transaction belongs to a split only if:
-  its decision_time falls inside the split window, AND
-  its label_time is at or before the split's cutoff.
-```
-
-Consequences:
-
-- Transactions whose labels have not matured by a split cutoff are **censored for that split**
-- Censored transactions are excluded from training and evaluation for that split
-- Censored counts are reported per split and per delay regime
-
-### 5.3 Rules
-
-- Splits are **chronological only**
-- No shuffling
-- No random train/test split
-- No cross-validation across time boundaries
-- No oversampling or SMOTE before splitting
-- Any resampling must respect time order
-
-### 5.4 Cutoff Values
-
-| Split | T_train | T_val | test_end |
-|---|---|---|---|
-| MVP (month-based) | month 3 | month 5 | month 7 |
-
-Cutoffs are set once, saved to `configs/splits.yaml`, and never changed without a documented reason.
-
----
-
-## 6. Leakage Risks
-
-Explicitly named to prevent accidental misuse.
+Explicitly named to prevent accidental misuse. Both the primary classification
+task and the supplementary decision task are subject to these risks.
 
 | Risk | Description | Mitigation |
 |---|---|---|
-| Future features | Any feature computed using data after `decision_time` | Feature builder uses only past data |
-| Post-decision fields | Columns that only exist after a decision (dispute reason, case notes) | Excluded from features |
-| Target leakage | Columns highly correlated with `y_true` | Audited in EDA, removed if suspicious |
+| Future features | Any feature computed using data after decision time | Feature builder uses only decision-time fields |
+| Post-decision fields | Columns that only exist after a decision (e.g. `device_fraud_count`) | Excluded in `FEATURE_EXCLUDE` |
+| Target leakage | Columns highly correlated with `fraud_bool` | Audited in EDA; excluded if suspicious |
 | Label leakage via delay | Using a label before `label_time` | Enforced by split rules |
 | Split leakage | Train/test overlap in time | Chronological split enforced |
 | Duplicate leakage | Same transaction appearing in train and test | Deduplicated by `transaction_id` |
-| ID leakage | Model memorizes `customer_id` or `merchant_id` | IDs excluded or hashed |
+| ID leakage | Model memorizes `transaction_id` | `transaction_id` excluded from features |
+| Preprocessing leakage | Scaling or encoding statistics computed on test | Preprocessing fit on training folds only |
+| Cross-validation leakage | CV folds that mix time boundaries | Time-series CV with contiguous folds |
 
-### 6.1 Feature Audit Checklist
+### 7.1 Feature Audit Checklist
 
 Before any model is trained:
 
 - [ ] Every feature has a documented source time
-- [ ] No feature uses `y_true`
-- [ ] No feature uses `label_time`
-- [ ] No feature uses post-decision data
-- [ ] No feature is a proxy for `y_true`
-- [ ] IDs are excluded or treated as categorical with care
+- [ ] No feature uses `fraud_bool`
+- [ ] No feature uses derived delay columns (`label_month`, `observed`)
+- [ ] No feature uses post-decision data (`device_fraud_count`)
+- [ ] No feature is a proxy for `fraud_bool`
+- [ ] `transaction_id` and `month` are excluded
+- [ ] Preprocessing is fit on training folds only
 
 ---
 
-## 7. Known Biases
+## 8. Known Biases
 
 | Bias | Description | Impact on Project |
 |---|---|---|
-| Censored labels | Some fraud never reported | Underestimates fraud rate |
+| Class imbalance | Fraud is ~1.1% of rows | Metrics must be imbalance-aware (Macro F1) |
+| Synthetic data bias | BAF is synthetic | Patterns may not match real fraud |
+| Censored labels (supplementary) | Some fraud never reported | Underestimates fraud rate |
 | Unreported fraud | Customer does not dispute | Label noise |
 | Investigation bias | Investigators focus on certain segments | Labels biased by past policy |
 | Selection bias | Only some transactions reach review | Training distribution differs from population |
 | Feedback loop | Model decisions change future labels | Observed labels depend on past policy |
-| Synthetic data bias | BAF is synthetic | Patterns may not match real fraud |
-| Class imbalance | Fraud is ~1% | Metrics must be imbalance-aware |
 | Temporal shift | Fraud patterns change over time | Static splits may overestimate performance |
 
-**None of these are solved in Week 1.** They are named so results can be interpreted honestly.
+None of these are solved in the current build. They are named so results can
+be interpreted honestly.
 
 ---
 
-## 8. Feature Groups
+## 9. Feature Groups
 
-| Group | Examples | Available at decision time | Week 1 use |
+| Group | Examples | Available at decision time | Used as feature? |
 |---|---|---|---|
-| Transaction | amount, payment method, channel | Yes | Yes |
-| Customer | account age, prior fraud count | Yes (as of `t`) | Yes |
-| Merchant | merchant category, prior disputes | Yes (as of `t`) | Yes |
-| Device | device fingerprint, OS | Yes | Yes |
-| Behavioral | velocity, time since last txn | Yes (as of `t`) | Yes |
-| Identity | customer_id, device_id | Yes | Careful (ID leakage) |
-| Outcome | y_true, label_time | No | Never as features |
-| Post-decision | dispute reason, case notes | No | Never as features |
+| Transaction | `proposed_credit_limit`, `payment_type` | Yes | Yes |
+| Customer | `customer_age`, `employment_status` | Yes | Yes |
+| Account | `housing_status`, `income` | Yes | Yes |
+| Device | `device_os`, `device_fraud_count` | Mixed | `device_os` only; `device_fraud_count` excluded |
+| Behavioral | `velocity_*`, `foreign_request` | Yes | Yes |
+| Identity | `transaction_id` | Yes | No (excluded) |
+| Time | `month` | Yes | No (excluded; used for splits) |
+| Outcome | `fraud_bool` | No | No (target) |
+| Derived (delay) | `label_month`, `observed` | No | No (excluded) |
+| Derived (cost) | `amount_proxy` | Yes | No (reserved for supplementary cost input) |
 
-### 8.1 Amount Usage
+### 9.1 Amount Usage
 
-`amount` is a decision-time feature **and** a cost input.
+`amount_proxy` (derived from `proposed_credit_limit`) is a decision-time
+field. It is used in two ways:
 
-- As a feature: allowed, and used by the baseline model
-- As a cost input: Week 1 uses a **constant** `fraud_loss`; amount-scaled `fraud_loss(amount) = amount * fraud_loss_rate` is a **required sensitivity analysis**, not the Week 1 default
-- This split is documented so Week 1 stays simple while still testing the realism of the cost assumption
+- **Supplementary cost input:** to scale `fraud_loss` in the cost-sensitive
+  decision policy.
+- **Not used as a model feature** in the current build, to keep the
+  comparison between the primary classification and the supplementary policy
+  clean.
 
----
-
-## 9. Preprocessing Rules
-
-- Missing values: documented per column, never silently imputed before splitting
-- Categorical encoding: fit on train only, applied to val/test
-- Normalization: fit on train only, applied to val/test
-- No target encoding across time boundaries
-- No scaling using statistics from val/test
-- All preprocessing steps saved to `artifacts/preprocessing.pkl` for reproducibility
+If `amount_proxy` is later added as a feature, this document must be updated
+first and the three-algorithm comparison re-run.
 
 ---
 
-## 10. Storage and Versioning
+## 10. Class Imbalance Handling
+
+Fraud is 1.1029% of transactions. This imbalance is addressed through:
+
+### 10.1 Metric Choice
+
+- **Primary metric:** Macro F1 — treats both classes equally and reflects
+  the operational cost of both false positives and false negatives
+- **Supporting metrics:** per-class precision, recall, F1; confusion matrix;
+  ROC-AUC (informational)
+- **Forbidden:** raw accuracy as the sole success criterion
+
+### 10.2 Algorithm-Level Handling
+
+| Algorithm | Handling |
+|---|---|
+| Logistic Regression | `class_weight='balanced'` |
+| Random Forest | `class_weight='balanced_subsample'` |
+| LightGBM | `is_unbalance=True` (or equivalent scale_pos_weight) |
+
+Exact hyperparameter values are documented in `reports/model_comparison.md`.
+
+### 10.3 Resampling
+
+No oversampling or SMOTE is applied. Class imbalance is handled via class
+weights and metric choice. If resampling is added, it must respect time
+order and be fit on training folds only.
+
+### 10.4 Threshold Selection
+
+The default classification threshold is 0.5 for the primary comparison. A
+non-default threshold may be reported as a sensitivity analysis, but the
+default is used for the head-to-head model comparison so that all three
+algorithms are evaluated under identical conditions.
+
+---
+
+## 11. Preprocessing Rules
+
+Preprocessing is fit on training data only and applied unchanged to
+validation and test data. These rules apply to the primary three-algorithm
+comparison.
+
+### 11.1 Missing Values
+
+BAF `Base.csv` has no missing values in the raw data. If missing values are
+introduced by downstream processing (e.g. category mismatch), they are
+handled per column and documented here.
+
+### 11.2 Categorical Encoding
+
+| Algorithm | Encoding |
+|---|---|
+| Logistic Regression | One-hot encoding |
+| Random Forest | Ordinal encoding (tree splits on categories) |
+| LightGBM | Native categorical handling (pandas `category` dtype) |
+
+Category mappings are fit on training folds only.
+
+### 11.3 Numeric Scaling
+
+| Algorithm | Scaling |
+|---|---|
+| Logistic Regression | StandardScaler (fit on training folds) |
+| Random Forest | None required |
+| LightGBM | None required |
+
+### 11.4 Feature Selection
+
+All 29 features (32 raw minus 3 excluded: `transaction_id`, `month`,
+`fraud_bool`; plus `device_fraud_count`, `amount_proxy`, `label_month`,
+`observed` excluded) are retained by default. Feature importance is reported
+for tree-based algorithms and may motivate documented removal, but no
+feature is dropped without an EDA finding that justifies it.
+
+### 11.5 Pipeline Persistence
+
+The complete preprocessing pipeline (encoders, scalers, feature list) is
+saved alongside the best model so that the Streamlit app applies the exact
+same transformations used at training time.
+
+---
+
+## 12. Storage and Versioning
 
 | Layer | Path | Committed? |
 |---|---|---|
-| Raw | `data/raw/` | No (gitignored) |
+| Raw | `data/raw/baf/Base.csv` | No (gitignored) |
 | Interim | `data/interim/` | No (gitignored) |
 | Processed | `data/processed/` | No (gitignored) |
+| Model | `models/best_model.pkl` | No (gitignored) |
+| Preprocessing pipeline | `models/preprocessing.pkl` | No (gitignored) |
 | Configs | `configs/` | Yes |
-| Split definitions | `configs/splits.yaml` | Yes |
-| Delay definitions | `configs/delay.yaml` | Yes |
-| Cost definitions | `configs/costs.yaml` | Yes |
+| Split definitions | Documented in this file | Yes |
 
-Raw and processed data are never committed to GitHub. Only code, configs, and documentation are tracked.
+Raw and processed data are never committed to GitHub. Only code, configs,
+documentation, and reports are tracked.
 
 ---
 
-## 11. Reproducibility
+## 13. Reproducibility
 
 Every data artifact must be reproducible from:
 
@@ -349,55 +534,71 @@ raw dataset + configs + random seed
 
 Requirements:
 
-- Fixed random seed for delay simulation
-- Fixed random seed for any sampling
+- Fixed random seed (42) for all stochastic operations
 - Fixed split cutoffs
+- Fixed cross-validation folds
 - Documented library versions
 - One command to rebuild all data artifacts
 
 ```bash
-python -m src.data.build --config configs/week1.yaml
+python -m src.pipeline
 ```
 
 ---
 
-## 12. Week 1 Data Definition of Done
+## 14. Definition of Done
 
-- [ ] BAF dataset downloaded to `data/raw/baf/`
-- [ ] BAF timestamp granularity verified and documented (Section 4.6)
-- [ ] Delay regimes finalized as day-based or month-based
-- [ ] `src/data/load.py` produces `data/interim/transactions.parquet`
-- [ ] Schema matches Section 3
-- [ ] `src/data/simulate_delay.py` produces labels for all three regimes
-- [ ] `src/data/split.py` produces chronological train/val/test
-- [ ] Cutoffs saved to `configs/splits.yaml`
-- [ ] Delay config saved to `configs/delay.yaml`
-- [ ] Cost config saved to `configs/costs.yaml`
+### Primary (Course Requirement)
+
+- [ ] BAF dataset downloaded to `data/raw/baf/Base.csv`
+- [ ] Dataset source and license documented
+- [ ] Data dictionary complete (`documentation/data_dictionary.md`)
+- [ ] Chronological 80/20 split defined and saved
+- [ ] 5-fold time-series CV folds defined
+- [ ] Class imbalance handling documented per algorithm
+- [ ] Preprocessing rules documented
 - [ ] Leakage audit checklist completed
-- [ ] Censored label counts reported per split and per delay regime
+- [ ] EDA produces summary statistics and month-by-month counts
+- [ ] Feature audit completed
 - [ ] Data build reproducible with one command
+
+### Supplementary (Project Depth)
+
+- [x] BAF timestamp granularity verified (month-level only)
+- [x] Delay regime finalized as month-based (1 month)
+- [x] Delay simulator implemented (`simulate_delay.py`)
+- [x] Supplementary split produces chronological train / val / test
+- [x] Censored label count reported (96,843 / 9.68%)
+- [x] Cost config saved to `configs/costs.yaml`
 
 ---
 
-## 13. Changelog
+## 15. Changelog
 
 | Date | Change | Reason |
 |---|---|---|
 | YYYY-MM-DD | Initial data card | Project start |
-| YYYY-MM-DD | Fixed delay per regime; added granularity check; added per-regime censored reporting | Align with Week 1 MVP and problem framing v0.2 |
+| YYYY-MM-DD | Fixed delay per regime; added granularity check; added per-regime censored reporting | Align with Week 1 MVP |
+| YYYY-MM-DD | Reframed primary task as classification with 3-algorithm comparison; added §3, §5, §10; separated primary and supplementary splits; pointed to data dictionary; documented class imbalance handling per algorithm | Align with course requirements |
 
 ---
 
-## 14. References
+## 16. References
 
-- Bank Account Fraud (BAF) Suite — Jesus et al., NeurIPS 2022
-- IEEE-CIS Fraud Detection — Kaggle
-- Cost-sensitive learning — Elkan 2001
-- Delayed feedback in fraud detection — industry literature
-- PU learning — Elkan & Noto 2008
+- Jesus et al., "Turning the Tables: Biased, Imbalanced, Dynamic Tabular
+  Datasets for ML Evaluation," NeurIPS 2022. *(BAF dataset)*
+- Elkan, "The Foundations of Cost-Sensitive Learning," IJCAI 2001.
+  *(Cost-sensitive learning)*
+- Elkan & Noto, "Learning Classifiers from Only Positive and Unlabeled
+  Data," KDD 2008. *(PU learning)*
+- Pedregosa et al., "Scikit-learn: Machine Learning in Python," JMLR 2011.
+- Ke et al., "LightGBM: A Highly Efficient Gradient Boosting Decision Tree,"
+  NeurIPS 2017.
 
 ---
 
-## 15. Guiding Rule
+## 17. Guiding Rule
 
-> If a delay assumption, a split cutoff, or a leakage risk is not documented here, it does not exist in this project.
+> If a dataset property, a split boundary, a feature definition, or a leakage
+> risk is not documented here or in the data dictionary, it does not exist in
+> this project.
