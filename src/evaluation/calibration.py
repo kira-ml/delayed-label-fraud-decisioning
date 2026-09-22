@@ -10,14 +10,16 @@ tells us whether calibration work is justified.
 Reads:  data/processed/{train,val}.parquet, artifacts/model.txt
 Writes: nothing (prints ECE and a reliability table)
 """
+import json
 import numpy as np
 import pandas as pd
 import lightgbm as lgb
-from src.common import DATA_PROCESSED, ARTIFACTS
+from src.common import DATA_PROCESSED, ARTIFACTS, CATEGORICAL_COLS
 
 TRAIN = DATA_PROCESSED / "train.parquet"
 VAL = DATA_PROCESSED / "val.parquet"
 MODEL = ARTIFACTS / "model.txt"
+CATEGORIES = ARTIFACTS / "categories.json"
 
 N_BINS = 10
 
@@ -25,19 +27,18 @@ N_BINS = 10
 def score_val():
     """Score the validation set with the saved booster.
 
-    Rebuilds the same category mapping used at training time so that
-    LightGBM's integer codes match. This mirrors src/models/score.py.
+    Uses the exact category mapping saved by train_baseline.py so that
+    LightGBM's integer codes match.
     """
     booster = lgb.Booster(model_file=str(MODEL))
     feats = booster.feature_name()
+    cat_map = json.loads(CATEGORIES.read_text(encoding="utf-8"))
 
-    train = pd.read_parquet(TRAIN)
     val = pd.read_parquet(VAL)
 
-    cat_cols = [c for c in feats if train[c].dtype == "object"]
-    for c in cat_cols:
-        cats = sorted(set(train[c].dropna().unique()) | set(val[c].dropna().unique()))
-        val[c] = pd.Categorical(val[c], categories=cats)
+    for c in CATEGORICAL_COLS:
+        if c in val.columns and c in cat_map:
+            val[c] = pd.Categorical(val[c], categories=cat_map[c])
 
     val["p_fraud"] = booster.predict(val[feats])
     return val[["p_fraud", "fraud_bool"]]
