@@ -153,6 +153,8 @@ The following columns are **never** used as model features.
 | `observed` | Derived; encodes the delay simulation, not the transaction |
 | `amount_proxy` | Reserved as a cost input for the supplementary analysis |
 | `device_fraud_count` | Post-decision risk field; may include future fraud events |
+| `proposed_credit_limit` | Duplicate of `amount_proxy`; reserved as a cost input |
+
 
 The exclusion list is enforced in code via `FEATURE_EXCLUDE` in
 `src/common.py`.
@@ -161,7 +163,7 @@ The exclusion list is enforced in code via `FEATURE_EXCLUDE` in
 
 | Type | Count | Handling |
 |---|---|---|
-| Numeric | 26 | Used as-is; scaling applied for Logistic Regression only |
+| Numeric | 23 | Used as-is; scaling applied for Logistic Regression only |
 | Categorical | 5 | Encoded per algorithm (see `docs/data_card.md` §11) |
 | Identifier | 1 | `transaction_id` excluded |
 | Target | 1 | `fraud_bool` excluded from features |
@@ -494,11 +496,12 @@ Category mappings are fit on training folds only.
 
 ### 11.4 Feature Selection
 
-All 29 features (32 raw minus 3 excluded: `transaction_id`, `month`,
-`fraud_bool`; plus `device_fraud_count`, `amount_proxy`, `label_month`,
-`observed` excluded) are retained by default. Feature importance is reported
-for tree-based algorithms and may motivate documented removal, but no
-feature is dropped without an EDA finding that justifies it.
+All 28 features (32 raw minus 8 excluded: `transaction_id`, `month`,
+`fraud_bool`, `label_month`, `observed`, `amount_proxy`,
+`proposed_credit_limit`, `device_fraud_count`) are retained by default.
+Feature importance is reported for tree-based algorithms and may motivate
+documented removal, but no feature is dropped without an EDA finding that
+justifies it.
 
 ### 11.5 Pipeline Persistence
 
