@@ -42,8 +42,7 @@ PARAM_GRIDS = {
          "n_jobs": -1, "random_state": SEED},
     ],
     "lightgbm": [
-        {"n_estimators": 300, "is_unbalance": True, "verbose": -1,
-         "random_state": SEED},
+        {"n_estimators": 300, "verbose": -1, "random_state": SEED},
     ],
 }
 

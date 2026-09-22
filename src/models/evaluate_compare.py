@@ -2,28 +2,41 @@
 on the untouched test set, and save the model + preprocessing pipeline.
 """
 from __future__ import annotations
+
 import json
 from pathlib import Path
+
 import numpy as np
 import pandas as pd
 import joblib
 from sklearn.metrics import (
-    accuracy_score, confusion_matrix, f1_score, precision_score,
-    recall_score, roc_auc_score,
+    accuracy_score,
+    confusion_matrix,
+    f1_score,
+    precision_score,
+    recall_score,
+    roc_auc_score,
 )
 
-from src.common import SEED
+from src.common import SEED, MODELS, CATEGORICAL_COLS
 from src.models.preprocess import (
-    build_preprocessor, get_feature_columns, get_numeric_categorical,
+    build_preprocessor,
+    get_feature_columns,
+    get_numeric_categorical,
 )
 from src.models.train_compare import (
-    ALGORITHMS, PARAM_GRIDS, RESULTS_PATH, make_model,
+    ALGORITHMS,
+    PARAM_GRIDS,
+    RESULTS_PATH,
+    make_model,
 )
 
 TRAIN_PATH = Path("data/processed/primary_train.parquet")
 TEST_PATH = Path("data/processed/primary_test.parquet")
 MODEL_PATH = Path("models/best_model.pkl")
 PREPROC_PATH = Path("models/preprocessing.pkl")
+FEATURES_PATH = Path("models/feature_columns.json")
+DEFAULTS_PATH = Path("models/feature_defaults.json")
 FINAL_REPORT = Path("reports/model_comparison.md")
 
 
@@ -46,8 +59,34 @@ def _to_array(X):
     return X
 
 
+def _save_feature_metadata(train: pd.DataFrame, features: list[str]) -> None:
+    """Persist the training-time feature order and per-column defaults.
+
+    The Streamlit app reads these to construct a fully-populated feature
+    vector for manual input and to validate CSV uploads.
+    """
+    defaults: dict = {}
+    for c in features:
+        if c in CATEGORICAL_COLS:
+            mode = train[c].mode()
+            defaults[c] = str(mode.iloc[0]) if len(mode) else ""
+        else:
+            med = train[c].median()
+            defaults[c] = float(med) if pd.notna(med) else 0.0
+
+    FEATURES_PATH.write_text(
+        json.dumps(list(features), indent=2), encoding="utf-8"
+    )
+    DEFAULTS_PATH.write_text(
+        json.dumps(defaults, indent=2), encoding="utf-8"
+    )
+    print(f"[evaluate_compare] Wrote {FEATURES_PATH}")
+    print(f"[evaluate_compare] Wrote {DEFAULTS_PATH}")
+
+
 def main() -> None:
     MODEL_PATH.parent.mkdir(parents=True, exist_ok=True)
+
     train = pd.read_parquet(TRAIN_PATH)
     test = pd.read_parquet(TEST_PATH)
     features = get_feature_columns(train)
@@ -62,9 +101,12 @@ def main() -> None:
     pre = build_preprocessor(best_alg, *get_numeric_categorical(X_train))
     X_train_t = _to_array(pre.fit_transform(X_train))
 
-    # Train final model
+    # Train final model on the full training split
     model = make_model(best_alg, best_params)
     model.fit(X_train_t, y_train)
+
+    # Persist feature metadata now that training has succeeded
+    _save_feature_metadata(train, features)
 
     # Evaluate ONCE on the untouched test set
     X_test = test[features]
@@ -90,14 +132,28 @@ def main() -> None:
         print(f"  {k:<16} {v}")
     print(f"  confusion_matrix {cm}")
 
-    # Persist
+
+
+    # Save global feature importances for the app's explainability panel
+    if hasattr(model, "feature_importances_"):
+        importances = list(map(float, model.feature_importances_))
+        imp_path = MODELS / "feature_importances.json"
+        imp_path.write_text(
+            json.dumps({"features": list(features), "importances": importances},
+                       indent=2),
+            encoding="utf-8",
+        )
+        print(f"[evaluate_compare] Wrote {imp_path}")
+
+
+    # Persist the model and preprocessing pipeline
     joblib.dump(model, MODEL_PATH)
     joblib.dump(pre, PREPROC_PATH)
     print(f"\n[evaluate_compare] Saved model -> {MODEL_PATH}")
     print(f"[evaluate_compare] Saved preprocessing -> {PREPROC_PATH}")
 
     # Append a final-test section to the report
-    with open(FINAL_REPORT, "a") as f:
+    with open(FINAL_REPORT, "a", encoding="utf-8") as f:
         f.write("\n\n## Final Test Results\n\n")
         f.write(f"Selected algorithm: **{best_alg}**\n\n")
         f.write("| Metric | Value |\n|---|---|\n")

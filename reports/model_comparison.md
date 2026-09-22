@@ -10,7 +10,7 @@
 |---|---|---|---|---|---|
 | logistic_regression | 0.4773 ± 0.0186 | 0.7900 | 0.0386 | 0.8028 | 0.8792 |
 | random_forest | 0.4975 ± 0.0003 | 0.9900 | 0.0000 | 0.0000 | 0.8414 |
-| lightgbm | 0.5249 ± 0.0142 | 0.8935 | 0.0592 | 0.6121 | 0.8606 |
+| lightgbm | 0.5344 ± 0.0139 | 0.9890 | 0.2426 | 0.0450 | 0.8802 |
 
 ## Final Test Results
 
@@ -19,11 +19,11 @@ Selected algorithm: **lightgbm**
 | Metric | Value |
 |---|---|
 | algorithm | lightgbm |
-| macro_f1 | 0.5186318317119464 |
-| accuracy | 0.8488325016706421 |
-| precision_fraud | 0.06531218109286575 |
-| recall_fraud | 0.7338429464906184 |
-| f1_fraud | 0.11994888541814568 |
-| roc_auc | 0.8747957291909857 |
+| macro_f1 | 0.5335638754934683 |
+| accuracy | 0.9852300608260045 |
+| precision_fraud | 0.3096446700507614 |
+| recall_fraud | 0.0423905489923558 |
+| f1_fraud | 0.0745721271393643 |
+| roc_auc | 0.8765865003180965 |
 
-Confusion matrix (rows=true, cols=pred): `[[171908, 30225], [766, 2112]]`
+Confusion matrix (rows=true, cols=pred): `[[201861, 272], [2756, 122]]`

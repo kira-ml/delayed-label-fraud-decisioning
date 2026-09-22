@@ -31,8 +31,9 @@ def choose_actions(p: np.ndarray,
                   Used only when costs['amount_scaled'] is True.
 
     Returns:
-        actions:    np.ndarray of shape (n,) with values in ACTIONS
-        cost_matrix: np.ndarray of shape (n, 3) with [approve, review, block]
+        actions:     np.ndarray of shape (n,) with values in ACTIONS
+        chosen_cost: np.ndarray of shape (n,) with the min expected cost per row
+        components:  tuple of (c_approve, c_review, c_block), each shape (n,)
     """
     p = np.asarray(p, dtype=float)
     n = len(p)
@@ -49,7 +50,8 @@ def choose_actions(p: np.ndarray,
 
     cost_matrix = np.column_stack([c_approve, c_review, c_block])
     idx = np.argmin(cost_matrix, axis=1)
-    return ACTIONS[idx], cost_matrix
+    chosen_cost = cost_matrix[np.arange(len(idx)), idx]
+    return ACTIONS[idx], chosen_cost, (c_approve, c_review, c_block)
 
 
 def main() -> None:
@@ -58,17 +60,19 @@ def main() -> None:
 
     amounts = (scored["amount_proxy"].values
                if "amount_proxy" in scored.columns else None)
-    actions, cost_matrix = choose_actions(scored["p_fraud"].values, costs, amounts)
+    actions, chosen_cost, (c_app, c_rev, c_blk) = choose_actions(
+        scored["p_fraud"].values, costs, amounts
+    )
 
     log = pd.DataFrame({
         "transaction_id": scored["transaction_id"].values,
         "month": scored["month"].values,
         "p_fraud": scored["p_fraud"].values,
         "action": actions,
-        "expected_cost_approve": cost_matrix[:, 0],
-        "expected_cost_review":  cost_matrix[:, 1],
-        "expected_cost_block":   cost_matrix[:, 2],
-        "chosen_expected_cost":  cost_matrix.min(axis=1),
+        "expected_cost_approve": c_app,
+        "expected_cost_review":  c_rev,
+        "expected_cost_block":   c_blk,
+        "chosen_expected_cost":  chosen_cost,
         "reason": "argmin_expected_cost",
     })
     OUT_PATH.parent.mkdir(parents=True, exist_ok=True)
