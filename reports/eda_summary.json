@@ -1,0 +1,294 @@
+{
+  "rows": 1000000,
+  "cols": 34,
+  "fraud_rate_overall": 0.011029,
+  "fraud_rate_by_month": {
+    "0": 0.011325883418906675,
+    "1": 0.009387243378780755,
+    "2": 0.008745866154666044,
+    "3": 0.009222451900143107,
+    "4": 0.011371200789405674,
+    "5": 0.01182504630289215,
+    "6": 0.013405073589231566,
+    "7": 0.014745515938167962
+  },
+  "train_fraud_rate": 0.010252972053701372,
+  "test_fraud_rate": 0.014038271117159567,
+  "numeric_summary": {
+    "count": {
+      "customer_age": 1000000.0,
+      "proposed_credit_limit": 1000000.0,
+      "velocity_6h": 1000000.0,
+      "velocity_24h": 1000000.0,
+      "credit_risk_score": 1000000.0,
+      "intended_balcon_amount": 1000000.0
+    },
+    "mean": {
+      "customer_age": 33.68908,
+      "proposed_credit_limit": 515.85101,
+      "velocity_6h": 5665.296604795272,
+      "velocity_24h": 4769.781964962278,
+      "credit_risk_score": 130.989595,
+      "intended_balcon_amount": 8.66149853717249
+    },
+    "std": {
+      "customer_age": 12.025798658443993,
+      "proposed_credit_limit": 487.55990185477486,
+      "velocity_6h": 3009.380665329911,
+      "velocity_24h": 1479.2126120157122,
+      "credit_risk_score": 69.68181240676046,
+      "intended_balcon_amount": 20.23615460624682
+    },
+    "min": {
+      "customer_age": 10.0,
+      "proposed_credit_limit": 190.0,
+      "velocity_6h": -170.60307235124628,
+      "velocity_24h": 1300.3073144849477,
+      "credit_risk_score": -170.0,
+      "intended_balcon_amount": -15.530554840076814
+    },
+    "1%": {
+      "customer_age": 10.0,
+      "proposed_credit_limit": 200.0,
+      "velocity_6h": 695.5937495835973,
+      "velocity_24h": 2021.4077101693638,
+      "credit_risk_score": -14.0,
+      "intended_balcon_amount": -1.8312656308070083
+    },
+    "5%": {
+      "customer_age": 20.0,
+      "proposed_credit_limit": 200.0,
+      "velocity_6h": 1273.4488905958794,
+      "velocity_24h": 2572.498635835725,
+      "credit_risk_score": 28.0,
+      "intended_balcon_amount": -1.588010844213971
+    },
+    "50%": {
+      "customer_age": 30.0,
+      "proposed_credit_limit": 200.0,
+      "velocity_6h": 5319.769349162381,
+      "velocity_24h": 4749.9211611050905,
+      "credit_risk_score": 122.0,
+      "intended_balcon_amount": -0.830506544712849
+    },
+    "95%": {
+      "customer_age": 50.0,
+      "proposed_credit_limit": 1500.0,
+      "velocity_6h": 11234.629809982196,
+      "velocity_24h": 7348.990590963577,
+      "credit_risk_score": 255.0,
+      "intended_balcon_amount": 50.39400298407584
+    },
+    "99%": {
+      "customer_age": 60.0,
+      "proposed_credit_limit": 1500.0,
+      "velocity_6h": 13932.187847492492,
+      "velocity_24h": 8597.047787729944,
+      "credit_risk_score": 305.0,
+      "intended_balcon_amount": 100.82652396521567
+    },
+    "max": {
+      "customer_age": 90.0,
+      "proposed_credit_limit": 2100.0,
+      "velocity_6h": 16715.565404174275,
+      "velocity_24h": 9506.896596111665,
+      "credit_risk_score": 389.0,
+      "intended_balcon_amount": 112.9569276953714
+    },
+    "skew": {
+      "customer_age": 0.4780788141693705,
+      "proposed_credit_limit": 1.3014099769019427,
+      "velocity_6h": 0.5626820852821413,
+      "velocity_24h": 0.3311335573391996,
+      "credit_risk_score": 0.2958953785899287,
+      "intended_balcon_amount": 2.5071733898277992
+    }
+  },
+  "top_point_biserial": [
+    {
+      "feature": "credit_risk_score",
+      "r": 0.07062363179618894,
+      "abs_r": 0.07062363179618894,
+      "p_value": 0.0
+    },
+    {
+      "feature": "proposed_credit_limit",
+      "r": 0.06890662898976002,
+      "abs_r": 0.06890662898976002,
+      "p_value": 0.0
+    },
+    {
+      "feature": "amount_proxy",
+      "r": 0.06890662898976002,
+      "abs_r": 0.06890662898976002,
+      "p_value": 0.0
+    },
+    {
+      "feature": "customer_age",
+      "r": 0.06295865025001492,
+      "abs_r": 0.06295865025001492,
+      "p_value": 0.0
+    },
+    {
+      "feature": "keep_alive_session",
+      "r": -0.05029641281959583,
+      "abs_r": 0.05029641281959583,
+      "p_value": 0.0
+    },
+    {
+      "feature": "income",
+      "r": 0.04507917449209755,
+      "abs_r": 0.04507917449209755,
+      "p_value": 0.0
+    },
+    {
+      "feature": "date_of_birth_distinct_emails_4w",
+      "r": -0.043223705636284145,
+      "abs_r": 0.043223705636284145,
+      "p_value": 0.0
+    },
+    {
+      "feature": "name_email_similarity",
+      "r": -0.036719635834956625,
+      "abs_r": 0.036719635834956625,
+      "p_value": 2.2555045287380443e-295
+    },
+    {
+      "feature": "device_distinct_emails_8w",
+      "r": 0.03570411312756105,
+      "abs_r": 0.03570411312756105,
+      "p_value": 2.2755392243268333e-279
+    },
+    {
+      "feature": "has_other_cards",
+      "r": -0.03515636818447662,
+      "abs_r": 0.03515636818447662,
+      "p_value": 6.347503401315166e-271
+    },
+    {
+      "feature": "phone_home_valid",
+      "r": -0.03512781487305028,
+      "abs_r": 0.03512781487305028,
+      "p_value": 1.7348994849359312e-270
+    },
+    {
+      "feature": "current_address_months_count",
+      "r": 0.03370121908267578,
+      "abs_r": 0.03370121908267578,
+      "p_value": 4.0220816728626835e-249
+    },
+    {
+      "feature": "email_is_free",
+      "r": 0.02775760841377015,
+      "abs_r": 0.02775760841377015,
+      "p_value": 1.2167188766400944e-169
+    },
+    {
+      "feature": "prev_address_months_count",
+      "r": -0.026030691362931086,
+      "abs_r": 0.026030691362931086,
+      "p_value": 1.9858314927287924e-149
+    },
+    {
+      "feature": "intended_balcon_amount",
+      "r": -0.024524446662324673,
+      "abs_r": 0.024524446662324673,
+      "p_value": 7.408216720922503e-133
+    }
+  ],
+  "top_correlated_pairs": [
+    {
+      "a": "proposed_credit_limit",
+      "b": "amount_proxy",
+      "r": 1.0,
+      "abs_r": 1.0
+    },
+    {
+      "a": "credit_risk_score",
+      "b": "amount_proxy",
+      "r": 0.6061414475223205,
+      "abs_r": 0.6061414475223205
+    },
+    {
+      "a": "credit_risk_score",
+      "b": "proposed_credit_limit",
+      "r": 0.6061414475223205,
+      "abs_r": 0.6061414475223205
+    },
+    {
+      "a": "velocity_24h",
+      "b": "velocity_4w",
+      "r": 0.53911473300906,
+      "abs_r": 0.53911473300906
+    },
+    {
+      "a": "velocity_6h",
+      "b": "velocity_24h",
+      "r": 0.46400292568279033,
+      "abs_r": 0.46400292568279033
+    },
+    {
+      "a": "customer_age",
+      "b": "date_of_birth_distinct_emails_4w",
+      "r": -0.4201727103242685,
+      "abs_r": 0.4201727103242685
+    },
+    {
+      "a": "velocity_6h",
+      "b": "velocity_4w",
+      "r": 0.40025437082039844,
+      "abs_r": 0.40025437082039844
+    },
+    {
+      "a": "zip_count_4w",
+      "b": "velocity_4w",
+      "r": 0.3029554268300212,
+      "abs_r": 0.3029554268300212
+    },
+    {
+      "a": "phone_home_valid",
+      "b": "phone_mobile_valid",
+      "r": -0.27239211622743775,
+      "abs_r": 0.27239211622743775
+    },
+    {
+      "a": "prev_address_months_count",
+      "b": "current_address_months_count",
+      "r": -0.27173013622970005,
+      "abs_r": 0.27173013622970005
+    }
+  ],
+  "outlier_report": {
+    "proposed_credit_limit": {
+      "q1": 200.0,
+      "q3": 500.0,
+      "iqr": 300.0,
+      "lo_bound": -250.0,
+      "hi_bound": 950.0,
+      "n_below": 0,
+      "n_above": 241742,
+      "pct_flagged": 0.241742,
+      "min": 190.0,
+      "max": 2100.0
+    },
+    "customer_age": {
+      "q1": 20.0,
+      "q3": 40.0,
+      "iqr": 20.0,
+      "lo_bound": -10.0,
+      "hi_bound": 70.0,
+      "n_below": 0,
+      "n_above": 1373,
+      "pct_flagged": 0.001373,
+      "min": 10.0,
+      "max": 90.0
+    }
+  },
+  "categorical_unique_counts": {
+    "payment_type": 5,
+    "employment_status": 7,
+    "housing_status": 7,
+    "source": 2,
+    "device_os": 5
+  }
+}
