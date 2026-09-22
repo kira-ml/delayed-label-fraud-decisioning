@@ -22,6 +22,7 @@ deliverable described in docs/evaluation_protocol.md §4.
 from __future__ import annotations
 
 import argparse
+import subprocess
 import sys
 import time
 from typing import Callable
@@ -88,6 +89,15 @@ def _print_list() -> None:
         print(f"  {i}. {name}")
 
 
+def _run_analyses() -> None:
+    """Run the standalone sensitivity and bootstrap analyses."""
+    for module in ("src.evaluation.sensitivity", "src.evaluation.bootstrap"):
+        print("=" * 60)
+        print(f"Analysis: {module}")
+        print("=" * 60)
+        subprocess.run([sys.executable, "-m", module], check=True)
+
+
 def main() -> None:
     parser = argparse.ArgumentParser(
         description="Run the fraud decisioning pipeline(s)."
@@ -109,6 +119,10 @@ def main() -> None:
         "--list", action="store_true",
         help="print the step order for both pipelines and exit",
     )
+    parser.add_argument(
+        "--analyses", action="store_true",
+        help="after the supplementary pipeline, also run sensitivity + bootstrap",
+    )
     args = parser.parse_args()
 
     if args.list:
@@ -123,6 +137,9 @@ def main() -> None:
     else:
         # Default: supplementary only (backwards-compatible)
         _run_pipeline("Supplementary", SUPPLEMENTARY_STEPS)
+
+    if args.analyses:
+        _run_analyses()
 
 
 if __name__ == "__main__":
