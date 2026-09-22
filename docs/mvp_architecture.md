@@ -47,7 +47,7 @@ flowchart LR
     C --> D[Preprocessing]
     D --> E[Train / Test Split]
     E --> F[3-Algorithm Training]
-    F --> G[5-Fold CV Comparison]
+    F --> G[5-Fold CV Comparison - Expanding Window by Month]
     G --> H[Model Selection]
     H --> I[Final Test Evaluation]
     H --> J[Save Best Model + Pipeline]
@@ -459,8 +459,9 @@ Each supplementary component is a single script with one job.
 
 - **Inputs:** supplementary `test.parquet`, `artifacts/model.txt`
 - **Output:** `scored_test.parquet`
-- **Does:** Loads model, rebuilds category mapping (train ∪ val), computes
-  `p_fraud`, asserts `0 ≤ p_fraud ≤ 1`
+- **Does:** Loads model and the training-time category mapping from
+  `artifacts/categories.json`, computes `p_fraud`, asserts
+  `0 <= p_fraud <= 1`
 - **Does not:** threshold, decide, log
 
 ### 7.6 `src/policy/decide.py`
@@ -565,7 +566,7 @@ python -m src.evaluation.bootstrap     # writes reports/bootstrap.md
 
 ```bash
 pytest
-# 13 passed in ~1.4s
+# 60 passed
 ```
 
 If any step fails, the pipeline fails loudly. Do not swallow errors.
