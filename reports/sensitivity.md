@@ -10,12 +10,12 @@ Base config: `{'fraud_loss': 1.0, 'false_positive_cost': 0.1, 'review_cost': 0.0
 
 | Config                       |    Policy | Strongest base |      Cost |      Adv |
 |------------------------------|-----------|----------------|-----------|----------|
-| baseline                     | 0.007566 | LightGBM+0.5   | 0.017543 |   56.87% |
-| false_positive_cost=0.05     | 0.007055 | LightGBM+0.5   | 0.017480 |   59.64% |
-| false_positive_cost=0.2      | 0.007845 | LightGBM+0.5   | 0.017670 |   55.60% |
-| review_cost=0.01             | 0.006217 | LightGBM+0.5   | 0.017543 |   64.56% |
-| review_cost=0.04             | 0.009393 | LightGBM+0.5   | 0.017543 |   46.46% |
-| residual_fraud_loss=0.15     | 0.006644 | LightGBM+0.5   | 0.017543 |   62.13% |
-| residual_fraud_loss=0.6      | 0.008783 | LightGBM+0.5   | 0.017543 |   49.94% |
+| baseline                     | 0.007621 | LightGBM+0.5   | 0.017749 |   57.06% |
+| false_positive_cost=0.05     | 0.007087 | LightGBM+0.5   | 0.017686 |   59.93% |
+| false_positive_cost=0.2      | 0.007858 | LightGBM+0.5   | 0.017875 |   56.04% |
+| review_cost=0.01             | 0.006294 | LightGBM+0.5   | 0.017749 |   64.54% |
+| review_cost=0.04             | 0.009396 | LightGBM+0.5   | 0.017749 |   47.06% |
+| residual_fraud_loss=0.15     | 0.006677 | LightGBM+0.5   | 0.017749 |   62.38% |
+| residual_fraud_loss=0.6      | 0.008850 | LightGBM+0.5   | 0.017749 |   50.14% |
 
 One-at-a-time variation. Amount scaling is held fixed at the train-calibrated rate. Decisions are recomputed at each setting; the model is not retrained.

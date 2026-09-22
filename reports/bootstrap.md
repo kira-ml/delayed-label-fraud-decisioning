@@ -9,9 +9,9 @@ Resampling: 1000 iterations, seed=42, n=227,491
 
 | Quantity | Point estimate | 95% CI |
 |---|---:|---|
-| Policy cost/txn | 0.007566 | [0.007277, 0.007874] |
-| LightGBM + 0.5 cost/txn | 0.017543 | [0.016732, 0.018336] |
-| Difference (baseline − policy) | 0.009977 | [0.009257, 0.010686] |
-| Advantage (%) | 56.87% | [52.77%, 60.91%] |
+| Policy cost/txn | 0.007621 | [0.007331, 0.007918] |
+| LightGBM + 0.5 cost/txn | 0.017749 | [0.016918, 0.018619] |
+| Difference (baseline − policy) | 0.010128 | [0.009436, 0.010869] |
+| Advantage (%) | 57.06% | [53.16%, 61.24%] |
 
 **Difference CI excludes zero:** True

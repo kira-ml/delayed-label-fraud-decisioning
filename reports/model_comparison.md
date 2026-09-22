@@ -6,11 +6,11 @@
 
 ## Cross-Validation Results
 
-| Algorithm | Macro F1 (mean ± SD) | Accuracy | Precision (fraud) | Recall (fraud) | ROC-AUC |
+| Algorithm | Macro F1 (mean Â± SD) | Accuracy | Precision (fraud) | Recall (fraud) | ROC-AUC |
 |---|---|---|---|---|---|
-| logistic_regression | 0.4773 ± 0.0186 | 0.7900 | 0.0386 | 0.8028 | 0.8792 |
-| random_forest | 0.4975 ± 0.0003 | 0.9900 | 0.0000 | 0.0000 | 0.8414 |
-| lightgbm | 0.5344 ± 0.0139 | 0.9890 | 0.2426 | 0.0450 | 0.8802 |
+| logistic_regression | 0.4773 Â± 0.0186 | 0.7900 | 0.0386 | 0.8028 | 0.8792 |
+| random_forest | 0.4975 Â± 0.0003 | 0.9900 | 0.0000 | 0.0000 | 0.8414 |
+| lightgbm | 0.5344 Â± 0.0139 | 0.9890 | 0.2426 | 0.0450 | 0.8802 |
 
 ## Final Test Results
 
