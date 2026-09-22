@@ -76,8 +76,8 @@ utility = fraud loss avoided
    and feature selection are identical across algorithms except where the
    algorithm's mathematical requirements differ (e.g. Logistic Regression
    requires scaling; tree models do not). Any difference is documented.
-3. **Same cross-validation strategy.** 5-fold time-series CV on the training
-   data, identical folds for all three algorithms.
+3. **Same cross-validation strategy.** 5-fold expanding-window CV by month
+   on the training data, identical folds for all three algorithms.
 4. **Same primary metric.** Macro F1, reported with mean and variability
    across folds.
 5. **Test set untouched until final evaluation.** No model selection,
@@ -112,7 +112,7 @@ to the primary deliverable.
 | Train split | Months 0–5 (~80%) |
 | Test split | Months 6–7 (~20%) |
 | Split type | Chronological (justified alternative to random 80/20) |
-| Cross-validation | 5-fold time-series CV on training data |
+| Cross-validation | 5-fold expanding-window by month (train months 0..k, validate month k+1) |
 
 The chronological split is used instead of a random 80/20 split because the
 course explicitly requires chronological splits for time-ordered data:
@@ -131,7 +131,7 @@ permitted by the course.
 |---|---|---|---|
 | 1 | Logistic Regression | Linear baseline; interpretable | `class_weight='balanced'` |
 | 2 | Random Forest | Non-linear ensemble; robust | `class_weight='balanced_subsample'` |
-| 3 | LightGBM | Gradient boosting; strong tabular performance | `is_unbalance=True` |
+| 3 | LightGBM | Gradient boosting; strong tabular performance | None (cost matrix handles asymmetry) |
 
 **Prohibited algorithms** (explicitly disallowed by the course): neural
 networks, deep learning, CNNs, RNNs, transformers, LLMs, pretrained
@@ -157,7 +157,8 @@ Any deviation from this table must be documented and justified.
 ### 4.4 Hyperparameter Tuning
 
 Each algorithm receives a small, documented grid search. Tuning is performed
-**on training folds only**, using the same 5-fold time-series CV.
+**on training folds only**, using the same 5-fold expanding-window CV by month
+(train months 0..k, validate month k+1).
 
 The grids are documented in `reports/model_comparison.md`. The following
 rules apply:
@@ -194,7 +195,7 @@ rules apply:
 
 | Step | Detail |
 |---|---|
-| Cross-validation | 5-fold, time-series, contiguous folds |
+| Cross-validation | 5-fold expanding-window by month |
 | Folds | Identical across all three algorithms |
 | Primary metric | Mean Macro F1 across folds |
 | Variability | Standard deviation of Macro F1 across folds |
@@ -284,7 +285,10 @@ E[cost(block)]   = (1 - p) * false_positive_cost
 action = argmin over {approve, review, block}
 ```
 
-Where `p` is the model's predicted fraud probability.
+Where `p` is the predicted fraud probability from the dedicated LightGBM
+baseline trained on the supplementary chronological split (months 0–2,
+validated on 3–4, tested on 5–6). This is not the primary selected
+classifier.
 
 When `amount_scaled: true`, `fraud_loss` becomes per-row:
 `fraud_loss(amount) = amount × fraud_loss_rate`. The formula is otherwise
@@ -666,7 +670,7 @@ extension.
 
 - [ ] Three algorithms implemented: Logistic Regression, Random Forest, LightGBM
 - [ ] Chronological 80/20 split defined
-- [ ] 5-fold time-series CV folds defined
+- [ ] 5-fold expanding-window CV by month defined
 - [ ] Preprocessing fit within each fold's training portion
 - [ ] Hyperparameter grids documented per algorithm
 - [ ] Cross-validation results table complete (mean ± SD)

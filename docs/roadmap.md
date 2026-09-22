@@ -60,7 +60,7 @@ If any of these is violated, the roadmap is not being followed.
 - **Exactly three traditional algorithms:** Logistic Regression, Random
   Forest, LightGBM
 - Fair experimental design: same split, same preprocessing, same 5-fold
-  time-series CV, same primary metric (Macro F1)
+  expanding-window CV by month, same primary metric (Macro F1)
 - Documented hyperparameter tuning
 - Model selection based on validation results
 - Final evaluation once on the untouched test set
@@ -165,7 +165,7 @@ and applied unchanged to test data.
 7. Handle class imbalance:
    - Logistic Regression: `class_weight='balanced'`
    - Random Forest: `class_weight='balanced_subsample'`
-   - LightGBM: `is_unbalance=True`
+   - LightGBM: none (asymmetry is handled by the cost matrix)
 8. Save the pipeline to `models/preprocessing.pkl`
 9. Document leakage prevention: preprocessing fit only on training folds
 
@@ -195,7 +195,8 @@ identical conditions.
 1. Define the chronological 80/20 split:
    - Train: months 0–5
    - Test: months 6–7
-2. Define 5-fold time-series CV on the training split
+2. Define 5-fold expanding-window CV by month on the training split
+   (train months 0..k, validate month k+1)
 3. For each algorithm:
    - Define a small hyperparameter grid
    - Run grid search within the CV folds

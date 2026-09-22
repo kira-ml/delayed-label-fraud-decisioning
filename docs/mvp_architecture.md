@@ -87,7 +87,7 @@ flowchart LR
 
 - Both layers use the **Bank Account Fraud (BAF) `Base.csv` dataset**.
 - The primary layer uses a **chronological 80/20 split** with 5-fold
-  time-series cross-validation.
+  expanding-window CV by month.
 - The supplementary layer uses a **chronological train / validation / test
   split** with a 1-month delay regime.
 - The primary layer produces the **classification metrics** required by the
@@ -327,10 +327,11 @@ cross-validation folds, and the chronological split are documented in:
 Hardcoded primary parameters:
 
 - Chronological split: train months 0–5, test months 6–7
-- Cross-validation: 5-fold time-series
+- Cross-validation: 5-fold expanding-window by month
 - Primary metric: Macro F1
 - Class imbalance handling: `class_weight='balanced'` (LR),
-  `class_weight='balanced_subsample'` (RF), `is_unbalance=True` (LGBM)
+  `class_weight='balanced_subsample'` (RF), none (LGBM; asymmetry is
+  handled by the cost matrix, not the training objective)
 
 If you change any of these, update `docs/evaluation_protocol.md` and
 `docs/data_card.md` first.
@@ -380,7 +381,7 @@ Each primary component is a script or notebook with one job.
   - Trains Logistic Regression with documented grid
   - Trains Random Forest with documented grid
   - Trains LightGBM with documented grid
-  - Runs 5-fold time-series CV for each
+  - Runs 5-fold expanding-window CV by month for each
   - Reports mean ± SD of Macro F1 per fold
   - Tracks supporting metrics: accuracy, per-class precision/recall/F1,
     ROC-AUC
@@ -678,7 +679,7 @@ Test each step manually before moving to the next.
 - [ ] Data dictionary complete (`documentation/data_dictionary.md`)
 - [ ] Preprocessing pipeline saved to `models/preprocessing.pkl`
 - [ ] Chronological 80/20 split implemented
-- [ ] 5-fold time-series CV implemented
+- [ ] 5-fold expanding-window CV by month implemented
 - [ ] Logistic Regression trained and tuned
 - [ ] Random Forest trained and tuned
 - [ ] LightGBM trained and tuned

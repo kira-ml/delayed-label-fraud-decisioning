@@ -86,7 +86,8 @@ Understand the built system before the plan.
 
 | Report | Contents |
 |---|---|
-| [`mvp_backtest.md`](../reports/mvp_backtest.md) | Primary deliverable: baseline comparison, sensitivity, bootstrap, stopping decisions |
+| [`model_comparison.md`](../reports/model_comparison.md) | Primary course deliverable: 3-algorithm CV comparison, final test results, selection justification, failure analysis |
+| [`mvp_backtest.md`](../reports/mvp_backtest.md) | Supplementary deliverable: baseline comparison, sensitivity, bootstrap, stopping decisions |
 | [`sensitivity.md`](../reports/sensitivity.md) | Full cost sensitivity table |
 | [`bootstrap.md`](../reports/bootstrap.md) | 95% confidence intervals on cost per transaction |
 

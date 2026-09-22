@@ -229,8 +229,9 @@ Exact row counts are documented in §5.4.
 
 ### 5.3 Cross-Validation
 
-Model selection and hyperparameter tuning use **5-fold time-series
-cross-validation** on the training data.
+Model selection and hyperparameter tuning use **5-fold expanding-window
+cross-validation by month** on the training data (train months 0..k,
+validate month k+1).
 
 - Folds are contiguous in time (no shuffling).
 - Each fold's validation set is strictly after its training set.
@@ -242,12 +243,12 @@ cross-validation** on the training data.
 
 | Split | Months | Rows | Fraud rate |
 |---|---|---:|---:|
-| Train | 0, 1, 2, 3, 4, 5 | TBD | TBD |
-| Test | 6, 7 | TBD | TBD |
+| Train | 0, 1, 2, 3, 4, 5 | 794,989 | 1.0253% |
+| Test | 6, 7 | 205,011 | 1.4038% |
 | **Total** | | **1,000,000** | **1.1029%** |
 
-*Rows per month are approximately uniform. Exact counts will be filled in
-after the EDA notebook produces the month-by-month breakdown.*
+Rows per month are approximately uniform. Counts above are the verified
+split produced by `src/data/primary_split.py`.
 
 ### 5.5 Test Set Discipline
 
@@ -442,7 +443,7 @@ Fraud is 1.1029% of transactions. This imbalance is addressed through:
 |---|---|
 | Logistic Regression | `class_weight='balanced'` |
 | Random Forest | `class_weight='balanced_subsample'` |
-| LightGBM | `is_unbalance=True` (or equivalent scale_pos_weight) |
+| LightGBM | None (no class weighting; asymmetry is handled by the cost matrix) |
 
 Exact hyperparameter values are documented in `reports/model_comparison.md`.
 
@@ -554,7 +555,7 @@ python -m src.pipeline
 - [ ] Dataset source and license documented
 - [ ] Data dictionary complete (`documentation/data_dictionary.md`)
 - [ ] Chronological 80/20 split defined and saved
-- [ ] 5-fold time-series CV folds defined
+- [ ] 5-fold expanding-window CV by month defined
 - [ ] Class imbalance handling documented per algorithm
 - [ ] Preprocessing rules documented
 - [ ] Leakage audit checklist completed

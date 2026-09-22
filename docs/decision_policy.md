@@ -1,4 +1,4 @@
-# Decision Policy
+﻿# Decision Policy
 
 > **Repository:** `delayed-label-fraud-decisioning`  
 > **Course:** Introduction to Machine Learning — Final Group Project  
@@ -42,9 +42,12 @@ not the primary course deliverable.
 - **Supplementary deliverable (project depth):** Cost-sensitive decision
   policy under delayed labels — described in this document.
 
-The policy consumes the predicted probability `p` produced by the classifier
-selected in the primary comparison. It does not replace the classification
-task; it extends it into an operational decision.
+The policy consumes the predicted probability `p` produced by a dedicated
+LightGBM baseline trained on the supplementary chronological split
+(months 0–2, validated on 3–4, tested on 5–6). It does **not** reuse the
+classifier selected in the primary comparison. The supplementary analysis is
+a separate chronological experiment; it does not replace the primary
+classification task.
 
 ---
 
