@@ -1,0 +1,51 @@
+"""End-to-end: all pipeline artifacts exist and match the documented schema."""
+from pathlib import Path
+import pandas as pd
+import pytest
+
+REQUIRED_ARTIFACTS = [
+    "data/interim/transactions.parquet",
+    "data/interim/labeled.parquet",
+    "data/processed/train.parquet",
+    "data/processed/val.parquet",
+    "data/processed/test.parquet",
+    "data/processed/scored_test.parquet",
+    "data/processed/action_log.parquet",
+    "data/processed/primary_train.parquet",
+    "data/processed/primary_test.parquet",
+    "models/best_model.pkl",
+    "models/preprocessing.pkl",
+    "reports/model_comparison.md",
+    "reports/mvp_backtest.md",
+]
+
+
+@pytest.mark.parametrize("path", REQUIRED_ARTIFACTS)
+def test_artifact_exists(path):
+    assert Path(path).exists(), f"missing artifact: {path}"
+
+
+def test_action_log_schema():
+    log = pd.read_parquet("data/processed/action_log.parquet")
+    required = {
+        "transaction_id", "month", "p_fraud", "action",
+        "expected_cost_approve", "expected_cost_review", "expected_cost_block",
+        "chosen_expected_cost", "reason",
+    }
+    missing = required - set(log.columns)
+    assert not missing, f"action log missing columns: {missing}"
+
+
+def test_action_log_actions_are_valid():
+    log = pd.read_parquet("data/processed/action_log.parquet")
+    assert set(log["action"].unique()) <= {"approve", "review", "block"}
+
+
+def test_action_log_chosen_cost_is_min():
+    """chosen_expected_cost must equal min of the three option costs."""
+    log = pd.read_parquet("data/processed/action_log.parquet")
+    computed = log[["expected_cost_approve",
+                    "expected_cost_review",
+                    "expected_cost_block"]].min(axis=1)
+    diff = (log["chosen_expected_cost"] - computed).abs().max()
+    assert diff < 1e-9, f"argmin violation, max diff = {diff}"
