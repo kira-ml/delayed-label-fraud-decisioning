@@ -152,14 +152,18 @@ def main() -> None:
     print(f"\n[evaluate_compare] Saved model -> {MODEL_PATH}")
     print(f"[evaluate_compare] Saved preprocessing -> {PREPROC_PATH}")
 
-    # Append a final-test section to the report
-    with open(FINAL_REPORT, "a", encoding="utf-8") as f:
-        f.write("\n\n## Final Test Results\n\n")
-        f.write(f"Selected algorithm: **{best_alg}**\n\n")
-        f.write("| Metric | Value |\n|---|---|\n")
-        for k, v in metrics.items():
-            f.write(f"| {k} | {v} |\n")
-        f.write(f"\nConfusion matrix (rows=true, cols=pred): `{cm}`\n")
+    # Write a final-test section to the report (idempotent on re-runs)
+    marker = "\n\n## Final Test Results\n"
+    text = FINAL_REPORT.read_text(encoding="utf-8")
+    if marker in text:
+        text = text.split(marker, 1)[0]
+    body = ["\n\n## Final Test Results\n\n",
+            f"Selected algorithm: **{best_alg}**\n\n",
+            "| Metric | Value |\n|---|---|\n"]
+    for k, v in metrics.items():
+        body.append(f"| {k} | {v} |\n")
+    body.append(f"\nConfusion matrix (rows=true, cols=pred): `{cm}`\n")
+    FINAL_REPORT.write_text(text + "".join(body), encoding="utf-8")
 
 
 if __name__ == "__main__":

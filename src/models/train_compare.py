@@ -114,7 +114,7 @@ def main() -> None:
             print(f"  {alg:<22} Macro F1 = {m['macro_f1']:.4f}")
 
     # Persist raw results for evaluate_compare.py
-    RESULTS_PATH.write_text(json.dumps(results, indent=2))
+    RESULTS_PATH.write_text(json.dumps(results, indent=2), encoding="utf-8")
 
     # Markdown report
     lines = ["# Model Comparison: Primary 3-Algorithm Study\n",
@@ -135,7 +135,7 @@ def main() -> None:
             f"{np.mean(accs):.4f} | {np.mean(precs):.4f} | "
             f"{np.mean(recs):.4f} | {np.nanmean(aucs):.4f} |"
         )
-    REPORT_PATH.write_text("\n".join(lines))
+    REPORT_PATH.write_text("\n".join(lines), encoding="utf-8")
     print(f"\n[train_compare] Wrote {REPORT_PATH}")
     print(f"[train_compare] Wrote {RESULTS_PATH}")
 
