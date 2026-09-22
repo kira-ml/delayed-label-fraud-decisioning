@@ -42,7 +42,13 @@ data/backup/
 # Model artifacts
 # ----------------------------
 /artifacts/
-/models/
+# Models: allow deployment artifacts
+/models/*
+!/models/best_model.pkl
+!/models/preprocessing.pkl
+!/models/feature_columns.json
+!/models/feature_defaults.json
+!/models/feature_importances.json
 checkpoints/
 *.ckpt
 *.pt
@@ -153,6 +159,8 @@ reports/*.svg
 
 # Keep markdown reports
 !reports/*.md
+
+!reports/cv_results.json
 !reports/.gitkeep
 
 # ----------------------------
