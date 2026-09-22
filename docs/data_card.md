@@ -56,7 +56,7 @@ design.
 | Time column | `month`, integer, values 0–7 |
 | Time granularity | **Month-level only** — no day-level timestamp |
 | Overall fraud rate | 1.1029% |
-| Storage | `data/raw/baf/Base.csv` |
+| Storage | `data/original/Base.csv` (course-required layout; legacy path `data/raw/baf/Base.csv` is also accepted) |
 
 **Why chosen:**
 

@@ -43,7 +43,10 @@ def main() -> None:
         "metric": "auc",
         "seed": SEED,
         "verbose": -1,
-        "is_unbalance": True,
+        # NOTE: no is_unbalance / scale_pos_weight here. The cost-sensitive
+        # policy assumes calibrated probabilities. Class reweighting shifts
+        # the outputs by ~90x and makes E[cost] incorrect. Asymmetry is
+        # handled by the cost matrix, not by the training objective.
     }
 
     dtrain = lgb.Dataset(X_train, y_train)
