@@ -1,51 +1,65 @@
+"""Train the supplementary LightGBM baseline on the chronological split."""
+from pathlib import Path
 import pandas as pd
 import lightgbm as lgb
-from src.common import DATA_PROCESSED, ARTIFACTS, feature_columns
 
-TRAIN = DATA_PROCESSED / "train.parquet"
-VAL = DATA_PROCESSED / "val.parquet"
-MODEL_OUT = ARTIFACTS / "model.txt"
+from src.common import FEATURE_EXCLUDE, CATEGORICAL_COLS, SEED
+from src.models.preprocess import get_feature_columns
 
-PARAMS = {
-    "objective": "binary",
-    "metric": ["auc", "binary_logloss"],
-    "verbosity": -1,
-    "seed": 42,
-    "num_threads": 0,
-}
+TRAIN_PATH = Path("data/processed/train.parquet")
+VAL_PATH = Path("data/processed/val.parquet")
+MODEL_PATH = Path("artifacts/model.txt")
 
 
-def run():
-    train = pd.read_parquet(TRAIN)
-    val = pd.read_parquet(VAL)
+def _prepare(df: pd.DataFrame, features: list[str],
+             categories: dict | None = None) -> pd.DataFrame:
+    X = df[features].copy()
+    for c in CATEGORICAL_COLS:
+        if c not in X.columns:
+            continue
+        if categories and c in categories:
+            X[c] = pd.Categorical(X[c], categories=categories[c])
+        else:
+            X[c] = X[c].astype("category")
+    return X
 
-    feats = feature_columns(train)
-    print(f"[train] {len(feats)} features, train={len(train):,} val={len(val):,}")
 
-    # Convert object/string columns to pandas category with a shared category set.
-    cat_cols = [c for c in feats if train[c].dtype == "object"]
-    print(f"[train] categorical columns: {cat_cols}")
-    for c in cat_cols:
-        cats = sorted(set(train[c].dropna().unique()) | set(val[c].dropna().unique()))
-        train[c] = pd.Categorical(train[c], categories=cats)
-        val[c] = pd.Categorical(val[c], categories=cats)
+def main() -> None:
+    MODEL_PATH.parent.mkdir(parents=True, exist_ok=True)
+    train = pd.read_parquet(TRAIN_PATH)
+    val = pd.read_parquet(VAL_PATH)
 
-    dtrain = lgb.Dataset(train[feats], label=train["fraud_bool"])
-    dval = lgb.Dataset(val[feats], label=val["fraud_bool"], reference=dtrain)
+    features = get_feature_columns(train)
+    X_train = _prepare(train, features)
+    X_val = _prepare(val, features, categories={
+        c: X_train[c].cat.categories
+        for c in CATEGORICAL_COLS if c in X_train.columns
+    })
+    y_train = train["fraud_bool"]
+    y_val = val["fraud_bool"]
 
-    booster = lgb.train(
-        PARAMS,
+    params = {
+        "objective": "binary",
+        "metric": "auc",
+        "seed": SEED,
+        "verbose": -1,
+        "is_unbalance": True,
+    }
+
+    dtrain = lgb.Dataset(X_train, y_train)
+    dval = lgb.Dataset(X_val, y_val, reference=dtrain)
+
+    model = lgb.train(
+        params,
         dtrain,
-        num_boost_round=2000,
+        num_boost_round=1000,
         valid_sets=[dval],
-        valid_names=["val"],
-        callbacks=[lgb.early_stopping(50, verbose=False), lgb.log_evaluation(100)],
+        callbacks=[lgb.early_stopping(50, verbose=False)],
     )
-
-    booster.save_model(str(MODEL_OUT))
-    print(f"[train] best_iteration={booster.best_iteration}")
-    print(f"[train] saved {MODEL_OUT}")
+    model.save_model(str(MODEL_PATH))
+    print(f"[train_baseline] Best iteration: {model.best_iteration}")
+    print(f"[train_baseline] Saved model to {MODEL_PATH}")
 
 
 if __name__ == "__main__":
-    run()
+    main()

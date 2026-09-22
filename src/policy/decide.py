@@ -1,87 +1,85 @@
+"""Cost-sensitive decision policy: argmin of expected cost.
+
+This is the source of truth. Derived thresholds in the report are a
+diagnostic view only. See docs/decision_policy.md §5.4 and §6.5.
+"""
+from __future__ import annotations
+from pathlib import Path
 import numpy as np
 import pandas as pd
-from src.common import DATA_PROCESSED, load_costs
+import yaml
 
-IN = DATA_PROCESSED / "scored_test.parquet"
-OUT = DATA_PROCESSED / "action_log.parquet"
+SCORED_PATH = Path("data/processed/scored_test.parquet")
+COSTS_PATH = Path("configs/costs.yaml")
+OUT_PATH = Path("data/processed/action_log.parquet")
 
 ACTIONS = np.array(["approve", "review", "block"])
 
 
-def expected_costs(p, costs, amounts=None):
-    """Return (c_approve, c_review, c_block) arrays for probabilities p.
+def load_costs(path: Path = COSTS_PATH) -> dict:
+    with open(path) as f:
+        return yaml.safe_load(f)
 
-    If costs['amount_scaled'] is true, fraud_loss becomes per-row:
-        fraud_loss_i = amounts_i * fraud_loss_rate
-    Otherwise fraud_loss is the constant from costs['fraud_loss'].
 
-    residual_fraud_loss stays constant per decision_policy.md §7.
+def choose_actions(p: np.ndarray,
+                   costs: dict,
+                   amounts: np.ndarray | None = None):
+    """Pure argmin-of-expected-cost function.
+
+    Args:
+        p:        fraud probabilities, shape (n,)
+        costs:    dict with fraud_loss, false_positive_cost,
+                  review_cost, residual_fraud_loss, amount_scaled
+        amounts:  optional transaction amounts, shape (n,).
+                  Used only when costs['amount_scaled'] is True.
+
+    Returns:
+        actions:    np.ndarray of shape (n,) with values in ACTIONS
+        cost_matrix: np.ndarray of shape (n, 3) with [approve, review, block]
     """
-    fp = float(costs["false_positive_cost"])
-    rc = float(costs["review_cost"])
-    rfl = float(costs["residual_fraud_loss"])
     p = np.asarray(p, dtype=float)
+    n = len(p)
 
-    if costs.get("amount_scaled", False):
-        if amounts is None:
-            raise ValueError("amount_scaled=true requires the amounts array")
-        rate = float(costs["fraud_loss_rate"])
-        fl = np.asarray(amounts, dtype=float) * rate
+    if costs.get("amount_scaled", False) and amounts is not None:
+        amounts = np.asarray(amounts, dtype=float)
+        fraud_loss = amounts * float(costs["fraud_loss_rate"])
     else:
-        fl = float(costs["fraud_loss"])
+        fraud_loss = np.full(n, float(costs["fraud_loss"]))
 
-    c_app = p * fl
-    c_rev = rc + p * rfl
-    c_blk = (1.0 - p) * fp
-    return c_app, c_rev, c_blk
+    c_approve = p * fraud_loss
+    c_review = float(costs["review_cost"]) + p * float(costs["residual_fraud_loss"])
+    c_block = (1.0 - p) * float(costs["false_positive_cost"])
 
-
-def choose_actions(p, costs, amounts=None):
-    """Argmin over {approve, review, block} of expected cost."""
-    c_app, c_rev, c_blk = expected_costs(p, costs, amounts=amounts)
-    stacked = np.vstack([c_app, c_rev, c_blk])
-    idx = stacked.argmin(axis=0)
-    return ACTIONS[idx], stacked.min(axis=0), (c_app, c_rev, c_blk)
+    cost_matrix = np.column_stack([c_approve, c_review, c_block])
+    idx = np.argmin(cost_matrix, axis=1)
+    return ACTIONS[idx], cost_matrix
 
 
-def run():
+def main() -> None:
+    scored = pd.read_parquet(SCORED_PATH)
     costs = load_costs()
-    df = pd.read_parquet(IN)
-    p = df["p_fraud"].to_numpy()
-    amounts = df["amount_proxy"].to_numpy()
 
-    actions, chosen, (c_app, c_rev, c_blk) = choose_actions(p, costs, amounts=amounts)
+    amounts = (scored["amount_proxy"].values
+               if "amount_proxy" in scored.columns else None)
+    actions, cost_matrix = choose_actions(scored["p_fraud"].values, costs, amounts)
 
-    out = pd.DataFrame({
-        "transaction_id": df["transaction_id"].to_numpy(),
-        "month": df["month"].to_numpy(),
-        "p_fraud": p,
+    log = pd.DataFrame({
+        "transaction_id": scored["transaction_id"].values,
+        "month": scored["month"].values,
+        "p_fraud": scored["p_fraud"].values,
         "action": actions,
-        "expected_cost_approve": c_app,
-        "expected_cost_review": c_rev,
-        "expected_cost_block": c_blk,
-        "chosen_expected_cost": chosen,
+        "expected_cost_approve": cost_matrix[:, 0],
+        "expected_cost_review":  cost_matrix[:, 1],
+        "expected_cost_block":   cost_matrix[:, 2],
+        "chosen_expected_cost":  cost_matrix.min(axis=1),
         "reason": "argmin_expected_cost",
     })
-    out.to_parquet(OUT, index=False)
+    OUT_PATH.parent.mkdir(parents=True, exist_ok=True)
+    log.to_parquet(OUT_PATH, index=False)
 
-    counts = out["action"].value_counts().to_dict()
-    print(f"[decide] wrote {OUT.name}: {len(out):,} rows")
-    print(f"[decide] actions: {counts}")
-
-    if costs.get("amount_scaled", False):
-        print("[decide] amount_scaled=true: thresholds are amount-dependent "
-              "(see decision_policy.md §7)")
-        print(f"[decide] fraud_loss_rate={costs['fraud_loss_rate']}")
-    else:
-        fl = float(costs["fraud_loss"])
-        rc = float(costs["review_cost"])
-        rfl = float(costs["residual_fraud_loss"])
-        fp = float(costs["false_positive_cost"])
-        p_review = rc / (fl - rfl) if (fl - rfl) > 0 else float("nan")
-        p_block = (fp - rc) / (fp + rfl) if (fp + rfl) > 0 else float("nan")
-        print(f"[decide] derived thresholds: p_review={p_review:.4f}, p_block={p_block:.4f}")
+    print(f"[decide] Actions: {log['action'].value_counts().to_dict()}")
+    print(f"[decide] Wrote action log to {OUT_PATH}")
 
 
 if __name__ == "__main__":
-    run()
+    main()

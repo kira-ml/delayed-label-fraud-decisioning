@@ -1,26 +1,38 @@
-import pandas as pd
-from src.common import DATA_INTERIM
+"""Simulate the 1-month label delay regime.
 
-IN = DATA_INTERIM / "transactions.parquet"
-OUT = DATA_INTERIM / "labeled.parquet"
+Produces data/interim/labeled.parquet with two new columns:
+  - label_month = month + DELAY_MONTHS
+  - observed    = label_month <= LAST_MONTH
+"""
+from pathlib import Path
+import pandas as pd
+
+IN_PATH = Path("data/interim/transactions.parquet")
+OUT_PATH = Path("data/interim/labeled.parquet")
 
 DELAY_MONTHS = 1
 LAST_MONTH = 7
 
 
-def run():
-    df = pd.read_parquet(IN)
-    df["label_month"] = df["month"] + DELAY_MONTHS
-    df["observed"] = df["label_month"] <= LAST_MONTH
-
-    df.to_parquet(OUT, index=False)
-
-    n = len(df)
-    n_cens = int((~df["observed"]).sum())
-    print(f"[delay] wrote {OUT.name}: {n:,} rows")
-    print(f"[delay] censored: {n_cens:,} ({n_cens / n:.2%})")
+def simulate(df: pd.DataFrame,
+             delta: int = DELAY_MONTHS,
+             last_month: int = LAST_MONTH) -> pd.DataFrame:
+    df = df.copy()
+    df["label_month"] = df["month"] + delta
+    df["observed"] = df["label_month"] <= last_month
     return df
 
 
+def main() -> None:
+    OUT_PATH.parent.mkdir(parents=True, exist_ok=True)
+    df = pd.read_parquet(IN_PATH)
+    df = simulate(df)
+    df.to_parquet(OUT_PATH, index=False)
+    n_censored = int((~df["observed"]).sum())
+    print(f"[simulate_delay] Wrote {len(df):,} rows to {OUT_PATH}")
+    print(f"[simulate_delay] Censored: {n_censored:,} "
+          f"({100 * n_censored / len(df):.2f}%)")
+
+
 if __name__ == "__main__":
-    run()
+    main()
