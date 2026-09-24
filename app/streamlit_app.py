@@ -153,7 +153,7 @@ def load_artifacts():
     for p in (MODEL_PATH, PREPROC_PATH, FEATURES_PATH):
         if not p.exists():
             st.error(
-                f"Missing artifact: `{p}`.\n\nRun: `python -m src.pipeline --primary`"
+                f"Missing artifact: `{p}`.\n\nRun: `python -m src.pipeline`"
             )
             st.stop()
     model = joblib.load(MODEL_PATH)
@@ -354,23 +354,25 @@ def sidebar(model, features, importances, cv_results) -> dict:
             f"""
             <div class="card">
             <b>Algorithm</b><br><span class="muted">{type(model).__name__}</span><br>
-            <b>Training window</b><br><span class="muted">Months 0–5</span><br>
-            <b>Test window</b><br><span class="muted">Months 6–7</span><br>
+            <b>Training window</b><br><span class="muted">Months 0–2</span><br>
+            <b>Validation window</b><br><span class="muted">Months 3–4</span><br>
+            <b>Test window</b><br><span class="muted">Months 5–6</span><br>
             <b>Features</b><br><span class="muted">{len(features)}</span>
             </div>
             """,
             unsafe_allow_html=True,
         )
 
-        st.markdown("### Test metrics")
+        st.markdown("### Policy metrics (test window)")
         st.markdown(
             """
             <div class="card">
-            <b>Macro F1</b> 0.5336<br>
-            <b>ROC-AUC</b> 0.8766<br>
-            <b>Precision (fraud)</b> 0.3096<br>
-            <b>Recall (fraud)</b> 0.0424<br>
-            <b>Calibration ECE</b> 0.0040
+            <b>Policy recall</b> 0.5051<br>
+            <b>Policy precision</b> 0.0654<br>
+            <b>Recall@5%</b> 0.4729<br>
+            <b>Precision@5%</b> 0.1189<br>
+            <b>ROC-AUC</b> 0.8753<br>
+            <b>Calibration ECE</b> 0.0033
             </div>
             """,
             unsafe_allow_html=True,
@@ -426,11 +428,12 @@ def sidebar(model, features, importances, cv_results) -> dict:
         )
 
         # ---- 3-algorithm comparison ----
-        with st.expander("3-algorithm comparison (5-fold CV)"):
+        with st.expander("3-algorithm comparison (2-fold CV)"):
             if cv_results:
+                results = cv_results.get("results", {})
                 rows = []
                 for alg in ("logistic_regression", "random_forest", "lightgbm"):
-                    f1s = [r["macro_f1"] for r in cv_results.get(alg, [])]
+                    f1s = [r["macro_f1"] for r in results.get(alg, [])]
                     if not f1s:
                         continue
                     rows.append({
@@ -442,14 +445,19 @@ def sidebar(model, features, importances, cv_results) -> dict:
                     st.dataframe(pd.DataFrame(rows), hide_index=True,
                                  use_container_width=True)
                     st.caption(
-                        "Selected: **lightgbm**. Source: `reports/cv_results.json`."
+                        "See `reports/model_comparison.md` for the selected "
+                        "classifier and the selection justification."
                     )
             else:
                 st.caption("Run `train_compare` to generate `cv_results.json`.")
 
         # ---- Feature importances ----
         with st.expander("Top feature importances"):
-            if importances:
+            if (
+                importances
+                and len(importances.get("features", []))
+                    == len(importances.get("importances", []))
+            ):
                 imp_df = (
                     pd.DataFrame(importances)
                     .sort_values("importances", ascending=False)

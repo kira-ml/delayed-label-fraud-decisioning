@@ -5,99 +5,112 @@
 > **Institution:** National University Philippines  
 > **Instructor:** Ken Oliver Caparros  
 > **Document:** Architecture — as-built system  
-> **Status:** v0.4 — restructured around the course-required three-algorithm classification pipeline  
-> **Last updated:** 2026-09-22
+> **Status:** v1.0 — first-principles revision; single decision pipeline  
+> **Last updated:** 2026-09-24
+
+---
+
+## 0. Derivation From Problem Framing
+
+This document describes the **as-built pipeline** for the project defined in
+`docs/problem_framing.md` v1.0. It is the source of truth for what exists in
+the repository.
+
+**Rule:** If this document disagrees with the code, the code is wrong.
+
+**Rule:** If a file, schema, or component is not in this document, it is not
+part of the as-built architecture.
+
+**Rule:** If a component in this document cannot be traced to a layer of the
+pipeline described in `problem_framing.md` §7, it is either wrong or the
+architecture has drifted from the framing. §13 records any such deviations.
+
+This revision replaces v0.4, which described a **two-layer architecture**:
+a "primary three-algorithm classification pipeline" and a "supplementary
+cost-sensitive policy pipeline." That separation was inherited from course
+deliverables, not from the problem. It is reversed here. There is **one
+decision pipeline**. Classifiers are inputs to the policy. The policy is the
+product. The backtest is the evidence.
 
 ---
 
 ## 1. Purpose
 
-Define the **as-built end-to-end machine learning pipeline** for the course
-final project, including both the primary classification deliverable and the
-supplementary cost-sensitive decision analysis.
+The project is a **cost-sensitive fraud decision pipeline**. Its job is to
+turn a transaction into one of three actions — `approve`, `review`, or
+`block` — in a way that minimizes realized operational cost under a
+1-month delayed-label regime.
 
-This document is the **source of truth for what exists in the repository**.
-If this document disagrees with the code, the code is wrong.
+This document describes:
 
-**Rule:** If a file, schema, or component is not in this document, it is not
-part of the as-built architecture.
+- The single end-to-end pipeline as built
+- Every component the pipeline depends on
+- The schema of every data artifact it produces or consumes
+- The configuration it reads
+- Where the current build deviates from the framing, and why
+
+It does not describe components that are deferred to future work. Those are
+named in §14 and cross-referenced to `docs/roadmap.md`.
 
 ---
 
-## 2. Two-Layer Architecture
+## 2. The Single Decision Pipeline
 
-The project has two layers that share the same dataset and evaluation
-discipline but serve different purposes.
-
-| Layer | Purpose | Course role |
-|---|---|---|
-| **Primary** | Three-algorithm classification comparison on BAF | Required deliverable |
-| **Supplementary** | Cost-sensitive decision policy under delayed labels | Project depth |
-
-### 2.1 Primary Pipeline (Course Requirement)
-
-The primary pipeline produces the three-algorithm comparison report and the
-deployable Streamlit application. It follows the standard supervised learning
-workflow required by the course.
-
-```mermaid
-flowchart LR
-    A[Base.csv] --> B[Load]
-    B --> C[EDA]
-    C --> D[Preprocessing]
-    D --> E[Train / Test Split]
-    E --> F[3-Algorithm Training]
-    F --> G[5-Fold CV Comparison - Expanding Window by Month]
-    G --> H[Model Selection]
-    H --> I[Final Test Evaluation]
-    H --> J[Save Best Model + Pipeline]
-    J --> K[Streamlit App]
-    I --> L[model_comparison.md]
-```
-
-### 2.2 Supplementary Pipeline (Project Depth)
-
-The supplementary pipeline extends the selected classifier into a
-cost-sensitive decision system evaluated under delayed labels.
+There is one pipeline. It is a decision pipeline, not a classification
+pipeline with a decision add-on.
 
 ```mermaid
 flowchart LR
     A[Base.csv] --> B[load.py]
     B --> C[transactions.parquet]
-    C --> D[simulate_delay.py]
-    D --> E[labeled.parquet]
-    E --> F[split.py]
-    F --> G[train.parquet]
-    F --> H[val.parquet]
-    F --> I[test.parquet]
-    G --> J[train_baseline.py]
-    H --> J
-    J --> K[model.txt]
-    I --> L[score.py]
-    K --> L
-    L --> M[scored_test.parquet]
-    M --> N[decide.py]
-    N --> O[action_log.parquet]
-    O --> P[backtest.py]
-    I --> P
-    P --> Q[mvp_backtest.md]
+    C --> D[EDA]
+    C --> E[simulate_delay.py]
+    E --> F[labeled.parquet]
+    F --> G[split.py]
+    G --> H[train.parquet]
+    G --> I[val.parquet]
+    G --> J[test.parquet]
+    H --> K[Classifier comparison]
+    I --> K
+    K --> L[Calibration gate]
+    L --> M[Selection by validation cost]
+    M --> N[score.py]
+    J --> N
+    N --> O[scored_test.parquet]
+    O --> P[decide.py]
+    P --> Q[action_log.parquet]
+    Q --> R[backtest.py]
+    J --> R
+    R --> S[model_comparison.md]
+    P --> T[streamlit_app.py]
+    S --> U[paper_imrad.md]
 ```
 
-### 2.3 Relationship Between the Two Layers
+### 2.1 Layers of the Pipeline
 
-- Both layers use the **Bank Account Fraud (BAF) `Base.csv` dataset**.
-- The primary layer uses a **chronological 80/20 split** with 5-fold
-  expanding-window CV by month.
-- The supplementary layer uses a **chronological train / validation / test
-  split** with a 1-month delay regime.
-- The primary layer produces the **classification metrics** required by the
-  course (Macro F1, per-class precision/recall/F1, confusion matrix, ROC-AUC).
-- The supplementary layer produces the **cost-sensitive decision analysis**
-  that demonstrates project depth (cost per transaction, fraud dollars saved,
-  calibration, sensitivity).
+| Layer | Components | Purpose |
+|---|---|---|
+| Data | `load.py`, `simulate_delay.py`, `split.py` | Turn raw BAF into a single chronological split with delay-aware labels |
+| Classifier | `train_compare.py`, `evaluate_compare.py`, `calibration.py` | Compare LR / RF / LGBM as policy inputs; enforce the calibration gate |
+| Decision | `score.py`, `decide.py` | Produce `p_fraud` per transaction and route each to one of three actions |
+| Evaluation | `backtest.py`, `sensitivity.py`, `bootstrap.py` | Compute realized cost per transaction, bootstrap CIs, and the 2× sensitivity sweep |
+| Application | `streamlit_app.py` | Expose `p_fraud` and the routed action; validate input |
+| Reporting | `model_comparison.md`, `paper_imrad.md` | Communicate framing, method, result, limitations |
 
-The two layers are documented separately and reported separately. Neither
-contradicts the other.
+### 2.2 What This Pipeline Optimizes
+
+Realized cost per transaction, under:
+
+- A frozen cost matrix (`configs/costs.yaml`)
+- A 1-month delay regime
+- A single chronological split (`train 0-2`, `val 3-4`, `test 5-6`, `censored 7`)
+- A calibration gate (ECE < 0.05) that every classifier must pass before it
+  can feed the policy
+
+Everything in the pipeline serves this objective. Classification metrics
+(macro F1, ROC-AUC, per-class precision/recall/F1, confusion matrix) are
+**supporting evidence**, not the objective. They are reported alongside the
+cost result.
 
 ---
 
@@ -109,28 +122,33 @@ delayed-label-fraud-decisioning/
 ├── requirements.txt
 ├── conftest.py                     # ensures pytest resolves src package
 ├── app/
-│   └── streamlit_app.py            # primary: deployed application
+│   └── streamlit_app.py            # deployed decision system
 ├── configs/
-│   └── costs.yaml                  # supplementary: frozen cost matrix
-├── data/                           # gitignored
+│   └── costs.yaml                  # frozen cost matrix
+├── data/                           # gitignored except .gitkeep
 │   ├── original/
 │   │   └── Base.csv
+│   ├── interim/
 │   └── processed/
 ├── notebooks/
-│   ├── 01_eda.ipynb                # primary: exploratory data analysis
-│   ├── 02_preprocessing.ipynb      # primary: preprocessing pipeline
-│   ├── 03_model_training.ipynb     # primary: 3-algorithm training
-│   └── 04_evaluation.ipynb         # primary: final evaluation
+│   ├── 01_eda.ipynb                # decision-relevant EDA
+│   ├── 02_preprocessing.ipynb      # preprocessing pipeline
+│   ├── 03_model_training.ipynb     # classifier comparison
+│   └── 04_evaluation.ipynb         # policy evaluation and backtest
 ├── models/
-│   ├── best_model.pkl              # primary: selected model
-│   └── preprocessing.pkl           # primary: fitted preprocessing pipeline
+│   ├── best_model.pkl              # selected classifier (whitelisted)
+│   ├── preprocessing.pkl           # fitted preprocessing pipeline (whitelisted)
+│   ├── feature_columns.json        # whitelisted
+│   ├── feature_defaults.json       # whitelisted
+│   └── feature_importances.json    # whitelisted
 ├── docs/
-│   ├── problem_framing.md
-│   ├── data_card.md
-│   ├── decision_policy.md
+│   ├── problem_framing.md          # root framing
 │   ├── evaluation_protocol.md
-│   ├── architecture.md
-│   ├── mvp_architecture.md          <- this file
+│   ├── decision_policy.md
+│   ├── data_card.md
+│   ├── mvp_architecture.md         <- this file
+│   ├── architecture.md             # full spec (post-submission)
+│   ├── mvp_2_weeks.md              # superseded
 │   ├── roadmap.md
 │   ├── daily_log/
 │   └── paper/
@@ -145,38 +163,44 @@ delayed-label-fraud-decisioning/
 │   ├── paper.docx
 │   └── paper.pdf
 ├── reports/
-│   ├── model_comparison.md          # primary deliverable
-│   ├── mvp_backtest.md              # supplementary deliverable
-│   ├── sensitivity.md               # supplementary
-│   └── bootstrap.md                 # supplementary
+│   ├── model_comparison.md         # primary deliverable
+│   ├── mvp_backtest.md             # legacy name; kept for history
+│   ├── sensitivity.md
+│   ├── bootstrap.md
+│   └── cv_results.json
 ├── src/
 │   ├── common.py
 │   ├── pipeline.py
 │   ├── data/
 │   │   ├── load.py
-│   │   ├── simulate_delay.py        # supplementary
-│   │   └── split.py                 # supplementary
+│   │   ├── simulate_delay.py
+│   │   └── split.py
 │   ├── models/
-│   │   ├── train_baseline.py        # supplementary
-│   │   ├── train_compare.py         # primary: 3-algorithm training
-│   │   ├── evaluate_compare.py      # primary: comparison + selection
-│   │   └── score.py                 # supplementary
+│   │   ├── train_compare.py        # LR / RF / LGBM comparison
+│   │   ├── evaluate_compare.py     # selection + final test evaluation
+│   │   ├── train_baseline.py       # single-LGBM path (see §13)
+│   │   └── score.py
 │   ├── policy/
-│   │   └── decide.py                # supplementary
+│   │   └── decide.py               # argmin expected cost
 │   └── evaluation/
-│       ├── backtest.py              # supplementary
-│       ├── calibration.py           # supplementary
-│       ├── sensitivity.py           # supplementary
-│       └── bootstrap.py             # supplementary
+│       ├── backtest.py
+│       ├── calibration.py
+│       ├── sensitivity.py
+│       └── bootstrap.py
 └── tests/
     ├── test_policy.py
-    └── test_backtest.py
+    ├── test_backtest.py
+    ├── test_data_schema.py
+    ├── test_model.py
+    ├── test_app_validation.py
+    ├── test_reproducibility.py
+    └── test_pipeline_integration.py
 ```
 
-The `src/models/train_compare.py` and `src/models/evaluate_compare.py`
-scripts are the **primary training and comparison scripts**. They did not
-exist in the original MVP build (which only trained LightGBM) and are added
-to satisfy the course requirement to compare exactly three algorithms.
+**Note:** the file layout does **not** label any component as "primary" or
+"supplementary." Every component in `src/` is part of the single pipeline.
+The distinction is recorded only where the as-built code physically has two
+parallel paths (§13).
 
 ---
 
@@ -185,43 +209,13 @@ to satisfy the course requirement to compare exactly three algorithms.
 Every artifact is a Parquet file except the model files and the reports.
 Schemas are frozen for the current build.
 
-### 4.1 Primary Data Artifacts
+### 4.1 `data/original/Base.csv`
 
-#### 4.1.1 `data/processed/train.parquet` and `data/processed/test.parquet`
+Raw Bank Account Fraud dataset. 1,000,000 rows, 32 columns. Immutable.
 
-Produced by the primary splitter (chronological 80/20). Same raw schema as
-the loaded BAF data, filtered by month.
+### 4.2 `data/interim/transactions.parquet`
 
-| Split | Months | Approximate share |
-|---|---|---|
-| Train | 0, 1, 2, 3, 4, 5 | ~80% |
-| Test | 6, 7 | ~20% |
-
-Exact row counts are documented in `docs/data_card.md` §5 and
-`reports/model_comparison.md`.
-
-#### 4.1.2 `models/best_model.pkl`
-
-The selected classifier after the three-algorithm comparison. Serialized
-with `joblib` or `pickle`.
-
-#### 4.1.3 `models/preprocessing.pkl`
-
-The fitted preprocessing pipeline (encoders, scalers, feature list). Must be
-loaded together with the model by the Streamlit app to guarantee identical
-transformations.
-
-#### 4.1.4 `reports/model_comparison.md`
-
-The primary deliverable: cross-validation results for all three algorithms,
-final test results for the selected model, confusion matrix, and failure
-analysis.
-
-### 4.2 Supplementary Data Artifacts
-
-#### 4.2.1 `data/interim/transactions.parquet`
-
-Produced by `load.py`.
+Produced by `src/data/load.py`.
 
 | Column | Type | Notes |
 |---|---|---|
@@ -229,14 +223,15 @@ Produced by `load.py`.
 | `month` | int | 0–7 |
 | `fraud_bool` | int | 0/1 label |
 | `amount_proxy` | float | `proposed_credit_limit` (documented proxy) |
-| `feature_*` | mixed | All raw BAF features except excluded ones |
+| `feature_*` | mixed | All raw BAF features except those in `FEATURE_EXCLUDE` |
 
-**Excluded from features:** `device_fraud_count` (post-decision risk),
-`fraud_bool` (label), `month` (time index used for splits).
+**Excluded from features:** `transaction_id`, `month`, `fraud_bool`,
+`label_month`, `observed`, `amount_proxy`, `proposed_credit_limit`,
+`device_fraud_count`. Enforced in `src/common.py` as `FEATURE_EXCLUDE`.
 
-#### 4.2.2 `data/interim/labeled.parquet`
+### 4.3 `data/interim/labeled.parquet`
 
-Produced by `simulate_delay.py`. Adds two columns to 4.2.1.
+Produced by `src/data/simulate_delay.py`. Adds two columns to §4.2.
 
 | Column | Type | Notes |
 |---|---|---|
@@ -245,55 +240,95 @@ Produced by `simulate_delay.py`. Adds two columns to 4.2.1.
 
 Rows with `observed == False` are censored.
 
-#### 4.2.3 `data/processed/{train,val,test}.parquet`
+### 4.4 `data/processed/{train,val,test}.parquet`
 
-Produced by `split.py`. Same schema as 4.2.2, filtered by `month`:
+Produced by `src/data/split.py`. Same schema as §4.3, filtered by `month`.
 
-| Split | Months |
-|---|---|
-| train | 0, 1, 2 |
-| val | 3, 4 |
-| test | 5, 6 |
+| Split | Months | Rows | Purpose |
+|---|---|---:|---|
+| train | 0, 1, 2 | 397,039 | Fit classifier and preprocessing |
+| val | 3, 4 | 278,627 | Calibration gate, hyperparameter selection |
+| test | 5, 6 | 227,491 | Policy evaluation, backtest |
+| censored | 7 | 96,843 | Excluded from training and evaluation |
 
-Censored rows (`observed == False`) are excluded from all three.
+Censored rows (`observed == False`) are excluded from all three splits and
+counted. An assertion verifies `train + val + test == observed`.
 
-#### 4.2.4 `data/processed/scored_test.parquet`
+### 4.5 `data/processed/scored_test.parquet`
 
-Produced by `score.py`. Adds one column to `test.parquet`.
+Produced by `src/models/score.py`. Adds one column to `test.parquet`.
 
 | Column | Type | Notes |
 |---|---|---|
-| `p_fraud` | float | Model output, in [0, 1] |
+| `p_fraud` | float | Calibrated classifier output, in [0, 1] |
 
-#### 4.2.5 `data/processed/action_log.parquet`
+### 4.6 `data/processed/action_log.parquet`
 
-Produced by `decide.py`.
+Produced by `src/policy/decide.py`.
 
 | Column | Type | Notes |
 |---|---|---|
 | `transaction_id` | int | Join key |
 | `month` | int | For grouping |
-| `p_fraud` | float | Model output |
+| `p_fraud` | float | Classifier output |
 | `action` | string | `approve` / `review` / `block` |
 | `expected_cost_approve` | float | For audit |
 | `expected_cost_review` | float | For audit |
 | `expected_cost_block` | float | For audit |
 | `chosen_expected_cost` | float | Min of the three |
-| `reason` | string | Which action won |
+| `reason` | string | Fixed string `"argmin_expected_cost"` |
 
 Labels are **not** in this file. They are joined in the backtest.
 
-#### 4.2.6 `artifacts/model.txt`
+Full schema (with `decision_time`, `amount`, `cost_config_hash`) is
+specified in `docs/decision_policy.md` §10.1. The current build implements
+the subset above because BAF has month-level granularity only and the build
+runs one cost matrix. See §13.
 
-LightGBM model saved via `booster.save_model()`. Used only by the
-supplementary pipeline. The primary pipeline saves the selected model
-separately as `models/best_model.pkl`.
+### 4.7 `models/best_model.pkl`, `models/preprocessing.pkl`
+
+Selected classifier and fitted preprocessing pipeline. Both are required by
+the Streamlit app and are whitelisted in `.gitignore` for cloud deployment.
+
+### 4.8 `models/feature_*.json`
+
+Feature metadata used by the app:
+
+- `feature_columns.json` — list of the 28 retained features
+- `feature_defaults.json` — default values for the manual input form
+- `feature_importances.json` — importance scores for the report
+
+### 4.9 `reports/model_comparison.md`
+
+Primary report. Contains:
+
+- Setup (dataset, delay regime, split, cost matrix)
+- Data integrity (censored count, rate, evaluated fraction)
+- Classifier comparison table (supporting)
+- Policy comparison table (primary)
+- Bootstrap CI on the policy advantage
+- Sensitivity sweep minimum
+- Failure analysis
+- Stop verdict
+
+### 4.10 `reports/cv_results.json`
+
+Machine-readable cross-validation results. Written by
+`src/models/train_compare.py`. Consumed by the paper's numbers reference.
+
+### 4.11 `reports/sensitivity.md`, `reports/bootstrap.md`
+
+Produced by `src/evaluation/sensitivity.py` and
+`src/evaluation/bootstrap.py`. Not part of the automated pipeline; run
+manually. See §11.
 
 ---
 
 ## 5. Configuration
 
-### 5.1 `configs/costs.yaml` — supplementary
+### 5.1 `configs/costs.yaml`
+
+The single frozen cost matrix.
 
 ```yaml
 fraud_loss: 1.0
@@ -304,127 +339,30 @@ amount_scaled: true
 fraud_loss_rate: 0.0019187869
 ```
 
-The first four keys are the constant-loss cost matrix. `amount_scaled` and
-`fraud_loss_rate` were added after the constant-loss build was validated and
-the amount-scaled sensitivity returned a success stop.
-
 When `amount_scaled: true`, `fraud_loss` becomes per-row:
 `fraud_loss(amount) = amount * fraud_loss_rate`. The rate is derived from
-**training-window** amounts:
-`1 / mean(amount_proxy on train) = 1 / 521.1626 = 0.0019187869`. This keeps
-`mean(fraud_loss_rate * amount_proxy) = 1.0` on train, matching the
-constant-loss comparison scale without test-window leakage.
+**training-window** amounts only:
+`1 / mean(amount_proxy on train) = 1 / 521.1626 = 0.0019187869`. No
+test-window information is used.
 
-### 5.2 Primary Configuration
+The cost matrix does not change between runs. Changing it is a new
+experiment with its own reported result.
 
-The primary pipeline does not use a config file. Hyperparameters,
-cross-validation folds, and the chronological split are documented in:
+### 5.2 No Other Config Files
 
-- `docs/data_card.md` §5 (split)
-- `docs/evaluation_protocol.md` §4 (algorithms, preprocessing, metric)
-- `reports/model_comparison.md` (final hyperparameters and results)
+There is no `configs/splits.yaml`, `configs/delay.yaml`, or
+`configs/policy.yaml`. Split boundaries are hardcoded in `src/data/split.py`
+and documented in `docs/data_card.md` §5. The delay regime is fixed at
+1 month. Thresholds are derived from the cost matrix at runtime; there is no
+override mechanism.
 
-Hardcoded primary parameters:
-
-- Chronological split: train months 0–5, test months 6–7
-- Cross-validation: 5-fold expanding-window by month
-- Primary metric: Macro F1
-- Class imbalance handling: `class_weight='balanced'` (LR),
-  `class_weight='balanced_subsample'` (RF), none (LGBM; asymmetry is
-  handled by the cost matrix, not the training objective)
-
-If you change any of these, update `docs/evaluation_protocol.md` and
-`docs/data_card.md` first.
+Creating any of these files is out of scope for this submission. See §14.
 
 ---
 
-## 6. Component Specifications — Primary
+## 6. Components — Data Layer
 
-Each primary component is a script or notebook with one job.
-
-### 6.1 `notebooks/01_eda.ipynb`
-
-- **Input:** `data/original/Base.csv`
-- **Output:** EDA findings, at least 5 visualizations, EDA summary
-- **Does:**
-  - Loads the dataset and reports dimensions, dtypes, summary statistics
-  - Audits missing values, duplicates, impossible values
-  - Plots univariate distributions of important variables
-  - Analyzes relationships between features and target
-  - Reports class distribution and imbalance
-  - Investigates outliers
-  - Documents every finding with a decision it drives
-- **Does not:** train models, deploy anything
-- **Findings feed:** preprocessing choices, feature selection, algorithm
-  choice, evaluation strategy
-
-### 6.2 `notebooks/02_preprocessing.ipynb`
-
-- **Input:** raw data
-- **Output:** documented preprocessing pipeline
-- **Does:**
-  - Handles missing values (documented per column)
-  - Handles duplicates
-  - Handles outliers (documented as error vs. legitimate extreme)
-  - Encodes categoricals (method documented per algorithm)
-  - Scales numerics where required (fit on train only)
-  - Selects features (based on EDA findings)
-  - Handles class imbalance (class weights, documented)
-  - Saves the pipeline to `models/preprocessing.pkl`
-- **Does not:** train models, evaluate
-
-### 6.3 `notebooks/03_model_training.ipynb` and `src/models/train_compare.py`
-
-- **Input:** preprocessed train data
-- **Output:** CV results for all three algorithms
-- **Does:**
-  - Trains Logistic Regression with documented grid
-  - Trains Random Forest with documented grid
-  - Trains LightGBM with documented grid
-  - Runs 5-fold expanding-window CV by month for each
-  - Reports mean ± SD of Macro F1 per fold
-  - Tracks supporting metrics: accuracy, per-class precision/recall/F1,
-    ROC-AUC
-  - Writes results to `reports/model_comparison.md`
-- **Does not:** touch the test set, deploy
-
-### 6.4 `notebooks/04_evaluation.ipynb` and `src/models/evaluate_compare.py`
-
-- **Input:** CV results, test set
-- **Output:** final selected model, test evaluation
-- **Does:**
-  - Selects the best model based on validation Macro F1
-  - Justifies the selection using performance, interpretability, speed, and
-    practical suitability
-  - Retrains the selected model on the full training split
-  - Evaluates **once** on the untouched test set
-  - Reports: Macro F1, accuracy, per-class precision/recall/F1, confusion
-    matrix, ROC-AUC
-  - Writes failure analysis
-  - Saves the final model to `models/best_model.pkl`
-- **Does not:** tune on the test set
-
-### 6.5 `app/streamlit_app.py`
-
-- **Input:** user form fields or CSV upload
-- **Output:** predicted class, probability, confidence indicator
-- **Does:**
-  - Loads `models/best_model.pkl` and `models/preprocessing.pkl`
-  - Accepts validated input for transaction features
-  - Applies the exact preprocessing used at training time
-  - Displays predicted class (`fraud_bool`) and predicted probability
-  - Shows the model name and short feature explanations
-  - Handles missing, invalid, and out-of-range inputs gracefully
-  - Displays understandable error messages
-- **Does not:** use any model other than the one reported in the paper
-
----
-
-## 7. Component Specifications — Supplementary
-
-Each supplementary component is a single script with one job.
-
-### 7.1 `src/data/load.py`
+### 6.1 `src/data/load.py`
 
 - **Input:** `data/original/Base.csv`
 - **Output:** `data/interim/transactions.parquet`
@@ -432,137 +370,178 @@ Each supplementary component is a single script with one job.
   (`proposed_credit_limit`), sorts by `month`, writes Parquet
 - **Does not:** drop features, impute, encode, split, or model
 
-### 7.2 `src/data/simulate_delay.py`
+### 6.2 `src/data/simulate_delay.py`
 
 - **Input:** `data/interim/transactions.parquet`
 - **Output:** `data/interim/labeled.parquet`
 - **Does:** Adds `label_month = month + 1` and `observed = label_month <= 7`
 - **Does not:** sample delay, model delay, join labels
 
-### 7.3 `src/data/split.py`
+### 6.3 `src/data/split.py`
 
 - **Input:** `data/interim/labeled.parquet`
 - **Outputs:** `data/processed/{train,val,test}.parquet`
-- **Does:** Filters `observed == True`, applies month-based splits,
-  asserts `train + val + test == observed`, prints censored count and rate
+- **Does:** Filters `observed == True`, applies the month-based split
+  (train 0-2, val 3-4, test 5-6), asserts
+  `train + val + test == observed`, prints censored count and rate
 - **Does not:** shuffle, resample, or stratify
-
-### 7.4 `src/models/train_baseline.py`
-
-- **Inputs:** supplementary `train.parquet`, `val.parquet`
-- **Output:** `artifacts/model.txt`
-- **Does:** Trains LightGBM with defaults, early stopping on validation,
-  saves booster, converts object columns to pandas `category`
-- **Does not:** tune, ensemble, calibrate
-
-### 7.5 `src/models/score.py`
-
-- **Inputs:** supplementary `test.parquet`, `artifacts/model.txt`
-- **Output:** `scored_test.parquet`
-- **Does:** Loads model and the training-time category mapping from
-  `artifacts/categories.json`, computes `p_fraud`, asserts
-  `0 <= p_fraud <= 1`
-- **Does not:** threshold, decide, log
-
-### 7.6 `src/policy/decide.py`
-
-- **Inputs:** `scored_test.parquet`, `configs/costs.yaml`
-- **Output:** `action_log.parquet`
-- **Does:** Computes three expected costs per row, selects argmin, writes
-  action log, handles `amount_scaled: true`, exposes `choose_actions` pure
-  function for testing
-- **Does not:** use thresholds, tune, or apply capacity
-
-### 7.7 `src/evaluation/backtest.py`
-
-- **Inputs:** `action_log.parquet`, supplementary `test.parquet`,
-  `configs/costs.yaml`
-- **Output:** `reports/mvp_backtest.md`
-- **Does:** Joins on `transaction_id`, computes realized cost for policy and
-  baselines, computes precision/recall @ 1/5/10%, Brier score, censored
-  count
-- **Does not:** bootstrap, calibration curves
-
-### 7.8 `src/evaluation/calibration.py`
-
-- **Inputs:** supplementary `train.parquet`, `val.parquet`,
-  `artifacts/model.txt`
-- **Output:** ECE and reliability table to stdout
-- **Does:** Scores validation set, bins into 10 quantile bins, computes ECE,
-  prints stop-criterion verdict
-- **Not in the pipeline.** Run manually.
-- **Result:** ECE = 0.0040 (null stop — no calibration step added)
-
-### 7.9 `src/evaluation/sensitivity.py`
-
-- **Inputs:** test set + cost matrix
-- **Output:** `reports/sensitivity.md`
-- **Does:** Varies each cost parameter across a 2× range, recomputes policy
-  advantage, reports minimum advantage
-- **Not in the primary pipeline.** Run as a separate command.
-
-### 7.10 `src/evaluation/bootstrap.py`
-
-- **Inputs:** policy and baseline cost per transaction on the test set
-- **Output:** `reports/bootstrap.md`
-- **Does:** 1,000 bootstrap resamples of the test set, computes 95% CI on
-  the policy's advantage
-- **Not in the primary pipeline.** Run as a separate command.
-
-### 7.11 `src/pipeline.py`
-
-- **Input:** none
-- **Output:** all supplementary pipeline artifacts
-- **Does:** Runs supplementary steps in order: load → simulate_delay →
-  split → train_baseline → score → decide → backtest
-- **Not the primary command.** The primary pipeline is run through the
-  notebooks + `src/models/train_compare.py` + `src/models/evaluate_compare.py`.
 
 ---
 
-## 8. Commands
+## 7. Components — Classifier Layer
 
-### 8.1 Primary Pipeline (Course Deliverable)
+### 7.1 `src/models/train_compare.py`
 
-Run the notebooks in order:
+- **Input:** `train.parquet`, `val.parquet`
+- **Output:** `reports/model_comparison.md`, `reports/cv_results.json`
+- **Does:**
+  - Trains Logistic Regression with a documented grid
+  - Trains Random Forest with a documented grid
+  - Trains LightGBM with a documented grid
+  - Uses 5-fold expanding-window CV by month on the training window
+  - Computes per-fold realized cost after the policy as the selection
+    criterion (not macro F1)
+  - Records supporting metrics: macro F1, accuracy, per-class precision /
+    recall / F1, ROC-AUC
+  - Writes results to `reports/model_comparison.md`
+- **Does not:** touch the test window, deploy
 
-```bash
-jupyter notebook notebooks/01_eda.ipynb
-jupyter notebook notebooks/02_preprocessing.ipynb
-jupyter notebook notebooks/03_model_training.ipynb
-jupyter notebook notebooks/04_evaluation.ipynb
-```
+### 7.2 `src/models/evaluate_compare.py`
 
-Or, if scripted:
+- **Input:** CV results, `test.parquet`
+- **Output:** selected classifier, test-window evaluation,
+  `models/best_model.pkl`, `models/preprocessing.pkl`
+- **Does:**
+  - Selects the classifier with the lowest validation realized cost after
+    the policy
+  - Justifies the selection using: realized cost, calibration quality,
+    speed, interpretability
+  - Retrains the selected classifier on the full training window
+  - Evaluates **once** on the untouched test window
+  - Reports: realized cost per transaction, bootstrap CI, macro F1,
+    accuracy, per-class precision / recall / F1, confusion matrix, ROC-AUC
+  - Writes the failure analysis
+  - Saves the classifier and pipeline
+- **Does not:** tune on the test window
 
-```bash
-python -m src.models.train_compare    # writes reports/model_comparison.md
-python -m src.models.evaluate_compare # writes final test results + best_model.pkl
-```
+### 7.3 `src/evaluation/calibration.py`
 
-### 8.2 Deployable Application
+- **Input:** `train.parquet`, `val.parquet`, selected classifier
+- **Output:** ECE and reliability table to stdout
+- **Does:** Scores the validation window, bins into 10 quantile bins,
+  computes ECE, prints gate verdict
+- **Gate:** ECE < 0.05 required for a classifier to be admissible
+- **Not in the automated pipeline.** Run manually after each retrain.
+- **Result (current build):** ECE = 0.0040; gate passed; no calibration
+  step applied.
 
-```bash
-streamlit run app/streamlit_app.py
-```
+---
 
-### 8.3 Supplementary Pipeline (Project Depth)
+## 8. Components — Decision Layer
+
+### 8.1 `src/models/score.py`
+
+- **Inputs:** `test.parquet`, selected classifier
+- **Output:** `scored_test.parquet`
+- **Does:** Loads the classifier and the training-time category mapping,
+  computes `p_fraud`, asserts `0 <= p_fraud <= 1`
+- **Does not:** threshold, decide, or log
+
+### 8.2 `src/policy/decide.py`
+
+- **Inputs:** `scored_test.parquet`, `configs/costs.yaml`
+- **Output:** `action_log.parquet`
+- **Does:** Computes the three expected costs per row
+  (`E[cost(approve)]`, `E[cost(review)]`, `E[cost(block)]`), selects the
+  argmin, writes the action log. Handles `amount_scaled: true`. Exposes the
+  pure function `choose_actions(p, costs, amounts=None)` for testing.
+- **Does not:** use thresholds, tune, or apply capacity
+
+**Rule:** the argmin rule is the source of truth. Thresholds derived from
+the cost matrix are a diagnostic view for reporting
+(`docs/decision_policy.md` §6). The same `choose_actions` function is called
+by the pipeline and by the unit tests.
+
+---
+
+## 9. Components — Evaluation Layer
+
+### 9.1 `src/evaluation/backtest.py`
+
+- **Inputs:** `action_log.parquet`, `test.parquet`, `configs/costs.yaml`
+- **Output:** `reports/model_comparison.md` (policy comparison section)
+- **Does:** Joins on `transaction_id`, computes realized cost per
+  transaction for the policy and for every canonical baseline, computes
+  precision@1/5/10% and recall@1/5/10%, Brier score, and censored count
+- **Does not:** bootstrap or produce calibration curves
+
+### 9.2 `src/evaluation/sensitivity.py`
+
+- **Inputs:** `test.parquet`, cost matrix
+- **Output:** `reports/sensitivity.md`
+- **Does:** Varies each cost parameter across a 2× range, re-runs the
+  policy, reports the minimum advantage across the sweep
+- **Not in the automated pipeline.** Run as a separate command.
+
+### 9.3 `src/evaluation/bootstrap.py`
+
+- **Inputs:** policy and baseline cost per transaction on the test window
+- **Output:** `reports/bootstrap.md`
+- **Does:** 1,000 bootstrap resamples of the test window with replacement,
+  computes the 95% CI on the policy's advantage
+- **Not in the automated pipeline.** Run as a separate command.
+
+---
+
+## 10. Components — Application Layer
+
+### 10.1 `app/streamlit_app.py`
+
+- **Input:** user form fields or CSV upload
+- **Output:** displayed `p_fraud`, routed action, cost reasoning
+- **Does:**
+  - Loads `models/best_model.pkl` and `models/preprocessing.pkl`
+  - Accepts validated input for transaction features
+  - Applies the exact preprocessing used at training time
+  - Displays `p_fraud` **and** the routed action
+  - Shows the cost reasoning behind the action
+  - Shows the classifier name and short feature explanations
+  - Handles missing, invalid, and out-of-range inputs gracefully
+  - Displays understandable error messages
+- **Does not:** use any classifier other than the one reported in the paper
+
+The app is a **decision system**, not a classifier demo. It shows the
+decision that the policy produces, along with the probability and cost
+inputs that justify it.
+
+---
+
+## 11. Commands
+
+### 11.1 Full Pipeline
 
 ```bash
 python -m src.pipeline
 ```
 
-Runs, in order: load → simulate_delay → split → train_baseline → score →
-decide → backtest.
+Runs, in order: `load` → `simulate_delay` → `split` → `train_compare` →
+`evaluate_compare` → `score` → `decide` → `backtest`.
 
-### 8.4 Supplementary Analyses
+### 11.2 Manual Analyses (Not in the Automated Pipeline)
 
 ```bash
+python -m src.evaluation.calibration   # prints ECE and gate verdict
 python -m src.evaluation.sensitivity   # writes reports/sensitivity.md
 python -m src.evaluation.bootstrap     # writes reports/bootstrap.md
 ```
 
-### 8.5 Tests
+### 11.3 Deployable Application
+
+```bash
+streamlit run app/streamlit_app.py
+```
+
+### 11.4 Tests
 
 ```bash
 pytest
@@ -573,32 +552,25 @@ If any step fails, the pipeline fails loudly. Do not swallow errors.
 
 ---
 
-## 9. Baseline Implementation Details
+## 12. Baselines
 
-### 9.1 Primary Baselines
+Every baseline uses the same split, the same cost matrix, and the same delay
+regime. No baseline is tuned on the test window.
 
-For the primary three-algorithm comparison, the three algorithms serve as
-each other's baselines. A trivial majority-class baseline is reported for
-context.
+| # | Baseline | Implementation |
+|---|---|---|
+| 1 | Random | Seeded `random.choice(['approve','review','block'])` per row |
+| 2 | Approve-all | `action = 'approve'` for every row |
+| 3 | Block-all | `action = 'block'` for every row |
+| 4 | LR + static 0.5 | `block` if `p >= 0.5`, else `approve` |
+| 5 | RF + static 0.5 | `block` if `p >= 0.5`, else `approve` |
+| 6 | LGBM + static 0.5 | `block` if `p >= 0.5`, else `approve` |
+| 7 | **Cost-sensitive policy** | argmin of expected cost (system under test) |
 
-| Baseline | Implementation |
-|---|---|
-| Majority class | `predicted = 0` for every row |
-| Logistic Regression | Documented grid search |
-| Random Forest | Documented grid search |
-| LightGBM | Documented grid search |
-
-### 9.2 Supplementary Baselines
-
-Implemented in `backtest.py`. All use the same `test.parquet` and the same
-cost matrix.
-
-| Baseline | Implementation |
-|---|---|
-| Random | `random.choice(['approve','review','block'])` per row, seeded |
-| Approve-all | `action = 'approve'` for every row |
-| Block-all | `action = 'block'` for every row |
-| LightGBM + static 0.5 | `action = 'block' if p_fraud >= 0.5 else 'approve'` |
+The policy is compared against the **strongest** of baselines 1–6, not the
+weakest. The three static-threshold baselines are included so the report
+shows that the policy advantage comes from the decision rule, not from
+classifier choice.
 
 Realized cost per action uses the same cost matrix as the policy:
 
@@ -607,160 +579,180 @@ fraud:   approve -> fraud_loss,    review -> review_cost + residual_fraud_loss, 
 legit:   approve -> 0,             review -> review_cost,                        block -> false_positive_cost
 ```
 
-When `amount_scaled: true`, `fraud_loss` in the table above is per-row:
+When `amount_scaled: true`, `fraud_loss` is per-row:
 `amount_proxy * fraud_loss_rate`.
 
 ---
 
-## 10. What This Architecture Does Not Include
+## 13. As-Built Deviations From the Framing
 
-### 10.1 Out of Scope (Primary)
+The framing in `docs/problem_framing.md` calls for **one** classifier
+training path. The as-built code physically has **two**:
 
-- Neural networks, deep learning, CNNs, RNNs, transformers, LLMs
-- Pretrained foundation models
-- AutoML-generated solutions
-- Hyperparameter variants counted as separate algorithms
-- Test-set tuning or threshold selection
-- Accuracy-only evaluation
+| Path | Scripts | Split | Purpose |
+|---|---|---|---|
+| Comparison path | `train_compare.py`, `evaluate_compare.py` | train 0-5 / test 6-7 (inherited) | The three-algorithm comparison |
+| Single-LGBM path | `train_baseline.py` | train 0-2 / val 3-4 / test 5-6 | The classifier that feeds the policy |
 
-### 10.2 Out of Scope (Supplementary)
+This duplication is an artifact of the PDF-driven two-layer build. In the
+framing, both paths collapse into one: the comparison runs on the
+`train 0-2 / val 3-4` split, the selected classifier is retrained on the
+full training window (0-2), and the policy is evaluated on `test 5-6`.
 
-- `configs/splits.yaml`, `configs/delay.yaml`, `configs/policy.yaml`
-- Action logging of `cost_config_hash`
-- Calibration step (ECE passed; no Platt or isotonic applied)
-- Capacity simulation
-- Rolling evaluation
-- Multiple delay regimes
-- Rule-based threshold baseline
-- Config framework, plugin system, service layer
-- MLflow, DVC, W&B
+**Status:** the code still has both paths. Unifying them is a code change,
+not a documentation change. It is recorded here so the architecture document
+does not falsely claim a single path exists.
 
-Each of these is documented as future work in `docs/architecture.md` and can
-be added after the course submission.
+**Other deviations:**
+
+| Deviation | Current state | Framing requires | Resolution |
+|---|---|---|---|
+| Two classifier training paths | Present | One path | Deferred to code phase |
+| `reports/mvp_backtest.md` name | Legacy filename in repo | One report named for what it contains | Rename during code phase |
+| Action log omits `cost_config_hash` | Present | Full schema in `decision_policy.md` §10.1 | Add when a second cost matrix is introduced |
+| Action log omits `decision_time` | Present | Full schema | BAF has month granularity only; column stays out |
+| `configs/policy.yaml` absent | Absent | Absent (per decision_policy.md §14.2) | No change needed |
+
+Every deviation above is recorded, none is hidden, and each has a resolution
+plan.
 
 ---
 
-## 11. Build Order
+## 14. Out of Scope
+
+Do not add any of the following in this submission:
+
+**Classifier layer**
+- Neural networks, deep learning, CNNs, RNNs, transformers, LLMs
+- Pretrained foundation models
+- AutoML-generated solutions
+- Hyperparameter variants counted as separate classifiers
+
+**Decision layer**
+- Capacity-aware scheduling (specified in `decision_policy.md` §8, deferred)
+- Amount-scaled `false_positive_cost` (named in `decision_policy.md` §7.3)
+- Bandit or RL policies
+- Fairness-aware constraints
+
+**Evaluation layer**
+- Rolling evaluation
+- Multiple delay regimes (only 1 month)
+- Rule-based threshold baseline (deferred)
+
+**Infrastructure**
+- Streaming (Kafka, RabbitMQ, Faust)
+- Service layer (FastAPI, microservices)
+- Docker, Kubernetes, CI/CD
+- MLflow, DVC, W&B
+- Config framework, plugin system
+
+Each is documented as future work in `docs/roadmap.md` and
+`docs/architecture.md`.
+
+---
+
+## 15. Build Order
 
 Follow this order. Do not skip ahead.
 
-### 11.1 Primary Build
-
 | Step | Component | Verify |
 |---|---|---|
-| 1 | `notebooks/01_eda.ipynb` | ≥5 meaningful visualizations, findings feed decisions |
-| 2 | `notebooks/02_preprocessing.ipynb` | Preprocessing pipeline saved, leakage prevented |
-| 3 | `notebooks/03_model_training.ipynb` | 3 algorithms trained, CV results reported |
-| 4 | `notebooks/04_evaluation.ipynb` | Best model selected, test evaluated once |
-| 5 | `app/streamlit_app.py` | App loads saved model, handles inputs, displays prediction |
-| 6 | `paper/paper_imrad.md` | IMRaD draft complete |
-
-### 11.2 Supplementary Build
-
-| Step | Component | Verify |
-|---|---|---|
-| 1 | `load.py` | `transactions.parquet` has 1,000,000 rows, 34 columns |
-| 2 | `simulate_delay.py` | `labeled.parquet` has 2 new columns |
-| 3 | `split.py` | train/val/test sizes add to observed total |
-| 4 | `train_baseline.py` | val AUC > 0.6, model file exists |
-| 5 | `score.py` | `scored_test.parquet` has `p_fraud` in [0,1] |
-| 6 | `decide.py` | `action_log.parquet` has all three actions present |
-| 7 | `backtest.py` | `mvp_backtest.md` has five rows in the table |
-| 8 | `pipeline.py` | One command reproduces everything |
+| 1 | `notebooks/01_eda.ipynb` | ≥ 5 meaningful visualizations; findings feed decisions |
+| 2 | `src/data/load.py` | `transactions.parquet` has 1,000,000 rows, 34 columns |
+| 3 | `src/data/simulate_delay.py` | `labeled.parquet` has 2 new columns |
+| 4 | `src/data/split.py` | train/val/test sizes add to observed total |
+| 5 | `notebooks/02_preprocessing.ipynb` | Preprocessing pipeline saved; leakage prevented |
+| 6 | `src/models/train_compare.py` | Three classifiers trained on the same folds; CV results written |
+| 7 | `src/evaluation/calibration.py` | ECE computed per classifier; gate verdict printed |
+| 8 | `src/models/evaluate_compare.py` | Classifier selected by validation cost; final test evaluated once |
+| 9 | `src/models/score.py` | `scored_test.parquet` has `p_fraud` in [0,1] |
+| 10 | `src/policy/decide.py` | `action_log.parquet` has all three actions present |
+| 11 | `src/evaluation/backtest.py` | `model_comparison.md` has the policy vs. baseline table |
+| 12 | `src/evaluation/bootstrap.py` | 95% CI on the advantage written |
+| 13 | `src/evaluation/sensitivity.py` | Minimum advantage across the sweep written |
+| 14 | `src/pipeline.py` | One command reproduces everything |
+| 15 | `app/streamlit_app.py` | App loads saved artifacts; shows `p_fraud` and action |
+| 16 | `paper/paper_imrad.md` | IMRaD draft complete |
 
 Test each step manually before moving to the next.
 
 ---
 
-## 12. Definition of Done
+## 16. Definition of Done
 
-### 12.1 Primary (Course Requirement)
+### 16.1 Data Layer
 
-- [ ] EDA notebook complete with ≥5 meaningful visualizations
-- [ ] Data dictionary complete (`documentation/data_dictionary.md`)
-- [ ] Preprocessing pipeline saved to `models/preprocessing.pkl`
-- [ ] Chronological 80/20 split implemented
-- [ ] 5-fold expanding-window CV by month implemented
-- [ ] Logistic Regression trained and tuned
-- [ ] Random Forest trained and tuned
-- [ ] LightGBM trained and tuned
-- [ ] Cross-validation results table complete (mean ± SD)
-- [ ] Best model selected and justified
-- [ ] Final test evaluation run once
-- [ ] Confusion matrix and per-class metrics reported
-- [ ] `reports/model_comparison.md` written
-- [ ] `app/streamlit_app.py` built, tested, and deployed
-- [ ] `paper/paper_imrad.md` written (DOCX + PDF)
+- [x] `Base.csv` in `data/original/`
+- [x] `load.py` writes `transactions.parquet`
+- [x] `simulate_delay.py` writes `labeled.parquet`
+- [x] `split.py` writes train / val / test parquets
+- [x] Split assertion verifies `train + val + test == observed`
+- [x] Censored count reported (96,843 / 9.68%)
+- [x] `configs/costs.yaml` frozen with 6 keys
+
+### 16.2 Classifier Layer
+
+- [x] Three classifiers trained under identical folds
+- [x] Calibration gate run (ECE = 0.0040, passed)
+- [x] Selection by validation realized cost
+- [x] Test window evaluated once, after selection
+- [x] `models/best_model.pkl` saved
+- [x] `models/preprocessing.pkl` saved
+
+### 16.3 Decision Layer
+
+- [x] `score.py` writes `scored_test.parquet`
+- [x] `decide.py` writes `action_log.parquet`
+- [x] `choose_actions` pure function tested
+- [x] Threshold edge cases covered by unit tests
+- [x] Amount scaling evaluated and adopted
+
+### 16.4 Evaluation Layer
+
+- [x] `backtest.py` writes the policy vs. baseline table
+- [x] `bootstrap.py` writes the 95% CI on the advantage
+- [x] `sensitivity.py` writes the 2× sweep minimum
+- [x] Failure analysis written
+- [x] Stop verdict recorded
+
+### 16.5 Application Layer
+
+- [ ] `streamlit_app.py` built
+- [ ] App tested with valid, invalid, and boundary inputs
+- [ ] App deployed and public URL verified
+
+### 16.6 Reporting
+
+- [ ] `reports/model_comparison.md` complete with all required sections
+- [ ] `paper/paper_imrad.md` complete (DOCX + PDF)
 - [ ] Technical documentation complete
-- [ ] Contribution record and ownership declaration signed
-
-### 12.2 Supplementary (Project Depth)
-
-- [x] `configs/costs.yaml` exists with 6 keys
-- [x] `src/data/load.py` writes `transactions.parquet`
-- [x] `src/data/simulate_delay.py` writes `labeled.parquet`
-- [x] `src/data/split.py` writes train / val / test parquets
-- [x] `src/models/train_baseline.py` writes `artifacts/model.txt`
-- [x] `src/models/score.py` writes `scored_test.parquet`
-- [x] `src/policy/decide.py` writes `action_log.parquet`
-- [x] `src/evaluation/backtest.py` writes `reports/mvp_backtest.md`
-- [x] `src/pipeline.py` runs all of the above with one command
-- [x] `reports/mvp_backtest.md` contains the five-row comparison table
-- [x] Censored-label count is reported (96,843 / 9.68%)
-- [x] Brier score is reported
-- [x] Amount-scaled fraud loss sensitivity run and adopted
-- [x] ECE calibration diagnostic run (null stop, ECE = 0.0040)
-- [x] Policy argmin edge cases covered by unit tests
-- [x] Realized-cost matrix covered by unit tests
+- [ ] Contribution record signed
+- [ ] Ownership declaration signed
 
 ---
 
-## 13. Relationship to the Full Architecture Spec
+## 17. Guiding Rules
 
-| As-built (`mvp_architecture.md`) | Full spec (`docs/architecture.md`) |
-|---|---|
-| 9 supplementary scripts + primary notebooks | More components |
-| 1 delay regime | 2–3 regimes |
-| 5 supplementary baselines | 6 baselines |
-| Brier + ECE | Brier + ECE + calibration applied |
-| Amount-scaled sensitivity (adopted) | Full cost matrix sensitivity |
-| Stop criteria applied where relevant | Section 9 defines them all |
-| Hardcoded split | `configs/splits.yaml` |
-| No `cost_config_hash` | Full action log schema |
+> The pipeline is a decision pipeline. The classifier is an input to the
+> policy. The policy is the product. The backtest is the evidence.
 
-The as-built system is a strict subset in structure. Two items from the full
-spec were pulled forward because they were cheap to add and their stop
-criteria were already written: amount-scaled sensitivity and the ECE
-diagnostic. Both were evaluated against their stop criteria and reported.
-Nothing in the as-built system contradicts the full spec.
+> The argmin rule is the source of truth. Thresholds are a diagnostic view.
 
----
+> The test window is used once. No exceptions.
 
-## 14. Guiding Rules
-
-### 14.1 Primary
-
-> The three algorithms are only comparable if they use the **same split,
-> same preprocessing, same folds, and same primary metric.**
-
-> The test set is used **once**, after model selection. No exceptions.
-
-> The Streamlit app must load the **same model and preprocessing pipeline**
+> The Streamlit app must load the same classifier and preprocessing pipeline
 > reported in the paper.
 
-### 14.2 Supplementary
+> If a component does not change the report, it is not part of the pipeline.
 
-> Build the smallest correct loop. Ship it. Then expand.
-
-> If a component is not required to produce `reports/mvp_backtest.md`, it is
-> not part of the supplementary pipeline.
+> Every deviation from the framing is recorded in §13. Hiding a deviation is
+> worse than the deviation itself.
 
 ---
 
-## 15. Changelog
+## 18. Changelog
 
 | Date | Change | Reason |
 |---|---|---|
-| 2026-09-22 | Initial MVP architecture | Project start |
-| 2026-09-21 | MVP complete: 9 pipeline scripts, 2 test files, 1 diagnostic; amount-scaled sensitivity adopted; ECE null stop recorded | Reconcile with built MVP |
-| 2026-09-22 | Restructured into two-layer architecture (primary course pipeline + supplementary cost-sensitive pipeline); added EDA, preprocessing, three-algorithm comparison, Streamlit app, and IMRaD paper to primary scope; added repository layout matching required submission structure; added primary and supplementary build orders; split DoD into primary and supplementary | Align with course requirements |
+| 2026-09-22 | v0.4 — restructured into two-layer architecture (primary + supplementary) | Align with course deliverables |
+| 2026-09-24 | v1.0 — first-principles revision; two-layer architecture removed; single decision pipeline adopted; components reorganized by pipeline layer (data / classifier / decision / evaluation / application); §13 added to record as-built deviations from framing; DoD restructured by layer; guiding rules rewritten; repository layout annotations updated to remove primary/supplementary labels | Derive from `problem_framing.md` v1.0, `evaluation_protocol.md` v1.0, `decision_policy.md` v1.0, and `data_card.md` v1.0 |

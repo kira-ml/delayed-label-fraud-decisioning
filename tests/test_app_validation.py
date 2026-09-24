@@ -8,7 +8,7 @@ from src.models.preprocess import get_feature_columns
 
 @pytest.fixture(scope="module")
 def sample_row():
-    df = pd.read_parquet("data/processed/primary_test.parquet").head(1)
+    df = pd.read_parquet("data/processed/test.parquet").head(1)
     return df
 
 

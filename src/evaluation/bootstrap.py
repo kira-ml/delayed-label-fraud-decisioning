@@ -95,7 +95,7 @@ def main():
     print(f"[bootstrap] N={n:,}, iterations={N_BOOT}")
     print(f"[bootstrap] point estimates:")
     print(f"  Policy           : {pol_point:.6f}")
-    print(f"  LightGBM + 0.5   : {bas_point:.6f}")
+    print(f"  Classifier + 0.5 : {bas_point:.6f}")
     print(f"  Difference       : {diff_point:.6f}")
     print(f"  Advantage        : {adv_point:.2f}%")
     print()
@@ -147,7 +147,7 @@ def main():
         "| Quantity | Point estimate | 95% CI |",
         "|---|---:|---|",
         f"| Policy cost/txn | {pol_point:.6f} | [{pol_lo:.6f}, {pol_hi:.6f}] |",
-        f"| LightGBM + 0.5 cost/txn | {bas_point:.6f} | [{bas_lo:.6f}, {bas_hi:.6f}] |",
+        f"| Classifier + 0.5 cost/txn | {bas_point:.6f} | [{bas_lo:.6f}, {bas_hi:.6f}] |",
         f"| Difference (baseline − policy) | {diff_point:.6f} | [{dif_lo:.6f}, {dif_hi:.6f}] |",
         f"| Advantage (%) | {adv_point:.2f}% | [{adv_lo:.2f}%, {adv_hi:.2f}%] |",
         "",

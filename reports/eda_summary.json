@@ -12,8 +12,9 @@
     "6": 0.013405073589231566,
     "7": 0.014745515938167962
   },
-  "train_fraud_rate": 0.010252972053701372,
-  "test_fraud_rate": 0.014038271117159567,
+  "train_fraud_rate": 0.00981263805318873,
+  "val_fraud_rate": 0.010207194564776565,
+  "test_fraud_rate": 0.012576321700638706,
   "numeric_summary": {
     "count": {
       "customer_age": 1000000.0,

@@ -1,13 +1,13 @@
 # MVP Backtest Report
 
-_Generated: 2026-09-22 10:58:08 UTC_
+_Generated: 2026-09-24 14:09:34 UTC_
 
 ## Setup
 
 - Dataset: BAF `Base.csv`
 - Delay regime: 1 month (`label_month = month + 1`)
 - Split: train months {0,1,2}, val {3,4}, test {5,6}
-- Model: LightGBM binary classifier, library defaults, early stopping on val
+- Model: selected classifier from the 3-algorithm comparison (models/best_model.pkl)
 - Policy: `argmin` of expected cost over `{approve, review, block}`
 - Cost matrix: `fraud_loss=1.0`, `false_positive_cost=0.1`, `review_cost=0.02`, `residual_fraud_loss=0.3`
 - Amount scaling: **enabled**, `fraud_loss(amount) = amount * 0.0019187869`
@@ -25,31 +25,31 @@ _Generated: 2026-09-22 10:58:08 UTC_
 | Random | 0.047484 | 10802.09 | -6496.21 |
 | Approve-all | 0.018928 | 4305.87 | 0.00 |
 | Block-all | 0.098742 | 22463.00 | -18157.13 |
-| LightGBM + static 0.5 | 0.017749 | 4037.76 | 268.12 |
-| Cost-sensitive policy | 0.007621 | 1733.77 | 2572.10 |
+| Selected classifier + static 0.5 | 0.018737 | 4262.45 | 43.42 |
+| Cost-sensitive policy | 0.007491 | 1704.17 | 2601.71 |
 
 ## Ranking metrics (on the policy's scores)
 
 | Budget | Precision | Recall |
 |---|---:|---:|
-| @1%  | 0.2316 | 0.1842 |
-| @5%  | 0.1182 | 0.4701 |
-| @10% | 0.0795 | 0.6323 |
+| @1%  | 0.2431 | 0.1933 |
+| @5%  | 0.1189 | 0.4729 |
+| @10% | 0.0775 | 0.6162 |
 
 ## Calibration
 
-- Brier score: **0.011832**
-- ROC-AUC (informational only): 0.8821
+- Brier score: **0.011506**
+- ROC-AUC (informational only): 0.8753
 
 ## Action distribution
 
-- `approve`: 206,276
-- `review`: 19,473
-- `block`: 1,742
+- `approve`: 205,395
+- `review`: 21,371
+- `block`: 725
 
 ## Interpretation
 
-The cost-sensitive policy achieves **0.007621** cost per transaction. The strongest non-policy baseline is **LightGBM + static 0.5** at **0.017749**.
+The cost-sensitive policy achieves **0.007491** cost per transaction. The strongest non-policy baseline is **Selected classifier + static 0.5** at **0.018737**.
 **Result:** the policy does beat the strongest baseline on realized cost per transaction under the same split, delay regime, and cost matrix.
 
 ## Limitations

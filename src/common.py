@@ -60,16 +60,11 @@ CATEGORICAL_COLS = [
 # ---------------------------------------------------------------------------
 # Split month definitions
 # ---------------------------------------------------------------------------
-# Supplementary (delay-aware) split — docs/data_card.md §6.4
-SUPP_TRAIN_MONTHS   = [0, 1, 2]
-SUPP_VAL_MONTHS     = [3, 4]
-SUPP_TEST_MONTHS    = [5, 6]
+# Single chronological split — docs/data_card.md §5.2
+SUPP_TRAIN_MONTHS    = [0, 1, 2]
+SUPP_VAL_MONTHS      = [3, 4]
+SUPP_TEST_MONTHS     = [5, 6]
 SUPP_CENSORED_MONTHS = [7]
-
-# Primary (course) split — docs/data_card.md §5.2
-PRIMARY_TRAIN_MONTHS = [0, 1, 2, 3, 4, 5]
-PRIMARY_TEST_MONTHS  = [6, 7]
-
 
 # ---------------------------------------------------------------------------
 # Cost configuration

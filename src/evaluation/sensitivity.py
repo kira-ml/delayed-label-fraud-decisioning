@@ -72,10 +72,10 @@ def realized_cost(actions, y, amount, costs):
 def baseline_actions(p, rng):
     n = len(p)
     return {
-        "Random":        rng.integers(0, 3, size=n),
-        "Approve-all":   np.zeros(n, dtype=int),
-        "Block-all":     np.full(n, 2, dtype=int),
-        "LightGBM+0.5":  np.where(p >= 0.5, 2, 0),
+        "Random":         rng.integers(0, 3, size=n),
+        "Approve-all":    np.zeros(n, dtype=int),
+        "Block-all":      np.full(n, 2, dtype=int),
+        "Classifier+0.5": np.where(p >= 0.5, 2, 0),
     }
 
 

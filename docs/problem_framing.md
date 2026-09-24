@@ -5,373 +5,173 @@
 > **Institution:** National University Philippines  
 > **Instructor:** Ken Oliver Caparros  
 > **Document:** Problem framing / project charter  
-> **Status:** v0.3 — aligned with course requirements and three-algorithm comparison  
-> **Last updated:** 2026-09-22
+> **Status:** v1.0 — first-principles revision; decision-centric framing  
+> **Last updated:** 2026-09-24
+
+---
+
+## 0. How to Read This Document
+
+This document is the **root** of the project. Every other document —
+evaluation protocol, data card, decision policy, architecture, roadmap,
+report, and paper — must derive from the problem decomposition and framing
+stated here.
+
+**Rule:** If another document contradicts this one, either this document is
+wrong and must be revised, or that document is wrong and must be revised.
+No third option.
+
+**Rule:** If a component of the project cannot be traced to a sentence in
+this document, that component is either unjustified or this document is
+incomplete. Both are defects.
+
+This revision replaces v0.3, which framed the project as a
+classification-first study with a supplementary decision layer. That framing
+was inherited from course deliverables rather than derived from the problem.
+It is reversed here.
 
 ---
 
 ## 1. One-Sentence Project
 
-Build and compare three traditional machine learning algorithms for fraud
-classification on the Bank Account Fraud (BAF) dataset, deploy the best
-model through a Streamlit application, and — as a supplementary layer —
-evaluate a cost-sensitive decision policy under a delayed-label regime that
-reflects the operational reality of fraud detection.
+Design, implement, and evaluate a **cost-sensitive fraud decision policy**
+that decides `approve` / `review` / `block` in real time on the Bank Account
+Fraud (BAF) dataset under a **delayed and censored label regime**, where
+three traditional classifiers are compared as *inputs to the policy*, and
+where success is measured by **realized operational cost**, not by
+classification accuracy.
 
 ---
 
-## 2. Core Question
+## 2. The Problem, Stated From First Principles
 
-> Which of three traditional machine learning algorithms — Logistic
-> Regression, Random Forest, and LightGBM — performs best at predicting
-> fraud on the Bank Account Fraud dataset under a fair, reproducible
-> experimental design, and how does the best model translate into an
-> operational `approve` / `review` / `block` decision under delayed and
-> censored labels?
+### 2.1 The Bare Fact
 
-The primary question is a **supervised binary classification** comparison.
-The supplementary question is a **one-step decision problem** that maps the
-classification output to an operational action.
+A payment transaction must be authorized or declined **before** anyone knows
+whether it is fraudulent.
+
+This is not a modeling choice. It is a structural property of every real-time
+payment system. It cannot be optimized away.
+
+### 2.2 The Consequence
+
+The label that a supervised learning model needs — `y ∈ {0, 1}` — **does not
+exist at decision time**. It arrives later, if it arrives at all:
+
+```text
+decision_time = t
+label_time    = t + Δ_t        where Δ_t > 0
+```
+
+Sometimes `Δ_t` is a chargeback window. Sometimes the fraud is never
+reported. Sometimes the customer disputes a legitimate charge. The label is
+late, noisy, and missing-not-at-random.
+
+### 2.3 The Therefore
+
+Because labels arrive after the decision, and because both error types have
+real costs:
+
+- A **false negative** (approving fraud) costs the fraud amount.
+- A **false positive** (blocking a legitimate transaction) costs customer
+  friction, revenue, and churn.
+
+...the operational problem is **not** "predict `y` accurately." It is:
+
+> **Choose an action at decision time that minimizes expected operational
+> cost, given a calibrated estimate of P(fraud), a cost structure, and the
+> knowledge that the label is delayed and possibly censored.**
+
+Classification accuracy is a **proxy** for this. It is not the objective.
+Under class imbalance and cost asymmetry, it is a poor proxy.
+
+### 2.4 The Real Research Question
+
+> **How should a fraud system map a calibrated P(fraud) estimate into an
+> operational `approve` / `review` / `block` decision in order to minimize
+> realized cost under a delayed and censored label regime — and which
+> traditional classifier produces the best policy input under this
+> criterion?**
+
+This is a **decision problem under uncertainty**, not a classification
+problem. The classification model is an input. The policy is the object of
+study. The backtest is the evidence.
 
 ---
 
-## 3. First-Principles Problem Statement
+## 3. First-Principles Decomposition
 
-At decision time `t`, the system observes transaction features `X_t` and must
-predict whether the transaction is fraudulent:
+Each layer of the project derives from the layer above it. Nothing is
+included because a deliverable required it; everything is included because
+the problem required it.
 
-```text
-ŷ_t = f(X_t)   where   y_t ∈ {0, 1}
-```
+| Layer | Question | Answer | What it justifies |
+|---|---|---|---|
+| **0. Fact** | What is structurally true? | Decisions must be made before labels arrive. | Everything downstream. |
+| **1. Consequence** | What does that force? | Labels are delayed (`Δ_t > 0`), censored, and noisy. | Delay simulation; censored-label handling. |
+| **2. Objective** | What is the system actually optimizing? | Minimize realized operational cost. | Cost matrix; cost-based metrics; backtest. |
+| **3. Decision** | What actions are available? | `approve`, `review`, `block`. | Decision policy; expected-cost formulation. |
+| **4. Input** | What does the decision need? | A calibrated P(fraud). | Classifier; calibration requirement. |
+| **5. Method** | How do we choose a classifier? | Compare three traditional families under identical conditions. | Three-algorithm comparison (methodology). |
+| **6. Evaluation** | How do we know if it works? | Realized cost per transaction, on a temporal backtest, vs. baselines. | Evaluation protocol; backtest report. |
+| **7. Deployment** | How is it used? | An interactive application that shows both P(fraud) and the routed action. | Streamlit app. |
+| **8. Reporting** | How is it communicated? | IMRaD paper, IEEE format. | Paper; documentation. |
 
-The primary formulation is standard binary classification. The supplementary
-formulation extends the prediction into an action:
-
-- `approve`
-- `review`
-- `block`
-
-The true label `y_t` is not available at time `t`. It becomes observable later
-at:
-
-```text
-label_time = t + Δ_t
-```
-
-where `Δ_t` is the label delay.
-
-Under the supplementary decision framing, the system optimizes expected
-operational utility:
-
-```text
-maximize  E[ utility(action_t, y_t, cost_t) ]
-```
-
-where utility depends on:
-
-- fraud loss avoided
-- false-positive friction cost
-- review / investigation cost
-- operational capacity
-- customer experience
-
-The model is the primary deliverable. The decision policy is a supplementary
-layer that demonstrates how the classification output maps to a real
-operational decision.
-
-```text
-observe → predict → (decide) → act → observe delayed/partial outcome → evaluate
-```
-
-Full online adaptation and delayed-label correction are future work.
+**Course deliverables (three algorithms, Streamlit app, EDA, IMRaD) appear at
+layers 5, 7, 4, and 8.** They are **instruments** for answering the question
+at layers 2–3. They are not the question.
 
 ---
 
 ## 4. Why This Problem Exists
 
-Modern payment systems separate authorization, clearing, dispute, and
-chargeback.
+Modern payment systems separate four events that used to be one:
 
-This creates a structural gap:
+1. **Authorization** — the transaction is approved or declined, in
+   milliseconds.
+2. **Clearing** — funds move, often irrevocably on real-time rails (RTP,
+   FedNow, UPI, Pix).
+3. **Dispute** — the customer or issuer challenges the transaction, days to
+   weeks later.
+4. **Chargeback** — the outcome is resolved, sometimes 30–120 days after the
+   transaction.
 
-1. A transaction must be approved or declined in **milliseconds to seconds**.
-2. Fraud truth may arrive **30–120 days later** as a chargeback, dispute, or
-   investigation outcome.
-3. On real-time rails such as RTP, FedNow, UPI, and Pix, funds may become
-   **irrevocable** before fraud is confirmed.
-4. Fraudsters adapt faster than retraining cycles.
-5. Investigators have limited capacity.
-6. False positives create customer friction and revenue loss.
+The gap between (1) and (4) is the label delay. It is not an artifact of any
+particular dataset. It is the shape of the domain.
 
-Therefore, the core difficulty is not only “which model gets the best AUC?”
-The broader difficulty is:
+This gap creates six consequences that any honest fraud system must confront:
 
-> How do we build, compare, and deploy fraud classification models that
-> translate into cost-based decisions when the feedback loop is delayed,
-> partial, biased, and adversarial?
+1. **Latency.** The decision cannot wait for the label.
+2. **Cost asymmetry.** A missed fraud and a blocked customer do not cost the
+   same amount, and neither is a constant.
+3. **Capacity.** Investigators are finite. `review` is not free and not
+   unlimited.
+4. **Censoring.** Fraud that is never reported never appears as a positive
+   label.
+5. **Bias.** Labels reflect past policy, not ground truth. A transaction
+   approved by an old rule that turned out to be fraud may never be
+   investigated.
+6. **Adversarial drift.** Fraudsters adapt to the model. The distribution
+   the model learned is not the distribution it will face.
 
----
-
-## 5. First-Principles Decomposition
-
-| Layer | Question | Implication |
-|---|---|---|
-| Operational problem | Decide in real time with incomplete future information | Cannot wait for labels |
-| Why it exists | Payment lifecycle separates decision from dispute outcome | Labels arrive late |
-| Constraints | Latency, cost asymmetry, capacity, privacy, regulation | Cannot simply maximize recall |
-| Root causes | Delayed chargebacks, censored labels, unreported fraud, investigation bias | Observed labels are not ground truth |
-| Conventional failure | Offline random-split AUC on resolved labels | Overestimates live performance |
-| Why still hard | Nonstationarity + delayed feedback + adversarial adaptation | Model learns from a biased, delayed view |
-| **Primary ML contribution** | **Fair comparison of three traditional classifiers** | **Course requirement** |
-| Supplementary ML contribution | Calibrated probability model + cost-sensitive decision policy | Model must match the decision loop |
-| Measurable objective | Macro F1 and operational cost per transaction | Business-relevant evaluation |
-| Data required | Timestamped transactions, features, labels | Temporal data enables fair evaluation |
-| Deliverable | Three-algorithm comparison + Streamlit app + IMRaD paper | Course requirement |
+A classification model trained on resolved labels with a random split
+ignores all six. It reports an AUC that cannot be reproduced in production.
+The project's purpose is to not make that mistake.
 
 ---
 
-## 6. System Scope
+## 5. What the System Optimizes
 
-### In Scope — Primary (Course Requirement)
+### 5.1 The Objective Function
 
-- Exploratory data analysis with at least five meaningful visualizations
-- Data preparation: missing values, duplicates, outliers, encoding, scaling,
-  feature selection, class imbalance handling
-- **Exactly three traditional algorithms:**
-  - Logistic Regression
-  - Random Forest
-  - LightGBM
-- Fair experimental design:
-  - Same data split across all three algorithms
-  - Same preprocessing logic
-  - Same 5-fold cross-validation strategy
-  - Same primary metric (Macro F1)
-  - Documented hyperparameters and tuning procedure
-- Model selection based on validation results
-- Final evaluation once on an untouched test set
-- **Deployable Streamlit application** using the saved best model and the
-  same preprocessing pipeline
-- IMRaD-style paper in IEEE format
-- Technical documentation, data dictionary, contribution record, and signed
-  ownership declaration
-
-### In Scope — Supplementary (Project Depth)
-
-- Chronological transaction replay from a static dataset
-- Delayed-label simulation with documented rules
-- Chronological train / validation / test splits
-- Cost-sensitive decision policy over `approve` / `review` / `block`
-- Action logging
-- Cost-based temporal backtest
-- Calibration measurement
-- Sensitivity analysis on cost assumptions
-- Reproducible evaluation
-
-### Out of Scope
-
-- Neural networks, deep learning, CNNs, RNNs, transformers, LLMs
-- Pretrained foundation models
-- AutoML-generated solutions
-- Streaming infrastructure such as Kafka, RabbitMQ, or Faust
-- FastAPI or any service layer
-- Online learning such as SGD or Passive-Aggressive
-- PU learning
-- Delayed-label correction models
-- Drift detectors
-- Graph neural networks or graph features
-- Federated learning
-- Production bank integration
-- Real PII or live customer data
-- Novel algorithm research
-
-These are future work and are not part of the course submission.
-
----
-
-## 7. System Architecture
-
-The project has two layers. The primary layer is the classification pipeline;
-the supplementary layer adds the decision policy.
-
-### Primary Pipeline (Course Requirement)
-
-```mermaid
-flowchart LR
-    A[Raw Dataset] --> B[Load and Clean]
-    B --> C[EDA]
-    C --> D[Preprocessing]
-    D --> E[Three-Algorithm Training]
-    E --> F[Cross-Validation Comparison]
-    F --> G[Model Selection]
-    G --> H[Final Test Evaluation]
-    H --> I[Streamlit App]
-```
-
-### Supplementary Pipeline (Project Depth)
-
-```mermaid
-flowchart LR
-    A[Scored Test Set] --> B[Decision Policy]
-    B --> C[Action Log]
-    C --> D[Cost-Based Backtest]
-    D --> E[Supplementary Report]
-```
-
-### Components
-
-1. **Raw Dataset** — BAF `Base.csv`, 1,000,000 rows, 32 features.
-2. **Load and Clean** — standard schema, deduplication, type normalization.
-3. **EDA** — distributions, relationships, class balance, outliers, at least
-   five visualizations with written findings.
-4. **Preprocessing** — missing values, encoding, scaling, feature selection,
-   class imbalance handling; fit on training data only.
-5. **Three-Algorithm Training** — Logistic Regression, Random Forest,
-   LightGBM; identical folds and preprocessing.
-6. **Cross-Validation Comparison** — 5-fold time-series CV; mean and
-   variability reported.
-7. **Model Selection** — based on primary metric, interpretability, speed,
-   practical suitability.
-8. **Final Test Evaluation** — once on the untouched test set.
-9. **Streamlit App** — loads saved model and preprocessing pipeline;
-   validated inputs; clear output.
-10. **Decision Policy (Supplementary)** — maps `p_fraud` and costs to
-    `approve`, `review`, or `block`.
-11. **Action Log (Supplementary)** — audit trail of decisions.
-12. **Cost-Based Backtest (Supplementary)** — realized cost, fraud dollars
-    saved, precision@N.
-
----
-
-## 8. Data Strategy
-
-### Primary Dataset
-
-**Bank Account Fraud (BAF) Suite**
-
-| Field | Value |
-|---|---|
-| Source | Jesus et al., NeurIPS 2022 |
-| License | CC BY 4.0 |
-| Rows | 1,000,000 |
-| Features | 32 raw (31 excluding label) |
-| Target | `fraud_bool` (binary) |
-| Time column | `month`, values 0–7 |
-| Fraud rate | ~1.1% |
-
-Why chosen:
-
-- Public and citable
-- Tabular fraud detection with mixed feature types
-- Suitable for temporal and delay experiments
-- Manageable size for a student project
-- Legitimate license for academic use
-
-### Secondary Dataset
-
-**IEEE-CIS Fraud Detection** — optional. Not used in the current submission.
-
-### Class Imbalance
-
-Fraud is ~1.1% of transactions. This is addressed in:
-
-- Primary metric choice (Macro F1, not accuracy)
-- Preprocessing (class weights or documented resampling strategy)
-- Per-class precision, recall, and F1 reporting
-- Confusion matrix analysis
-
-### Label Delay Simulation (Supplementary)
-
-Public fraud datasets do not provide realistic chargeback timestamps. Delay
-is simulated to support the supplementary analysis.
+For each transaction, the system selects the action that minimizes expected
+operational cost:
 
 ```text
-decision_time = t
-label_time    = t + Δ
+action* = argmin over {approve, review, block} of E[cost(action)]
 ```
 
-BAF exposes month-level granularity only, so the delay regime is **1 month**
-in the current build. Day-based regimes (7 / 30 / 90 days) are documented as
-future work.
-
-Censoring rule:
-
-```text
-A label is observed only if label_time <= evaluation_end.
-Unobserved labels are censored, not negative.
-```
-
-### Time-Aware Splits
-
-For the supplementary analysis, training at time `T` may only use labels
-where:
-
-```text
-label_time <= T
-```
-
-Testing uses future transactions:
-
-```text
-decision_time > T
-```
-
-For the primary classification comparison, a chronological 80/20 train/test
-split is used, with 5-fold time-series cross-validation on the training data.
-No random splits. No shuffling.
-
----
-
-## 9. ML Formulation
-
-### Primary — Three-Algorithm Classification
-
-**Input:** Features available at decision time.
-
-```text
-X_t
-```
-
-**Target:** Binary fraud label.
-
-```text
-y_t ∈ {0, 1}
-```
-
-**Algorithms compared:**
-
-| Algorithm | Role | Why included |
-|---|---|---|
-| Logistic Regression | Linear baseline | Interpretable coefficients; fast; widely used in fraud |
-| Random Forest | Non-linear ensemble | Handles mixed types and interactions; robust to outliers |
-| LightGBM | Gradient boosting | Strong tabular performance; handles categorical features natively |
-
-**Fairness conditions:**
-
-- Same training/test split
-- Same preprocessing pipeline (fit on training data only)
-- Same 5-fold cross-validation strategy
-- Same primary metric: Macro F1
-- Documented hyperparameter tuning procedure
-- Test set used once, after model selection
-
-**Primary metric:** Macro F1
-
-Justification: the class distribution is heavily imbalanced (~1.1% fraud).
-Accuracy is misleading. Macro F1 treats both classes equally and reflects the
-operational cost of both false positives and false negatives.
-
-**Supporting metrics:**
-
-- Accuracy
-- Per-class precision, recall, F1
-- Confusion matrix
-- ROC-AUC (informational)
-- Precision@N and Recall@N
-
-### Supplementary — Decision Policy
-
-Given predicted probability `p = P(y=1 | X_t)`, choose the action minimizing
-expected cost:
+with:
 
 ```text
 E[cost(approve)] = p * fraud_loss(amount)
@@ -379,246 +179,576 @@ E[cost(review)]  = review_cost + p * residual_fraud_loss
 E[cost(block)]   = (1 - p) * false_positive_cost
 ```
 
-Choose the action with the lowest expected cost.
+where `p = P(y=1 | X_t)` is the calibrated model output.
 
-The argmin rule is the source of truth. Derived thresholds are a diagnostic
-view only.
+This is the entire optimization target. There is no separate classification
+objective. A classifier is "good" if and only if the policy it feeds produces
+lower realized cost than the alternatives.
 
-### Future Improvements
+### 5.2 Why Not Classification Metrics
 
-- Calibration (Platt, isotonic)
-- Cost-sensitive training
-- Amount-scaled costs (already adopted in supplementary analysis)
-- Capacity-aware policy
-- Online learning
+| Metric | What it measures | Why it is not the objective |
+|---|---|---|
+| Accuracy | Fraction correct | Useless at 1.1% base rate; predict-all-legit scores 98.9%. |
+| ROC-AUC | Ranking quality across all thresholds | Ignores the cost matrix; ignores calibration; ignores the actual decision. |
+| Macro F1 | Balanced precision/recall across classes | Treats the two classes as equally important; they are not. Treats all errors as equal cost; they are not. |
+| Recall@k | Coverage at fixed alert budget | Useful supporting metric; not a cost objective; ignores severity of missed fraud. |
+| Cost per transaction | Mean realized cost of the policy | **This is the objective.** |
+
+Supporting metrics are reported. They are never the primary claim.
+
+### 5.3 What "Success" Means
+
+The project succeeds if the cost-sensitive policy, fed by a properly
+calibrated classifier, produces **lower realized cost per transaction** than
+every canonical baseline under the same split, cost matrix, and delay
+regime — with a bootstrap confidence interval that excludes zero — and the
+result survives a sensitivity analysis over the cost matrix.
+
+Everything else — which classifier wins, what the macro F1 is, how the app
+looks — is instrumental.
+
+---
+
+## 6. Problem Boundary and Scope
+
+### 6.1 In Scope
+
+The following are in scope because the problem decomposition in §3 requires
+them.
+
+**Framing and evaluation**
+- A delay-aware, cost-based problem framing
+- A frozen cost matrix with documented assumptions
+- A chronological split with a 1-month delay regime and censored-label
+  handling
+- A calibration requirement (ECE < 0.05) before the policy is evaluated
+- A cost-based backtest with canonical baselines
+- A sensitivity analysis over the four cost parameters
+- Bootstrap confidence intervals on the policy advantage
+
+**Classification methodology**
+- Exactly three traditional classifiers: Logistic Regression, Random
+  Forest, LightGBM
+- Identical preprocessing, folds, and split for all three
+- Documented hyperparameters and tuning procedure
+- Evaluation of each classifier **as a policy input**, on realized cost
+
+**Data understanding**
+- Exploratory data analysis focused on decision-relevant properties:
+  - Amount distribution (drives cost asymmetry)
+  - Class imbalance and its effect on calibration
+  - Temporal drift in fraud rate
+  - Feature availability at decision time
+- A data dictionary with source-time availability per column
+- A leakage register
+
+**Deployment and reporting**
+- A Streamlit application that shows both P(fraud) and the routed action
+- An IMRaD paper in IEEE format
+- Technical documentation, contribution record, signed ownership declaration
+- Reproducibility from raw data, configs, and seeds
+
+### 6.2 Out of Scope
+
+The following are explicitly excluded. They are deferred to future work, not
+denied.
+
+- Neural networks, deep learning, transformers, LLMs, pretrained foundation
+  models
+- AutoML
+- Streaming infrastructure (Kafka, RabbitMQ, Faust)
+- Service layer (FastAPI, microservices)
+- Online learning (SGD, Passive-Aggressive)
 - PU learning
-- Delayed-label correction
-- Drift-aware retraining
-- Additional delay regimes (2-month, 3-month)
+- Delayed-label correction models
+- Drift detectors
+- Graph neural networks or graph features
+- Federated learning
+- Capacity-aware scheduling (named, not implemented)
+- Fairness-aware policy constraints (named, not implemented)
+- Bandit or RL policies
+- Multiple delay regimes (only 1 month is implemented)
+- Production bank integration
+- Real PII or live customer data
+- Novel algorithm research
 
-These are not part of the current submission.
+Each exclusion is justified by scope discipline, not by impossibility.
+
+---
+
+## 7. The System, End to End
+
+There is **one** pipeline. It is a decision pipeline, not a classification
+pipeline with a decision add-on.
+
+```mermaid
+flowchart LR
+    A[BAF Base.csv] --> B[Load + Schema]
+    B --> C[EDA: decision-relevant properties]
+    C --> D[Delay simulation: label_time = month + 1]
+    D --> E[Chronological split: train 0-2, val 3-4, test 5-6, censored 7]
+    E --> F[Classifier comparison: LR, RF, LGBM]
+    F --> G[Calibration check: ECE < 0.05]
+    G --> H[Decision policy: argmin expected cost]
+    H --> I[Action log]
+    I --> J[Cost-based backtest vs. baselines]
+    J --> K[Backtest report]
+    H --> L[Streamlit app: P_fraud + routed action]
+    K --> M[IMRaD paper]
+```
+
+### 7.1 Components
+
+1. **Raw dataset.** BAF `Base.csv`, 1,000,000 rows, 32 columns, `month` ∈
+   0–7.
+2. **Load and schema.** Add `transaction_id`, add `amount_proxy` (documented
+   from `proposed_credit_limit`), sort by month. No modeling.
+3. **EDA.** Decision-relevant properties only: amount distribution, class
+   balance, temporal drift, feature availability. Every figure leads to a
+   finding; every finding leads to a decision.
+4. **Delay simulation.** `label_time = month + 1`. A label is observed iff
+   `label_time ≤ 7`. Unobserved labels are **censored**, never treated as
+   negative.
+5. **Chronological split.** Train months 0–2, validation months 3–4, test
+   months 5–6, censored month 7. Assertion: `train + val + test == observed`.
+6. **Classifier comparison.** Logistic Regression, Random Forest, LightGBM.
+   Same split, same preprocessing pipeline (fit on training folds only),
+   same folds (expanding-window by month). Documented grids.
+7. **Calibration check.** ECE and Brier on validation. If ECE ≥ 0.05, apply
+   exactly one calibration method and re-check. Stop criterion in the
+   evaluation protocol.
+8. **Decision policy.** `argmin` over expected costs. The argmin rule is the
+   source of truth; derived thresholds are a diagnostic view.
+9. **Action log.** Per transaction: `p_fraud`, three expected costs, chosen
+   action, chosen cost. Labels are **not** in the log; they are joined in the
+   backtest.
+10. **Backtest.** Join actions with matured labels. Compute realized cost per
+    transaction for the policy and for every canonical baseline. Bootstrap
+    the advantage. Report censored counts.
+11. **Streamlit app.** Loads the saved classifier and the saved preprocessing
+    pipeline. Accepts form input or CSV upload. Displays both P(fraud) and
+    the routed action, with the cost reasoning visible.
+12. **IMRaD paper.** Reports the framing, the method, the backtest, and the
+    limitations — in that order.
+
+### 7.2 What Is Not a Separate Layer
+
+There is no "primary classification pipeline" and no "supplementary policy
+pipeline." The classification comparison is a step inside the decision
+pipeline. It exists to answer: *which classifier, when fed into the policy,
+produces the lowest realized cost?* That is a decision question, not a
+classification question.
+
+---
+
+## 8. Data Strategy
+
+### 8.1 Primary Dataset
+
+**Bank Account Fraud (BAF) Suite — Base.csv**
+
+| Field | Value |
+|---|---|
+| Source | Jesus et al., "Turning the Tables," NeurIPS 2022 |
+| License | CC BY 4.0 |
+| Rows | 1,000,000 |
+| Raw columns | 32 (including target) |
+| Target | `fraud_bool` (binary, ~1.1% positive) |
+| Time column | `month`, integer, 0–7 |
+| Granularity | Month-level only (no day-level timestamps) |
+| Storage | `data/original/Base.csv` |
+
+**Why chosen, from first principles:**
+
+- It is **temporal** (`month`), which is required for a delay-aware
+  evaluation.
+- It is **imbalanced** (~1.1%), which is realistic for fraud and forces the
+  cost asymmetry to matter.
+- It is **tabular with mixed types**, matching the domain.
+- It has a **legitimate license** and a **citable source**.
+- It is **small enough** to iterate on and **large enough** to train
+  reliably.
+
+**Known limitations, named in advance:**
+
+- Synthetic. Real fraud distributions differ.
+- Month-level granularity. Day-based delay regimes are not possible.
+- No chargeback timestamps. Delay must be simulated.
+- Fraud rate is fixed; production fraud rates drift.
+
+### 8.2 Delay Regime
+
+Given BAF's month-level granularity, the only defensible regime is **1
+month**:
+
+```text
+decision_time = month
+label_time    = month + 1
+observed      = (label_time <= 7)
+```
+
+A transaction in month 7 has `label_time = 8`, which is beyond the dataset.
+It is **censored**, not negative.
+
+### 8.3 Chronological Split
+
+| Split | Months | Purpose |
+|---|---|---|
+| Train | 0, 1, 2 | Fit classifier, fit preprocessing |
+| Validation | 3, 4 | Calibration check, hyperparameter selection, threshold diagnostics |
+| Test | 5, 6 | Policy evaluation, backtest |
+| Censored | 7 | Excluded from training and evaluation; count reported |
+
+Rules:
+- No shuffling. Ever.
+- No stratification that breaks time order.
+- Preprocessing fit on training months only.
+- Test set touched exactly once, at the end.
+
+### 8.4 Class Imbalance
+
+Fraud is ~1.1% of transactions. The response is:
+
+- **Metric:** cost per transaction (primary), with per-class precision,
+  recall, F1, and confusion matrix reported as supporting evidence.
+- **Algorithm-level handling:** documented per algorithm. Logistic
+  Regression and Random Forest may use class weights; LightGBM does not, so
+  that the cost asymmetry is handled by the policy, not the training
+  objective. Any weighting that distorts calibrated probabilities is
+  rejected, because the policy depends on calibration.
+- **Resampling:** not applied. It distorts calibration and complicates
+  temporal validity.
+
+### 8.5 Feature Availability
+
+Every feature must be available at decision time. The feature audit
+(recorded in the data card) excludes:
+
+- `transaction_id` (identifier)
+- `month` (used for splits only)
+- `fraud_bool` (target)
+- `label_month`, `observed` (derived from delay simulation)
+- `amount_proxy`, `proposed_credit_limit` (reserved as cost inputs)
+- `device_fraud_count` (may include post-decision information)
+
+The exclusion list is enforced in code and verified in tests.
+
+---
+
+## 9. ML Formulation
+
+### 9.1 The Classifier's Role
+
+The classifier produces `p = P(y=1 | X_t)`.
+
+It has **three** requirements, in order of importance:
+
+1. **Calibration.** `p` must be a real probability. The policy's expected
+   costs are linear in `p`. An uncalibrated `p` produces wrong decisions.
+   ECE < 0.05 is required; if unmet, one calibration method is tried and the
+   result is reported.
+2. **Ranking.** Among transactions with the same score, fraud must be more
+   likely than non-fraud. ROC-AUC is reported as a supporting metric.
+3. **Speed.** The classifier must run in real time. Training speed matters
+   for the comparison; inference speed matters for deployment.
+
+**Calibration is first because the decision depends on it. Ranking is
+second because it affects the policy's ability to separate approve from
+review. Speed is third because all three algorithms are fast enough.**
+
+### 9.2 The Classifiers Compared
+
+| Algorithm | Role | Why it is included |
+|---|---|---|
+| Logistic Regression | Linear baseline | Interpretable coefficients; fast; a well-understood reference. |
+| Random Forest | Non-linear ensemble | Handles mixed types and interactions; robust to outliers. |
+| LightGBM | Gradient boosting | Strong tabular performance; native categorical handling. |
+
+**Fairness conditions:**
+
+- Same split (train 0–2, val 3–4, test 5–6)
+- Same preprocessing pipeline (fit within each fold's training portion)
+- Same cross-validation folds (expanding-window by month)
+- Same evaluation criterion (realized cost per transaction after the policy)
+- Documented hyperparameter grids
+- Test set used once, after selection
+
+### 9.3 What "Best Classifier" Means
+
+The winning classifier is not the one with the highest macro F1 or ROC-AUC.
+It is the one that, **when fed into the decision policy, produces the lowest
+realized cost per transaction on the test window**.
+
+Classification metrics are reported for all three classifiers, side by side,
+as supporting evidence. The selection justification names the realized-cost
+comparison as the deciding factor and the classification metrics as
+context.
+
+### 9.4 The Decision Policy
+
+Given `p` and the cost matrix, the policy chooses:
+
+```text
+action* = argmin over {approve, review, block} of E[cost(action)]
+```
+
+Thresholds are **derived** from the cost matrix, not tuned. Under
+amount-scaled fraud loss, thresholds are amount-dependent. The argmin rule
+is the source of truth in all cases; threshold formulas are a diagnostic
+view used for reporting.
+
+Edge cases (degenerate thresholds, empty review band, thresholds outside
+[0, 1]) are handled by the argmin rule and covered by unit tests.
 
 ---
 
 ## 10. Evaluation Framework
 
-### Primary Metrics — Classification
+### 10.1 Primary Metric
+
+**Realized cost per transaction** on the test window, under the frozen cost
+matrix and 1-month delay regime.
+
+### 10.2 Supporting Metrics
 
 | Metric | Purpose |
 |---|---|
-| **Macro F1** | Primary metric; imbalance-aware |
-| Accuracy | Reported for completeness; not the selection criterion |
-| Per-class precision | Fraud and non-fraud |
-| Per-class recall | Fraud and non-fraud |
-| Per-class F1 | Fraud and non-fraud |
+| Cost per transaction (each baseline) | Baseline comparison |
+| Fraud dollars saved vs. approve-all | Business framing |
+| Precision@1%, @5%, @10% | Ranking quality at fixed budget |
+| Recall@1%, @5%, @10% | Coverage at fixed budget |
+| Brier score | Calibration (probability) |
+| ECE (10 quantile bins) | Calibration (decision-relevant) |
+| ROC-AUC | Discrimination, informational |
+| Per-class precision, recall, F1 | Classification context |
 | Confusion matrix | Full error breakdown |
-| ROC-AUC | Informational; threshold-independent |
+| Censored-label count and rate | Data integrity |
 
-### Supplementary Metrics — Decision Policy
+### 10.3 Baselines
 
-- Cost per transaction
-- Total cost
-- Fraud dollars saved
-- Precision@N alerts
-- Recall@N alerts
-- Calibration: Brier score, ECE
+Every baseline uses the same split, same cost matrix, same delay regime.
 
-### Validation Protocol
+1. **Random decision** (seeded)
+2. **Approve-all**
+3. **Block-all**
+4. **Classifier + static 0.5** (each of the three classifiers, so the
+   comparison is on realized cost, not on classification metrics)
 
-- **Primary:** 5-fold time-series cross-validation on the training data
-- **Final:** one evaluation on the untouched test set
-- **Supplementary:** chronological backtest under a 1-month delay regime
-- **No tuning on the test set**
+The policy under test is compared against the **strongest** baseline, not
+the weakest.
 
-### Baselines
+### 10.4 Validation Protocol
 
-For the **primary** comparison, the three algorithms serve as each other's
-baselines. A trivial baseline (majority class) is reported for context.
+| Stage | What happens |
+|---|---|
+| Preprocessing fit | On each fold's training months only |
+| Hyperparameter selection | On validation months 3–4, by realized cost after the policy |
+| Calibration check | ECE on validation; one calibration method if needed |
+| Threshold diagnostics | Derived from cost matrix; reported as a view, not tuned |
+| Test evaluation | Once, on months 5–6, after model and policy are frozen |
+| Bootstrap | 1,000 resamples of the test window for 95% CIs on cost advantage |
+| Sensitivity | Four cost parameters, each varied over a 2× range |
 
-For the **supplementary** decision analysis:
+### 10.5 What Is Forbidden
 
-1. Random decision
-2. Approve-all
-3. Block-all
-4. LightGBM + static 0.5
-5. Cost-sensitive policy
-
----
-
-## 11. Project Timeline
-
-### Week 1 — EDA and Data Preparation
-
-- Load BAF
-- Exploratory data analysis with at least five visualizations
-- Data dictionary
-- Preprocessing pipeline
-- Chronological 80/20 split
-- 5-fold time-series CV folds defined
-
-### Week 2 — Three-Algorithm Training
-
-- Logistic Regression with tuning
-- Random Forest with tuning
-- LightGBM with tuning
-- Cross-validation comparison
-- Validation results table
-
-### Week 3 — Final Evaluation and App
-
-- Select best model on validation
-- Evaluate once on untouched test set
-- Build Streamlit application
-- Test with valid, invalid, and boundary inputs
-- Deploy to Streamlit Cloud
-
-### Week 4 — Paper and Documentation
-
-- IMRaD paper (DOCX + PDF)
-- Technical documentation
-- Contribution record
-- Ownership and authorship declaration
-- Final submission package
-
-### Supplementary (Parallel)
-
-- Cost-sensitive decision policy
-- Cost-based backtest
-- Sensitivity analysis
-- Bootstrap confidence intervals
+- Random splits on temporal data
+- K-fold CV that mixes time boundaries
+- Test-set tuning of any kind
+- Treating censored labels as negatives
+- Reporting a classification metric as the primary success criterion
+- Using a classifier that fails the calibration check without reporting it
+- Counting hyperparameter variants as different algorithms
+- Neural networks, deep learning, transformers, LLMs, AutoML
 
 ---
 
-## 12. Success Criteria
+## 11. Success Criteria
 
-### Primary (Course Requirement)
+### 11.1 Primary
 
 The project succeeds if:
 
-- Three traditional algorithms are compared under identical conditions
-- The primary metric (Macro F1) is justified and reported for all three
-- Validation results include mean and variability across folds
-- The final test set is used exactly once, after model selection
-- The selected model is justified on performance, interpretability, speed,
-  and practical suitability
-- The Streamlit app uses the same saved model and preprocessing pipeline
-  reported in the paper
-- EDA includes at least five meaningful visualizations, each leading to a
-  finding or decision
-- The IMRaD paper is complete with IEEE numbered citations
-- All required deliverables are submitted
+1. The cost-sensitive policy produces **lower realized cost per transaction**
+   than every canonical baseline on the test window.
+2. The 95% bootstrap confidence interval on the policy advantage **excludes
+   zero**.
+3. The result **survives** a 2× sensitivity sweep on all four cost
+   parameters.
+4. The classifier used by the policy **passes** the calibration check
+   (ECE < 0.05, or a documented calibration step is applied).
+5. The three classifiers are compared **on realized cost as policy inputs**,
+   with classification metrics reported as supporting evidence.
+6. The final test window is touched **once**, after model and policy are
+   frozen.
+7. Results are reproducible from raw data, configs, and seeds.
 
-### Supplementary (Project Depth)
+### 11.2 Secondary
 
-- The cost-sensitive policy produces lower realized cost than all baselines
-  under the same chronological split and cost matrix
-- Calibration is measured and reported
-- Censored-label counts are reported
-- Results are reproducible from raw data, configs, and seeds
-- Sensitivity analysis does not reverse the main conclusion
+- EDA produces ≥ 5 meaningful visualizations, each leading to a decision.
+- Data dictionary documents every column's source-time availability.
+- Streamlit app loads the saved classifier and preprocessing pipeline, shows
+  both P(fraud) and the routed action, and handles invalid input.
+- IMRaD paper is complete in IEEE format with numbered citations.
+- Contribution record and signed ownership declaration are submitted.
+
+### 11.3 What Does Not Count as Success
+
+- Highest macro F1 among the three classifiers.
+- Highest ROC-AUC.
+- Highest accuracy.
+- A working app that shows only a probability.
+- A policy that beats only the weakest baseline.
+- A result inside the noise band.
 
 ---
 
-## 13. Risks and Mitigations
+## 12. Risks, Named in Advance
 
 | Risk | Mitigation |
 |---|---|
-| Class imbalance biases model selection | Use Macro F1 as primary; report per-class metrics |
-| Data leakage through preprocessing | Fit all preprocessing on training data only |
-| Test set contamination | Use test set once, after model selection |
-| Algorithm comparison unfair | Same split, same preprocessing, same CV, same metric |
-| Temporal leakage in supplementary analysis | Strict time-aware splits; feature audit |
-| Censored labels bias supplementary evaluation | Report censored counts; never treat as negative |
-| Unrealistic cost matrix | Run sensitivity analysis |
-| Scope creep | Stick to three algorithms and course deliverables |
-| Streamlit app crashes on invalid input | Validate inputs; test boundary cases |
-| Overclaiming delayed-label learning | State that matured labels only are used |
+| Class imbalance biases classifier selection | Selection is by realized cost, not by macro F1. |
+| Preprocessing leaks test information | Fit on training folds only; enforced by pipeline. |
+| Test set contaminated by tuning | Test touched once, at the end. |
+| Classifier comparison unfair | Same split, same preprocessing, same folds, same cost criterion. |
+| Temporal leakage in features | Feature audit; `device_fraud_count` excluded. |
+| Censored labels bias evaluation | Censored rows excluded, never negative; counts reported. |
+| Cost matrix unrealistic | Sensitivity sweep over 2× range on each parameter. |
+| Calibration failure distorts decisions | ECE check; one calibration attempt; result reported. |
+| App crashes on invalid input | Input validation at widget and Python level; boundary tests. |
+| Scope creep | Non-goals in §6.2; stop criteria in the architecture. |
+| Documentation drifts from code | Code is the source of truth; docs are updated when they disagree. |
+| Overclaiming delayed-label learning | The project uses matured labels only; delay is simulated; correction is out of scope. |
 
 ---
 
-## 14. Non-Goals
+## 13. Non-Goals
 
-### Primary (Course)
+**Primary**
 
-- Do not use neural networks, deep learning, transformers, or LLMs
-- Do not use AutoML-generated solutions
-- Do not count hyperparameter variants as different algorithms
-- Do not use the test set for model selection or tuning
-- Do not rely on accuracy alone for an imbalanced problem
+- Do not use neural networks, deep learning, transformers, LLMs, or AutoML.
+- Do not count hyperparameter variants as different algorithms.
+- Do not use the test set for model selection, threshold tuning, or feature
+  selection.
+- Do not report classification accuracy as the primary success criterion.
+- Do not treat censored labels as negatives.
 
-### Supplementary (Project)
+**Project**
 
-- Do not invent a new algorithm
-- Do not build a production bank system
-- Do not claim causal proof
-- Do not optimize only AUC
-- Do not ignore operational costs
-- Do not build streaming, online learning, PU learning, or delayed-label
-  correction
-
----
-
-## 15. Future Work
-
-- Additional delay regimes (2-month, 3-month)
-- Delayed-label correction models
-- PU learning with censored negatives
-- Bandit-based threshold optimization
-- Drift detection and automated retraining
-- Entity graph features
-- Federated learning across simulated institutions
-- Investigator feedback loops
-- Capacity-aware scheduling
-- Fairness-aware policy constraints
-- Cost-sensitive training
+- Do not invent a new algorithm.
+- Do not build a production bank system.
+- Do not claim causal proof.
+- Do not optimize for AUC alone.
+- Do not ignore operational costs.
+- Do not implement streaming, online learning, PU learning, delayed-label
+  correction, drift detection, graph features, or federated learning in this
+  submission.
 
 ---
 
-## 16. References and Data Sources
+## 14. What This Project Is Not
 
-- Bank Account Fraud (BAF) Suite — Jesus et al., NeurIPS 2022
-- IEEE-CIS Fraud Detection — Kaggle
-- Cost-sensitive learning — Elkan 2001
-- PU learning — Elkan & Noto 2008
-- Scikit-learn documentation — Pedregosa et al., 2011
-- LightGBM documentation — Ke et al., 2017
-- Chargeback and dispute lifecycle documentation
-- Online learning literature
+- It is not a classifier leaderboard.
+- It is not a study of which algorithm wins on macro F1.
+- It is not a deployment of a probability model.
+- It is not a demonstration that a decision policy works, without a
+  calibrated probability model behind it.
+- It is not a claim that delayed-label learning has been solved.
+
+It **is** a study of how a calibrated classifier and a cost-sensitive policy
+combine to minimize realized cost under delayed and censored labels, with a
+reproducible evaluation on a public, citable dataset.
 
 ---
 
-## 17. Definition of Done
+## 15. Deliverable Map
 
-### Primary (Course Requirement)
+Each course deliverable is mapped to the layer of the problem decomposition
+(§3) that requires it.
 
-- [ ] Problem framing documented
-- [ ] Dataset selected and documented
-- [ ] EDA notebook complete with at least five visualizations
-- [ ] Data dictionary complete
-- [ ] Preprocessing pipeline implemented
-- [ ] Chronological 80/20 split defined
-- [ ] 5-fold time-series CV defined
-- [ ] Logistic Regression trained and tuned
-- [ ] Random Forest trained and tuned
-- [ ] LightGBM trained and tuned
-- [ ] Validation results compared
-- [ ] Best model selected and justified
-- [ ] Final test evaluation complete
-- [ ] Streamlit app built and deployed
+| Course deliverable | Layer that requires it | Instrumental role |
+|---|---|---|
+| EDA | Layer 4 (input) | Establish amount distribution, class balance, temporal drift, feature availability. |
+| Three-algorithm comparison | Layer 5 (method) | Choose the classifier that produces the best policy input. |
+| Deployable Streamlit app | Layer 7 (deployment) | Expose P(fraud) and the routed action; validate input. |
+| IMRaD paper | Layer 8 (reporting) | Communicate framing, method, result, and limitations. |
+| Data dictionary | Layer 4 | Source-time availability per column. |
+| Technical documentation | Layer 7 | Reproducibility, setup, input format, limitations. |
+| Contribution record | — | Administrative. |
+| Ownership declaration | — | Administrative. |
+| Dataset package | — | Administrative. |
+
+**No deliverable is omitted. Every deliverable is reframed as an instrument
+for the question in §2.4.**
+
+---
+
+## 16. Definition of Done
+
+### 16.1 Framing
+
+- [x] Problem stated from first principles (§2)
+- [x] Decomposition from fact to deliverable (§3)
+- [x] Objective function named (§5)
+- [x] Boundary and scope named (§6)
+- [x] System described end to end (§7)
+
+### 16.2 Method (tracked in the evaluation protocol)
+
+- [ ] Cost matrix frozen in `configs/costs.yaml`
+- [ ] Delay regime (1 month) implemented and censored counts reported
+- [ ] Chronological split (0–2 / 3–4 / 5–6 / censored 7) implemented
+- [ ] Three classifiers trained under identical conditions
+- [ ] Calibration check (ECE) run and reported
+- [ ] Decision policy implemented with argmin rule as source of truth
+- [ ] Backtest run with all canonical baselines
+- [ ] Bootstrap CIs computed
+- [ ] Sensitivity sweep over four cost parameters run
+- [ ] Test window touched exactly once
+
+### 16.3 Deployment and reporting (tracked in the roadmap)
+
+- [ ] Streamlit app deployed, loads saved classifier and pipeline
 - [ ] App tested with valid, invalid, and boundary inputs
-- [ ] IMRaD paper written (DOCX + PDF)
+- [ ] Data dictionary complete
 - [ ] Technical documentation complete
-- [ ] Contribution record signed
-- [ ] Ownership declaration signed
-- [ ] Repository pushed to GitHub with ZIP archive
+- [ ] IMRaD paper (DOCX + PDF) complete
+- [ ] Contribution record and ownership declaration signed
+- [ ] Dataset package assembled
+- [ ] Repository and ZIP archive accessible
 
-### Supplementary (Project Depth)
+---
 
-- [x] Label delay simulator implemented
-- [x] Temporal split implemented
-- [x] Cost-sensitive policy implemented
-- [x] Cost-based backtest written
-- [x] Calibration measured
-- [x] Censored-label counts reported
-- [x] Sensitivity analysis run
-- [x] Bootstrap confidence intervals computed
+## 17. References and Data Sources
+
+- Jesus et al., "Turning the Tables: Biased, Imbalanced, Dynamic Tabular
+  Datasets for ML Evaluation," NeurIPS 2022. (BAF dataset)
+- Elkan, "The Foundations of Cost-Sensitive Learning," IJCAI 2001.
+- Elkan & Noto, "Learning Classifiers from Only Positive and Unlabeled
+  Data," KDD 2008.
+- Pedregosa et al., "Scikit-learn: Machine Learning in Python," JMLR 2011.
+- Ke et al., "LightGBM: A Highly Efficient Gradient Boosting Decision Tree,"
+  NeurIPS 2017.
+- Chargeback and dispute lifecycle documentation (Visa, Mastercard public
+  materials).
+
+---
+
+## 18. Changelog
+
+| Date | Change | Reason |
+|---|---|---|
+| 2026-09-22 | v0.3 — aligned with course requirements and three-algorithm comparison | Course-first framing |
+| 2026-09-24 | v1.0 — first-principles revision; decision-centric framing; two-layer architecture removed; classification reframed as policy input; success criteria moved to realized cost | Restore the framing the project actually requires; the professor confirmed autonomy |
+
+---
+
+## 19. Guiding Rule
+
+> The decision is the object of study. The classifier is an input. The
+> backtest is the evidence. The cost matrix is the assumption. The paper is
+> the argument.
+
+> If a sentence in any other document cannot be traced to a sentence in this
+> document, either the sentence is wrong or this document is incomplete.
+

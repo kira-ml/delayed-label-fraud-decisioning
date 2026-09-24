@@ -9,7 +9,7 @@ from src.models.preprocess import get_feature_columns
 
 
 def test_random_forest_deterministic():
-    df = pd.read_parquet("data/processed/primary_train.parquet").head(20_000)
+    df = pd.read_parquet("data/processed/train.parquet").head(20_000)
     X = df[get_feature_columns(df)].select_dtypes(include=np.number)
     y = df["fraud_bool"]
 
@@ -26,7 +26,7 @@ def test_random_forest_deterministic():
 
 def test_lightgbm_deterministic():
     import lightgbm as lgb
-    df = pd.read_parquet("data/processed/primary_train.parquet").head(20_000)
+    df = pd.read_parquet("data/processed/train.parquet").head(20_000)
     X = df[get_feature_columns(df)].select_dtypes(include=np.number)
     y = df["fraud_bool"]
 

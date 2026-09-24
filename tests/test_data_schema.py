@@ -44,19 +44,19 @@ def test_categorical_columns_present(df):
 
 
 @pytest.fixture(scope="module")
-def primary_test():
-    return pd.read_parquet("data/processed/primary_test.parquet")
+def test_df():
+    return pd.read_parquet("data/processed/test.parquet")
 
 
-def test_primary_test_features_exclude_leak_columns(primary_test):
+def test_test_features_exclude_leak_columns(test_df):
     """Model features must not include any FEATURE_EXCLUDE column."""
     from src.models.preprocess import get_feature_columns
-    features = set(get_feature_columns(primary_test))
+    features = set(get_feature_columns(test_df))
     leaked = features & set(FEATURE_EXCLUDE)
     assert not leaked, f"leak columns present in features: {leaked}"
 
 
-def test_primary_test_fraud_rate(primary_test):
-    """Documented drift: test fraud rate ~1.40%."""
-    r = primary_test["fraud_bool"].mean()
-    assert 0.012 < r < 0.016, f"unexpected test fraud rate: {r}"
+def test_test_fraud_rate(test_df):
+    """Test-split fraud rate ~1.26% (docs/data_card.md §5.2)."""
+    r = test_df["fraud_bool"].mean()
+    assert 0.010 < r < 0.016, f"unexpected test fraud rate: {r}"

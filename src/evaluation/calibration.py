@@ -13,34 +13,34 @@ Writes: nothing (prints ECE and a reliability table)
 import json
 import numpy as np
 import pandas as pd
-import lightgbm as lgb
-from src.common import DATA_PROCESSED, ARTIFACTS, CATEGORICAL_COLS
+import joblib
+from src.common import DATA_PROCESSED, MODELS
 
-TRAIN = DATA_PROCESSED / "train.parquet"
 VAL = DATA_PROCESSED / "val.parquet"
-MODEL = ARTIFACTS / "model.txt"
-CATEGORIES = ARTIFACTS / "categories.json"
+MODEL = MODELS / "best_model.pkl"
+PREPROC = MODELS / "preprocessing.pkl"
+FEATURES = MODELS / "feature_columns.json"
 
 N_BINS = 10
 
 
 def score_val():
-    """Score the validation set with the saved booster.
+    """Score the validation set with the selected classifier and its
+    saved preprocessing pipeline.
 
-    Uses the exact category mapping saved by train_baseline.py so that
-    LightGBM's integer codes match.
+    The gate is a property of the classifier that feeds the policy, so
+    it must run against models/best_model.pkl, not against the retired
+    artifacts/model.txt booster.
     """
-    booster = lgb.Booster(model_file=str(MODEL))
-    feats = booster.feature_name()
-    cat_map = json.loads(CATEGORIES.read_text(encoding="utf-8"))
+    model = joblib.load(MODEL)
+    pre = joblib.load(PREPROC)
+    feats = json.loads(FEATURES.read_text(encoding="utf-8"))
 
     val = pd.read_parquet(VAL)
-
-    for c in CATEGORICAL_COLS:
-        if c in val.columns and c in cat_map:
-            val[c] = pd.Categorical(val[c], categories=cat_map[c])
-
-    val["p_fraud"] = booster.predict(val[feats])
+    X = pre.transform(val[feats])
+    if hasattr(X, "toarray"):
+        X = X.toarray()
+    val["p_fraud"] = model.predict_proba(X)[:, 1]
     return val[["p_fraud", "fraud_bool"]]
 
 

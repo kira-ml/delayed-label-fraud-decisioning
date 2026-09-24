@@ -89,7 +89,7 @@ def main():
         "Random": random_actions,
         "Approve-all": approve_actions,
         "Block-all": block_actions,
-        "LightGBM + static 0.5": static_actions,
+        "Selected classifier + static 0.5": static_actions,
         "Cost-sensitive policy": df["action"].to_numpy(),
     }
 
@@ -130,7 +130,7 @@ def main():
     L.append("- Dataset: BAF `Base.csv`")
     L.append("- Delay regime: 1 month (`label_month = month + 1`)")
     L.append("- Split: train months {0,1,2}, val {3,4}, test {5,6}")
-    L.append("- Model: LightGBM binary classifier, library defaults, early stopping on val")
+    L.append("- Model: selected classifier from the 3-algorithm comparison (models/best_model.pkl)")
     L.append("- Policy: `argmin` of expected cost over `{approve, review, block}`")
     L.append(
         f"- Cost matrix: `fraud_loss={costs['fraud_loss']}`, "

@@ -10,12 +10,12 @@ from src.models.preprocess import (
 
 @pytest.fixture(scope="module")
 def train_df():
-    return pd.read_parquet("data/processed/primary_train.parquet").head(50_000)
+    return pd.read_parquet("data/processed/train.parquet").head(50_000)
 
 
 @pytest.fixture(scope="module")
 def test_df():
-    return pd.read_parquet("data/processed/primary_test.parquet").head(5_000)
+    return pd.read_parquet("data/processed/test.parquet").head(5_000)
 
 
 @pytest.mark.parametrize("algorithm", ["logistic_regression", "random_forest", "lightgbm"])

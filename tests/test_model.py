@@ -16,12 +16,12 @@ def model_and_pre():
 
 @pytest.fixture(scope="module")
 def test_df():
-    return pd.read_parquet("data/processed/primary_test.parquet").head(5_000)
+    return pd.read_parquet("data/processed/test.parquet").head(5_000)
 
 
-def test_saved_model_is_lightgbm(model_and_pre):
+def test_saved_model_is_loadable(model_and_pre):
     model, _ = model_and_pre
-    assert type(model).__name__ == "LGBMClassifier"
+    assert hasattr(model, "predict_proba")
 
 
 def test_predict_shape(model_and_pre, test_df):
