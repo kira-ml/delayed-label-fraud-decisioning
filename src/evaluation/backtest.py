@@ -121,7 +121,7 @@ def main():
 
     ts = datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M:%S UTC")
     L = []
-    L.append("# MVP Backtest Report")
+    L.append("# Backtest Report")
     L.append("")
     L.append(f"_Generated: {ts}_")
     L.append("")

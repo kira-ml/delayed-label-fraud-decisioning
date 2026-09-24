@@ -177,7 +177,7 @@ def main() -> None:
     )
 
     # Markdown report
-    lines = ["# Model Comparison: Primary 3-Algorithm Study\n",
+    lines = ["# Model Comparison: 3-Algorithm Study\n",
              f"- CV strategy: {n_folds}-fold expanding-window by month "
              "(train months 0..k, validate month k+1)",
              f"- Training rows: {len(train):,}",
