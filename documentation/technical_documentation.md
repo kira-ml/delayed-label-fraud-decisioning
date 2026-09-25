@@ -5,8 +5,8 @@
 > **Institution:** National University Philippines  
 > **Instructor:** Ken Oliver Caparros  
 > **Document:** Technical Documentation  
-> **Status:** v1.0  
-> **Last updated:** 2026-09-23
+> **Status:** v1.1 — unified decision pipeline  
+> **Last updated:** 2026-09-25
 
 ---
 
@@ -18,7 +18,7 @@ covers:
 - System requirements
 - Installation steps
 - Repository structure
-- How to run each pipeline
+- How to run the pipeline
 - How to run the tests
 - How to run the app
 - Where artifacts land
@@ -28,9 +28,9 @@ covers:
 
 It complements:
 
-- [`documentation/app_guide.md`](app_guide.md) - how to use the app
-- [`documentation/data_dictionary.md`](data_dictionary.md) - feature reference
-- [`docs/mvp_architecture.md`](../docs/mvp_architecture.md) - system design
+- [`documentation/app_guide.md`](app_guide.md) — how to use the app
+- [`documentation/data_dictionary.md`](data_dictionary.md) — feature reference
+- [`docs/mvp_architecture.md`](../docs/mvp_architecture.md) — as-built system design
 
 ---
 
@@ -109,178 +109,152 @@ attribution. See [`docs/data_card.md`](../docs/data_card.md) section 2.
 
 ```
 delayed-label-fraud-decisioning/
-â”œâ”€â”€ README.md
-â”œâ”€â”€ requirements.txt
-â”œâ”€â”€ conftest.py                     # pytest path bootstrap
-â”œâ”€â”€ app/
-â”‚   â””â”€â”€ streamlit_app.py            # deployed application
-â”œâ”€â”€ configs/
-â”‚   â””â”€â”€ costs.yaml                  # cost matrix
-â”œâ”€â”€ data/                           # gitignored
-â”‚   â”œâ”€â”€ original/
-â”‚   â”‚   â””â”€â”€ Base.csv
-â”‚   â”œâ”€â”€ interim/
-â”‚   â””â”€â”€ processed/
-â”œâ”€â”€ notebooks/
-â”‚   â”œâ”€â”€ 01_eda.ipynb
-â”‚   â”œâ”€â”€ 02_preprocessing.ipynb
-â”‚   â”œâ”€â”€ 03_model_training.ipynb
-â”‚   â””â”€â”€ 04_evaluation.ipynb
-â”œâ”€â”€ models/
-â”‚   â”œâ”€â”€ best_model.pkl
-â”‚   â”œâ”€â”€ preprocessing.pkl
-â”‚   â”œâ”€â”€ feature_columns.json
-â”‚   â”œâ”€â”€ feature_defaults.json
-â”‚   â””â”€â”€ feature_importances.json
-â”œâ”€â”€ docs/                           # design and methodology
-â”‚   â”œâ”€â”€ problem_framing.md
-â”‚   â”œâ”€â”€ data_card.md
-â”‚   â”œâ”€â”€ decision_policy.md
-â”‚   â”œâ”€â”€ evaluation_protocol.md
-â”‚   â”œâ”€â”€ architecture.md
-â”‚   â”œâ”€â”€ mvp_architecture.md
-â”‚   â”œâ”€â”€ roadmap.md
-â”‚   â””â”€â”€ daily_log/
-â”œâ”€â”€ documentation/                  # course-required deliverables
-â”‚   â”œâ”€â”€ data_dictionary.md
-â”‚   â”œâ”€â”€ app_guide.md
-â”‚   â”œâ”€â”€ technical_documentation.md
-â”‚   â”œâ”€â”€ contribution_record.md
-â”‚   â””â”€â”€ ownership_declaration.md
-â”œâ”€â”€ paper/
-â”‚   â”œâ”€â”€ paper_imrad.md
-â”‚   â”œâ”€â”€ paper.docx
-â”‚   â””â”€â”€ paper.pdf
-â”œâ”€â”€ reports/
-â”‚   â”œâ”€â”€ model_comparison.md         # primary course deliverable
-â”‚   â”œâ”€â”€ mvp_backtest.md             # supplementary deliverable
-â”‚   â”œâ”€â”€ cv_results.json
-â”‚   â”œâ”€â”€ sensitivity.md
-â”‚   â””â”€â”€ bootstrap.md
-â”œâ”€â”€ src/
-â”‚   â”œâ”€â”€ common.py
-â”‚   â”œâ”€â”€ pipeline.py
-â”‚   â”œâ”€â”€ data/
-â”‚   â”‚   â”œâ”€â”€ load.py
-â”‚   â”‚   â”œâ”€â”€ primary_split.py
-â”‚   â”‚   â”œâ”€â”€ simulate_delay.py
-â”‚   â”‚   â””â”€â”€ split.py
-â”‚   â”œâ”€â”€ models/
-â”‚   â”‚   â”œâ”€â”€ preprocess.py
-â”‚   â”‚   â”œâ”€â”€ train_baseline.py
-â”‚   â”‚   â”œâ”€â”€ train_compare.py
-â”‚   â”‚   â”œâ”€â”€ evaluate_compare.py
-â”‚   â”‚   â””â”€â”€ score.py
-â”‚   â”œâ”€â”€ policy/
-â”‚   â”‚   â””â”€â”€ decide.py
-â”‚   â””â”€â”€ evaluation/
-â”‚       â”œâ”€â”€ backtest.py
-â”‚       â”œâ”€â”€ calibration.py
-â”‚       â”œâ”€â”€ sensitivity.py
-â”‚       â””â”€â”€ bootstrap.py
-â””â”€â”€ tests/
-    â”œâ”€â”€ test_app_validation.py
-    â”œâ”€â”€ test_backtest.py
-    â”œâ”€â”€ test_data_schema.py
-    â”œâ”€â”€ test_model.py
-    â”œâ”€â”€ test_pipeline_integration.py
-    â”œâ”€â”€ test_policy.py
-    â”œâ”€â”€ test_preprocessing.py
-    â””â”€â”€ test_reproducibility.py
+├── README.md
+├── TODO.md                         # open work items
+├── requirements.txt
+├── conftest.py                     # pytest path bootstrap
+├── app/
+│   └── streamlit_app.py            # deployed decision system
+├── configs/
+│   └── costs.yaml                  # frozen cost matrix
+├── data/                           # gitignored
+│   ├── original/
+│   │   └── Base.csv
+│   ├── interim/
+│   └── processed/
+├── notebooks/
+│   ├── 01_eda.ipynb
+│   ├── 02_preprocessing.ipynb
+│   ├── 03_model_training.ipynb
+│   └── 04_evaluation.ipynb
+├── models/
+│   ├── best_model.pkl
+│   ├── preprocessing.pkl
+│   ├── feature_columns.json
+│   ├── feature_defaults.json
+│   └── feature_importances.json
+├── docs/                           # design and methodology
+│   ├── problem_framing.md
+│   ├── first_principles_decomposition.md
+│   ├── data_card.md
+│   ├── decision_policy.md
+│   ├── evaluation_protocol.md
+│   ├── mvp_architecture.md
+│   ├── roadmap.md
+│   └── daily_log/
+├── documentation/                  # course-required deliverables
+│   ├── data_dictionary.md
+│   ├── app_guide.md
+│   ├── technical_documentation.md
+│   ├── contribution_record.md
+│   └── ownership_declaration.md
+├── paper/
+│   ├── paper_imrad.md
+│   ├── paper.docx
+│   └── paper.pdf
+├── reports/
+│   ├── decision_backtest.md        # primary deliverable
+│   ├── model_comparison.md         # supporting classifier comparison
+│   ├── cv_results.json
+│   ├── sensitivity.md
+│   └── bootstrap.md
+├── src/
+│   ├── common.py
+│   ├── pipeline.py
+│   ├── data/
+│   │   ├── load.py
+│   │   ├── simulate_delay.py
+│   │   └── split.py
+│   ├── models/
+│   │   ├── preprocess.py
+│   │   ├── train_compare.py
+│   │   ├── evaluate_compare.py
+│   │   └── score.py
+│   ├── policy/
+│   │   └── decide.py
+│   └── evaluation/
+│       ├── backtest.py
+│       ├── calibration.py
+│       ├── sensitivity.py
+│       └── bootstrap.py
+└── tests/
+    ├── test_app_validation.py
+    ├── test_backtest.py
+    ├── test_data_schema.py
+    ├── test_model.py
+    ├── test_pipeline_integration.py
+    ├── test_policy.py
+    ├── test_preprocessing.py
+    └── test_reproducibility.py
 ```
 
 ---
 
-## 5. Running the Pipelines
+## 5. Running the Pipeline
 
-The repository has two pipelines that share the same raw dataset.
-
-| Pipeline | Purpose | Course role |
-|---|---|---|
-| Primary | Three-algorithm classification comparison | Required deliverable |
-| Supplementary | Cost-sensitive decision policy under delayed labels | Project depth |
-
-### 5.1 Primary Pipeline
-
-Builds the 3-algorithm comparison and the deployed model.
-
-```bash
-python -m src.pipeline --primary
-```
-
-Runs four steps in order:
-
-1. `load` - read `data/original/Base.csv`, add `transaction_id` and
-   `amount_proxy`, write `data/interim/transactions.parquet`
-2. `primary_split` - chronological split (train months 0-5, test months 6-7)
-3. `train_compare` - 5-fold expanding-window CV for Logistic Regression,
-   Random Forest, and LightGBM; writes `reports/model_comparison.md` and
-   `reports/cv_results.json`
-4. `evaluate_compare` - select best model by mean CV Macro F1; retrain on
-   full training split; evaluate once on test set; save `models/best_model.pkl`,
-   `models/preprocessing.pkl`, and feature metadata
-
-**Expected runtime:** 10-15 minutes on a modern laptop. Most of it is the
-3-algorithm CV.
-
-### 5.2 Supplementary Pipeline
-
-Builds the cost-sensitive decision analysis under delayed labels.
+There is **one** pipeline. It is a decision pipeline: the classifier is an
+input to the policy, and the policy is the product.
 
 ```bash
 python -m src.pipeline
 ```
 
-Runs seven steps:
+Runs eight steps in order:
 
-1. `load`
-2. `simulate_delay` - assign `label_month = month + 1`; mark `observed`
-3. `split` - train months 0-2, val 3-4, test 5-6; censor month 7
-4. `train_baseline` - LightGBM with defaults and early stopping; save
-   `artifacts/model.txt` and `artifacts/categories.json`
-5. `score` - score test set; write `data/processed/scored_test.parquet`
-6. `decide` - apply argmin expected-cost policy; write `action_log.parquet`
-7. `backtest` - realized cost vs baselines; write `reports/mvp_backtest.md`
+1. `load` — read `data/original/Base.csv`, add `transaction_id` and
+   `amount_proxy`, write `data/interim/transactions.parquet`
+2. `simulate_delay` — assign `label_month = month + 1`; mark `observed`;
+   write `data/interim/labeled.parquet`
+3. `split` — chronological split: train months 0-2, val 3-4, test 5-6;
+   censor month 7
+4. `train_compare` — expanding-window CV by month for Logistic
+   Regression, Random Forest, and LightGBM; write
+   `reports/model_comparison.md` and `reports/cv_results.json`
+5. `evaluate_compare` — select the classifier by validation realized cost
+   with the noise-band guard; retrain on the full training window;
+   evaluate **once** on the test window; save `models/best_model.pkl`,
+   `models/preprocessing.pkl`, and feature metadata
+6. `score` — score the test window; write
+   `data/processed/scored_test.parquet`
+7. `decide` — apply the argmin expected-cost policy; write
+   `data/processed/action_log.parquet`
+8. `backtest` — realized cost vs. canonical baselines; write
+   `reports/decision_backtest.md`
 
-### 5.3 Both Pipelines
+**Expected runtime:** 3-5 minutes on a modern laptop. Most of it is the
+3-algorithm CV.
 
-```bash
-python -m src.pipeline --all
-```
+### 5.1 Standalone Analyses
 
-Runs primary first, then supplementary. Use this to reproduce everything
-from a clean checkout in one command.
-
-### 5.4 Supplementary Analyses
-
-Two standalone analyses extend the supplementary report. They are not part
-of the pipeline because they are diagnostic, not part of the delivered
+Three standalone analyses extend the backtest report. They are not part of
+the pipeline because they are diagnostic and do not modify the delivered
 system.
 
 ```bash
+python -m src.evaluation.calibration    # prints ECE and reliability table
 python -m src.evaluation.sensitivity    # writes reports/sensitivity.md
 python -m src.evaluation.bootstrap      # writes reports/bootstrap.md
 ```
 
-Or run both after the supplementary pipeline:
+Or run all three after the pipeline:
 
 ```bash
 python -m src.pipeline --analyses
 ```
 
-### 5.5 Calibration Diagnostic
+### 5.2 Calibration Diagnostic
 
-Not part of any pipeline. Run manually after retraining:
+Run manually after each retrain:
 
 ```bash
 python -m src.evaluation.calibration
 ```
 
-Prints ECE and a reliability table to stdout. Expected: `ECE = 0.0040`,
-which is below the 0.05 threshold from `docs/architecture.md` section 9.2,
+Prints ECE and a reliability table to stdout. Expected: `ECE = 0.0033`,
+which is below the 0.05 threshold from `docs/evaluation_protocol.md` §17.1,
 so no calibration step is applied.
 
-### 5.6 List the Steps Without Running
+### 5.3 List the Steps Without Running
 
 ```bash
 python -m src.pipeline --list
@@ -294,7 +268,7 @@ python -m src.pipeline --list
 pytest
 ```
 
-Expected: **60 passed**.
+Expected: **58 passed**.
 
 ```bash
 pytest -q
@@ -324,17 +298,10 @@ Verbose mode for a specific test file.
 ### 6.2 Test Prerequisites
 
 The tests read from `data/processed/`. Before running `pytest` on a clean
-checkout, run at least one pipeline:
+checkout, run the pipeline once:
 
 ```bash
-python -m src.pipeline --primary
-```
-
-Tests that check primary artifacts require `--primary`. Tests that check
-supplementary artifacts require the default run. To satisfy both:
-
-```bash
-python -m src.pipeline --all
+python -m src.pipeline
 ```
 
 ---
@@ -379,35 +346,36 @@ See [`documentation/app_guide.md`](app_guide.md) for usage.
 
 ## 8. Artifacts
 
-### 8.1 Primary Pipeline Outputs
+### 8.1 Data Layer Outputs
 
 | Path | Description |
 |---|---|
 | `data/interim/transactions.parquet` | 1,000,000 rows, 34 columns |
-| `data/processed/primary_train.parquet` | 794,989 rows (months 0-5) |
-| `data/processed/primary_test.parquet` | 205,011 rows (months 6-7) |
-| `models/best_model.pkl` | Selected LightGBM classifier |
-| `models/preprocessing.pkl` | Fitted LGBMPreprocessor |
-| `models/feature_columns.json` | Training-time feature order |
-| `models/feature_defaults.json` | Median/mode per feature |
-| `models/feature_importances.json` | Feature importances |
-| `reports/model_comparison.md` | Primary course deliverable |
-| `reports/cv_results.json` | Per-fold CV metrics |
-
-### 8.2 Supplementary Pipeline Outputs
-
-| Path | Description |
-|---|---|
 | `data/interim/labeled.parquet` | Adds `label_month`, `observed` |
 | `data/processed/train.parquet` | 397,039 rows (months 0-2) |
 | `data/processed/val.parquet` | 278,627 rows (months 3-4) |
 | `data/processed/test.parquet` | 227,491 rows (months 5-6) |
 | `data/processed/scored_test.parquet` | Adds `p_fraud` |
 | `data/processed/action_log.parquet` | Decision log |
-| `artifacts/model.txt` | Supplementary LightGBM booster |
-| `artifacts/categories.json` | Training-time category mapping |
-| `reports/mvp_backtest.md` | Supplementary deliverable |
-| `reports/sensitivity.md` | Cost parameter sensitivity |
+
+### 8.2 Model Outputs
+
+| Path | Description |
+|---|---|
+| `models/best_model.pkl` | Selected classifier (LogisticRegression) |
+| `models/preprocessing.pkl` | Fitted preprocessing pipeline |
+| `models/feature_columns.json` | Training-time feature order |
+| `models/feature_defaults.json` | Median/mode per feature |
+| `models/feature_importances.json` | Feature importances |
+
+### 8.3 Report Outputs
+
+| Path | Description |
+|---|---|
+| `reports/decision_backtest.md` | Primary deliverable: policy vs. baseline comparison |
+| `reports/model_comparison.md` | Supporting: classifier comparison as policy inputs |
+| `reports/cv_results.json` | Per-fold CV metrics |
+| `reports/sensitivity.md` | Cost parameter sensitivity (2× sweep) |
 | `reports/bootstrap.md` | Bootstrap CIs on policy advantage |
 
 ---
@@ -422,28 +390,32 @@ python -m venv .venv
 .\.venv\Scripts\Activate.ps1          # Windows
 pip install -r requirements.txt
 
-# 2. Run both pipelines
-python -m src.pipeline --all
-
-# 3. Optional supplementary analyses
+# 2. Run the pipeline and analyses
 python -m src.pipeline --analyses
 
-# 4. Verify
+# 3. Verify
 pytest -q
 
-# 5. Launch the app
+# 4. Launch the app
 streamlit run app/streamlit_app.py
 ```
 
 **Expected results after step 2:**
 
-- `reports/model_comparison.md` shows LightGBM selected with CV Macro F1
-  0.5337
-- Test Macro F1 = 0.5336
-- Test ROC-AUC = 0.8766
-- Test confusion matrix `[[201861, 272], [2756, 122]]`
-- `reports/mvp_backtest.md` shows policy advantage over the strongest
-  baseline
+- `reports/model_comparison.md` shows LogisticRegression selected by the
+  noise-band guard (LGBM vs. LR CV gap 1.07% < 5% → non-finding →
+  simplicity tiebreak)
+- `reports/decision_backtest.md` shows:
+  - Policy cost/txn = **0.007491**
+  - Strongest baseline cost/txn = **0.018737**
+  - Policy advantage = **60.02%**
+  - Approve / review / block = 205,395 / 21,371 / 725
+- `reports/bootstrap.md` shows 95% CI on advantage = **[56.00%, 64.16%]**
+- `reports/sensitivity.md` shows minimum advantage = **50.38%** at
+  `review_cost=0.04`
+- `src.evaluation.calibration` prints **ECE = 0.0033** (gate passed)
+- Test rows = 227,491
+- Censored rows = 96,843 (9.68%)
 
 **Reproducibility:** all random operations use seed `42`. Library versions
 are pinned in `requirements.txt`. LightGBM training is deterministic on
@@ -508,11 +480,11 @@ Exact pins are enforced in `requirements.txt` at the ranges declared there.
 | `FileNotFoundError: data/original/Base.csv` | Raw dataset missing | Download from Kaggle and place at `data/original/Base.csv` |
 | `ImportError: cannot import name 'DATA_PROCESSED'` | Stale `src/common.py` | Pull latest `main`; verify `src/common.py` defines path constants |
 | `TypeError: Object of type float64 is not JSON serializable` | `cv_results.json` serialization | Add `default=float` to `json.dumps` in `train_compare.py` |
-| App shows `Missing artifact: models/best_model.pkl` | Primary pipeline not run | Run `python -m src.pipeline --primary` |
+| App shows `Missing artifact: models/best_model.pkl` | Pipeline not run | Run `python -m src.pipeline` |
 | Streamlit Cloud build fails on `pyarrow` | Python 3.14 has no wheel; source build needs CMake | Set Python version to 3.11 in Streamlit Cloud Advanced settings |
 | Streamlit Cloud build fails on missing package | Package absent from `requirements.txt` | Add the package, commit, push |
 | Batch upload crashes on large CSV | Memory limit | Split into chunks |
-| `pytest` fails on missing primary artifacts | Supplementary pipeline run only | Run `python -m src.pipeline --primary` |
+| `pytest` fails on missing artifacts | Pipeline not run | Run `python -m src.pipeline` |
 | App is slow on first load | Streamlit caches model loading on first request | Subsequent loads are faster |
 
 ---
@@ -521,14 +493,12 @@ Exact pins are enforced in `requirements.txt` at the ranges declared there.
 
 | Task | Command |
 |---|---|
-| Primary pipeline | `python -m src.pipeline --primary` |
-| Supplementary pipeline | `python -m src.pipeline` |
-| Both pipelines | `python -m src.pipeline --all` |
-| Both pipelines plus analyses | `python -m src.pipeline --analyses` |
+| Full pipeline | `python -m src.pipeline` |
+| Full pipeline plus analyses | `python -m src.pipeline --analyses` |
 | List steps | `python -m src.pipeline --list` |
+| Calibration diagnostic | `python -m src.evaluation.calibration` |
 | Sensitivity analysis | `python -m src.evaluation.sensitivity` |
 | Bootstrap analysis | `python -m src.evaluation.bootstrap` |
-| Calibration diagnostic | `python -m src.evaluation.calibration` |
 | Run tests | `pytest -q` |
 | Launch app | `streamlit run app/streamlit_app.py` |
 
@@ -541,7 +511,8 @@ Exact pins are enforced in `requirements.txt` at the ranges declared there.
 | [`documentation/data_dictionary.md`](data_dictionary.md) | Feature reference |
 | [`documentation/app_guide.md`](app_guide.md) | How to use the app |
 | [`docs/mvp_architecture.md`](../docs/mvp_architecture.md) | As-built system design |
-| [`docs/evaluation_protocol.md`](../docs/evaluation_protocol.md) | Metric definitions |
+| [`docs/evaluation_protocol.md`](../docs/evaluation_protocol.md) | Metric definitions and stop criteria |
+| [`docs/decision_policy.md`](../docs/decision_policy.md) | Policy specification |
 | [`docs/data_card.md`](../docs/data_card.md) | Dataset and splits |
 | [`README.md`](../README.md) | Project overview |
 
