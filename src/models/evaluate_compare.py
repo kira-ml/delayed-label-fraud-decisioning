@@ -94,10 +94,12 @@ def select_best() -> tuple[str, bool]:
         print(f"[evaluate_compare] Finding: {best_alg} selected on cost")
         return best_alg, True
 
-    for alg in SIMPLICITY_ORDER:
-        if alg in means:
-            tiebreak = alg
-            break
+    candidates = [
+        alg for alg in SIMPLICITY_ORDER
+        if alg in means
+        and (means[alg] - best_mean) / best_mean < MIN_RELATIVE_EFFECT
+    ]
+    tiebreak = candidates[0] if candidates else best_alg
     print(f"[evaluate_compare] Non-finding (within noise band). "
           f"Tiebreak by simplicity: {tiebreak}")
     return tiebreak, False

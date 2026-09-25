@@ -7,7 +7,8 @@ Per decision_policy.md §9, if ECE is high, expected costs are wrong and
 the thresholds derived from them are wrong. This is the check that
 tells us whether calibration work is justified.
 
-Reads:  data/processed/{train,val}.parquet, artifacts/model.txt
+Reads:  data/processed/val.parquet, models/best_model.pkl,
+        models/preprocessing.pkl, models/feature_columns.json
 Writes: nothing (prints ECE and a reliability table)
 """
 import json
@@ -29,8 +30,8 @@ def score_val():
     saved preprocessing pipeline.
 
     The gate is a property of the classifier that feeds the policy, so
-    it must run against models/best_model.pkl, not against the retired
-    artifacts/model.txt booster.
+    it must run against the selected classifier, not any retired
+    booster from the earlier pipeline.
     """
     model = joblib.load(MODEL)
     pre = joblib.load(PREPROC)
@@ -120,8 +121,8 @@ def main():
         print(table.to_string(index=False))
     print()
 
-    # Stop-criterion readout from architecture.md §9.2
-    print("=== Stop-criterion check (architecture.md §9.2) ===")
+    # Stop-criterion readout from evaluation_protocol.md §17.1
+    print("=== Stop-criterion check (evaluation_protocol.md §17.1) ===")
     if ece_value < 0.05:
         print(f"  ECE = {ece_value:.4f} < 0.05")
         print("  -> NULL STOP. Calibration is acceptable. Do not add a calibration step.")

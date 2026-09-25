@@ -6,7 +6,7 @@ from src.common import DATA_PROCESSED, DATA_INTERIM, REPORTS, load_costs
 ACTION_LOG = DATA_PROCESSED / "action_log.parquet"
 TEST = DATA_PROCESSED / "test.parquet"
 LABELED = DATA_INTERIM / "labeled.parquet"
-OUT = REPORTS / "mvp_backtest.md"
+OUT = REPORTS / "decision_backtest.md"
 
 SEED = 42
 RANDOM_ACTIONS = ["approve", "review", "block"]

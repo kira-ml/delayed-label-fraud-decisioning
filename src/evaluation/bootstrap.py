@@ -6,7 +6,7 @@ Resamples test rows with replacement (N=1000). Reports:
   - Strongest baseline cost/txn 95% CI
   - Difference (advantage) 95% CI
 
-Required by evaluation_protocol.md §14.
+Required by evaluation_protocol.md §13.1.
 
 Run: python -m src.evaluation.bootstrap
 """
@@ -14,18 +14,11 @@ from __future__ import annotations
 
 import numpy as np
 import pandas as pd
-import yaml
 
-from src.common import DATA_PROCESSED, REPORTS, CONFIGS
+from src.common import DATA_PROCESSED, REPORTS, load_costs
 
 SEED = 42
 N_BOOT = 1000
-
-
-def load_costs() -> dict:
-    with open(CONFIGS / "costs.yaml") as f:
-        return yaml.safe_load(f)
-
 
 def load_data() -> pd.DataFrame:
     """scored_test.parquet already contains fraud_bool and amount_proxy.

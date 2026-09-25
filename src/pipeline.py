@@ -7,7 +7,8 @@ Single decision pipeline:
 Usage:
     python -m src.pipeline              # runs the pipeline
     python -m src.pipeline --list       # prints the step order and exits
-    python -m src.pipeline --analyses   # runs calibration, sensitivity, bootstrap
+    python -m src.pipeline --analyses   # runs the pipeline, then calibration,
+                                        # sensitivity, and bootstrap
 """
 from __future__ import annotations
 

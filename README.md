@@ -1,13 +1,12 @@
 # Delayed-Label Fraud Decisioning
 
-A three-algorithm classification study on fraud detection with a supplementary
-cost-sensitive decision policy evaluated under delayed, censored, and biased
-labels.
+A cost-sensitive fraud decision pipeline on the Bank Account Fraud (BAF)
+dataset, evaluated under a delayed, censored, and biased label regime.
 
 > **Course:** Introduction to Machine Learning - Final Group Project  
 > **Institution:** National University Philippines  
 > **Instructor:** Ken Oliver Caparros  
-> **Lead Author:** Ken Ira Lacson Talingting 
+> **Lead Author:** Ken Ira Lacson Talingting  
 > **Co-Authors:** [Group member names]
 
 ---
@@ -17,30 +16,21 @@ labels.
 This project is submitted as the final group project for *Introduction to
 Machine Learning*. It satisfies the course requirement to design, train,
 evaluate, and deploy an end-to-end traditional machine learning solution
-based on a clear classification problem, with exploratory data analysis,
-a fair comparison of exactly three traditional algorithms, and a deployable
-Streamlit application.
+with exploratory data analysis, a fair comparison of exactly three
+traditional algorithms, and a deployable Streamlit application.
 
-The project has two layers:
-
-1. **Primary (course requirement):** A binary classification study that
-   compares three traditional algorithms on the Bank Account Fraud (BAF)
-   dataset, supported by exploratory data analysis and a Streamlit
-   application.
-2. **Supplementary (project depth):** A cost-sensitive decision policy
-   evaluated under a delayed-label regime, which reframes the classification
-   output as an operational `approve` / `review` / `block` decision.
-
-Both layers share the same dataset, the same chronological split, and the
-same evaluation discipline.
+The project is a **single decision pipeline**. The classifier is an input
+to the policy. The policy is the product. The backtest is the evidence.
+Course deliverables — three-algorithm comparison, EDA, Streamlit app,
+IMRaD paper — are instruments for that pipeline, not separate layers.
 
 ---
 
 ## Problem
 
-A transaction must be approved, reviewed, or blocked in **milliseconds**, but
-the fraud label (chargeback, dispute, investigation outcome) may not arrive
-for **weeks or months**. This creates a structural mismatch:
+A transaction must be approved, reviewed, or blocked in **milliseconds**,
+but the fraud label (chargeback, dispute, investigation outcome) may not
+arrive for **weeks or months**. This creates a structural mismatch:
 
 - The model must act **before** it can know whether it was correct.
 - Observed labels are **delayed, censored, and biased** by prior decisions.
@@ -48,96 +38,108 @@ for **weeks or months**. This creates a structural mismatch:
   the same.
 - Fraudsters **adapt**, so the data distribution drifts.
 
-**Classification framing (primary):** Predict `fraud_bool` from
-transaction-time features. The intended user is a fraud operations team that
-needs a ranked list of high-risk transactions.
-
-**Decision framing (supplementary):** Map the predicted probability to an
-operational action under an explicit cost structure.
+**Decision framing:** at decision time, choose the action that minimizes
+expected operational cost, given a calibrated `P(fraud)` estimate and a
+frozen cost matrix. Classification accuracy is a proxy; realized cost is
+the objective.
 
 ---
 
 ## Headline Result
 
-### Primary - Three-Algorithm Comparison
+### Cost-Sensitive Policy (Primary)
 
-Three traditional algorithms are compared under identical data, preprocessing,
-and cross-validation conditions (5-fold expanding-window by month) on the
-training split.
-
-| Algorithm | Primary Metric (Macro F1, mean +/- SD) | Precision (Fraud) | Recall (Fraud) | ROC-AUC |
-|---|---:|---:|---:|---:|
-| Logistic Regression | 0.4783 +/- 0.0201 | 0.0392 | 0.7993 | 0.8792 |
-| Random Forest | 0.4977 +/- 0.0004 | 0.1400 | 0.0003 | 0.8386 |
-| LightGBM | **0.5337 +/- 0.0100** | 0.2666 | 0.0430 | 0.8804 |
-
-**Selected model:** LightGBM, on mean CV Macro F1. Final test performance is
-reported once on the untouched test split:
-
-| Metric | Value |
-|---|---:|
-| Macro F1 | 0.5336 |
-| Accuracy | 0.9852 |
-| Precision (fraud) | 0.3096 |
-| Recall (fraud) | 0.0424 |
-| ROC-AUC | 0.8766 |
-| Confusion matrix | TN 201,861 / FP 272 / FN 2,756 / TP 122 |
-
-Full CV and test results: [`reports/model_comparison.md`](reports/model_comparison.md).
-
-### Supplementary - Cost-Sensitive Policy
-
-Under a 1-month delayed-label regime with a chronological train / validation
-/ test split, the cost-sensitive policy reduces realized cost per transaction
-by **57.1%** relative to the strongest baseline (LightGBM + static 0.5), with
-a 95% bootstrap confidence interval of **[53.16%, 61.24%]**.
+Under a 1-month delayed-label regime with a chronological train /
+validation / test split, the cost-sensitive policy reduces realized cost
+per transaction by **60.02%** relative to the strongest baseline
+(selected classifier + static 0.5), with a 95% bootstrap confidence
+interval of **[56.00%, 64.16%]**.
 
 | Baseline | Cost per transaction |
 |---|---:|
-| Random | see `reports/mvp_backtest.md` |
-| Approve-all | see `reports/mvp_backtest.md` |
-| Block-all | see `reports/mvp_backtest.md` |
-| LightGBM + static 0.5 (strongest baseline) | 0.017749 |
-| **Cost-sensitive policy (ours)** | **0.007621** |
+| Random | 0.047484 |
+| Approve-all | 0.018928 |
+| Block-all | 0.098742 |
+| Selected classifier + static 0.5 (strongest baseline) | 0.018737 |
+| **Cost-sensitive policy (ours)** | **0.007491** |
 
-The result is robust to a 2x variation in each cost parameter
+Action distribution on the test window:
+
+| Action | Count |
+|---|---:|
+| approve | 205,395 |
+| review | 21,371 |
+| block | 725 |
+
+The result is robust to a 2× variation in each cost parameter
 (`false_positive_cost`, `review_cost`, `residual_fraud_loss`); the minimum
-advantage across all variations is **46.46%**.
+advantage across all variations is **50.38%** (at `review_cost=0.04`).
 
-This supplementary analysis is documented in
-[`reports/mvp_backtest.md`](reports/mvp_backtest.md),
-[`reports/sensitivity.md`](reports/sensitivity.md), and
+Primary report: [`reports/decision_backtest.md`](reports/decision_backtest.md).
+Supporting sensitivity and bootstrap:
+[`reports/sensitivity.md`](reports/sensitivity.md),
 [`reports/bootstrap.md`](reports/bootstrap.md).
+
+### Classifier Comparison (Supporting)
+
+Three traditional classifiers are compared as **policy inputs** under
+identical folds, preprocessing, and cost criterion. Selection is by mean
+realized cost after the policy, with a pre-registered noise-band guard
+(top classifier must win every fold and the gap must exceed 5% relative).
+
+| Classifier | CV realized cost (mean ± SD) |
+|---|---:|
+| LightGBM | 0.005852 ± 0.000300 |
+| Logistic Regression | 0.005915 ± 0.000338 |
+| Random Forest | 0.006515 ± 0.000579 |
+
+Top gap: 0.000063 → **1.07% relative** (below the 5% threshold). Reported
+as a **non-finding**; tie broken by simplicity. **Selected classifier:
+LogisticRegression** (`C=10.0`, `max_iter=1000`).
+
+Full CV and test results:
+[`reports/model_comparison.md`](reports/model_comparison.md).
+
+### Calibration Gate
+
+Expected Calibration Error on the validation window: **ECE = 0.0033**
+(gate: ECE < 0.05). Gate passed; no calibration step applied. The policy
+uses raw classifier output directly.
 
 ---
 
 ## Approach
 
-### Primary - Three-Algorithm Classification
+### Data and Split
 
-- **Dataset:** Bank Account Fraud (BAF) `Base.csv` - 1,000,000 rows, 32 raw
-  features, ~1.1% fraud rate.
-- **Target:** `fraud_bool` (binary).
-- **Split:** chronological 80/20 train/test (train months 0-5, test months
-  6-7), with **5-fold expanding-window cross-validation by month** on the
-  training data for model selection and tuning.
-- **Preprocessing:** fit on training data only; applied unchanged to test.
-  Missing-value handling, categorical encoding, and scaling are documented
-  in [`docs/data_card.md`](docs/data_card.md) section 11.
-- **Primary metric:** Macro F1, chosen because the class distribution is
-  heavily imbalanced and both false positives and false negatives carry
-  operational cost. Supporting metrics: per-class precision, recall, F1,
-  confusion matrix, and ROC-AUC.
-- **Algorithms compared:** Logistic Regression, Random Forest, LightGBM.
-  Each is a permitted traditional algorithm; each uses one fixed
-  configuration; each uses identical folds and preprocessing.
-- **Selected model:** LightGBM, justified in `reports/model_comparison.md`
-  on performance, interpretability, speed, and practical suitability.
+- **Dataset:** Bank Account Fraud (BAF) `Base.csv` — 1,000,000 rows,
+  32 raw features, ~1.1% fraud rate.
+- **Delay regime:** `label_month = month + 1`; `observed = label_month <= 7`.
+- **Single chronological split:**
+  - Train: months 0–2 (397,039 rows)
+  - Validation: months 3–4 (278,627 rows)
+  - Test: months 5–6 (227,491 rows)
+  - Censored: month 7 (96,843 rows, 9.68%, excluded and counted)
+- **No shuffling. No random splits.** Preprocessing is fit on the training
+  window only.
 
-### Supplementary - Decision Policy
+### Preprocessing
 
-The classification output feeds an operational policy that minimizes
-expected cost:
+Algorithm-specific, fit within each training fold:
+
+- Logistic Regression: one-hot + StandardScaler
+- Random Forest: ordinal encoding, no scaling
+- LightGBM: native categorical, no scaling
+
+No class weighting is applied to any classifier: the decision policy
+depends on `p` being a calibrated probability, and reweighting would
+distort it. Cost asymmetry is handled by the policy, not the training
+objective. See [`docs/data_card.md`](docs/data_card.md) §9.2.
+
+### Decision Policy
+
+The classifier output feeds an operational policy that minimizes expected
+cost:
 
 ```text
 E[cost(approve)] = p * fraud_loss(amount)
@@ -147,20 +149,53 @@ E[cost(block)]   = (1 - p) * false_positive_cost
 action = argmin over {approve, review, block}
 ```
 
-The argmin rule is the source of truth. Derived thresholds are a diagnostic
-view only. `fraud_loss` scales with transaction amount under the adopted
-amount-scaled cost model.
+The argmin rule is the source of truth. Derived thresholds are a
+diagnostic view only. `fraud_loss` scales with transaction amount:
+
+```text
+fraud_loss(amount) = amount * fraud_loss_rate
+fraud_loss_rate    = 1 / mean(amount_proxy on train)
+                   = 0.0019187869
+```
+
+Calibration is required before the classifier is admissible: ECE < 0.05 on
+the validation window. See [`docs/decision_policy.md`](docs/decision_policy.md).
+
+### Evaluation Discipline
+
+This project pre-registers its evaluation and forbids practices that
+inflate results.
+
+- **Temporal splits only.** No random splits, no shuffling.
+- **Delay-aware.** A label may only be used after `label_time`.
+- **Cost-based.** Every decision is scored by realized cost.
+- **Baseline-anchored.** The policy is compared against the **strongest**
+  baseline, not the weakest.
+- **Pre-registered.** Metrics, thresholds, and the cost matrix are fixed
+  before modeling.
+- **Noise-aware.** A finding requires the 95% bootstrap CI on the
+  advantage to exclude zero and the relative reduction to exceed 5%.
+- **Honest.** Failures and non-findings are reported.
+
+Forbidden: random splits on temporal data, test-window tuning of any kind,
+treating censored labels as negatives, reporting macro F1 or ROC-AUC as
+the primary success criterion, counting hyperparameter variants as
+distinct algorithms.
+
+See [`docs/evaluation_protocol.md`](docs/evaluation_protocol.md) for the
+full protocol.
 
 ---
 
 ## Deployable Application
 
-A Streamlit application loads the saved best model and the same preprocessing
-pipeline used during training.
+A Streamlit application loads the saved classifier and the same
+preprocessing pipeline used during training. It is a **decision system**,
+not a classifier demo.
 
 **Input:** validated form fields (or CSV upload) for transaction features.  
-**Output:** predicted class, predicted probability, and the cost-sensitive
-action (`approve` / `review` / `block`).  
+**Output:** `p_fraud` and the routed action (`approve` / `review` /
+`block`), with the expected-cost reasoning visible.  
 **Error handling:** missing, invalid, and out-of-range inputs are rejected
 with clear error messages; the app does not crash.
 
@@ -175,38 +210,39 @@ with clear error messages; the app does not crash.
 ### Full pipeline
 
 ```bash
-# Primary (course deliverable: 3-algorithm comparison + deployed model)
-python -m src.pipeline --primary
-
-# Supplementary (project depth: cost-sensitive policy under delayed labels)
 python -m src.pipeline
-
-# Both, in order
-python -m src.pipeline --all
 ```
 
-Primary runs: load -> primary_split -> train_compare -> evaluate_compare.  
-Supplementary runs: load -> simulate_delay -> split -> train_baseline ->
-score -> decide -> backtest.
+Runs eight steps: `load → simulate_delay → split → train_compare →
+evaluate_compare → score → decide → backtest`.
 
-### Supplementary analyses
-
-```bash
-python -m src.evaluation.sensitivity   # writes reports/sensitivity.md
-python -m src.evaluation.bootstrap     # writes reports/bootstrap.md
-```
-
-Or, in one command after the supplementary pipeline:
+### Pipeline plus standalone analyses
 
 ```bash
 python -m src.pipeline --analyses
+```
+
+Runs the pipeline, then `calibration`, `sensitivity`, and `bootstrap`.
+
+### List the steps without running
+
+```bash
+python -m src.pipeline --list
+```
+
+### Standalone analyses
+
+```bash
+python -m src.evaluation.calibration    # prints ECE and reliability table
+python -m src.evaluation.sensitivity    # writes reports/sensitivity.md
+python -m src.evaluation.bootstrap      # writes reports/bootstrap.md
 ```
 
 ### Tests
 
 ```bash
 pytest -q
-# 60 passed
+# 58 passed
 ```
 
 ### Environment
@@ -223,27 +259,19 @@ pip install -r requirements.txt
 **Python 3.11 is required.** Do not use 3.14; several pinned dependencies
 lack prebuilt wheels for it.
 
-`pyarrow` is used only by the pipeline when writing Parquet files. It is not
-required by the deployed Streamlit app and is not in `requirements.txt`. To
-run the pipeline locally from a fresh environment, install it separately:
-
-```bash
-pip install "pyarrow>=15.0,<20.0"
-```
-
 Verified library versions: Python 3.11, numpy 2.2.6, pandas 2.3.3,
 pyarrow 19.0.1, scikit-learn 1.7.2, LightGBM 4.7.0, Streamlit 1.64.0,
 joblib 1.6.0, PyYAML 6.0.3, matplotlib 3.8+, pytest 8.1+.
 
-The pipeline reproduces byte-for-byte. Given `data/original/Base.csv` plus
-`configs/costs.yaml` and the fixed seed (`42`), every number in the reports
-regenerates.
+The pipeline reproduces byte-for-byte. Given `data/original/Base.csv`
+plus `configs/costs.yaml` and the fixed seed (`42`), every number in the
+reports regenerates.
 
 ---
 
 ## Documentation
 
-### Primary documents (course submission)
+### Course deliverables
 
 | Document | Purpose |
 |---|---|
@@ -254,26 +282,41 @@ regenerates.
 | [`documentation/ownership_declaration.md`](documentation/ownership_declaration.md) | Signed ownership and authorship declaration |
 | [`paper/paper_imrad.md`](paper/paper_imrad.md) | IMRaD draft (DOCX + PDF versions in `paper/`) |
 
-### Supplementary documents (project depth)
+### Foundation (source of truth)
 
 | Document | Purpose |
 |---|---|
 | [`docs/problem_framing.md`](docs/problem_framing.md) | First-principles problem decomposition, scope, success criteria |
-| [`docs/data_card.md`](docs/data_card.md) | Dataset, schema, label-delay simulation, leakage and bias registers |
-| [`docs/evaluation_protocol.md`](docs/evaluation_protocol.md) | Cost matrix, temporal backtest, canonical baselines, forbidden metrics |
+| [`docs/first_principles_decomposition.md`](docs/first_principles_decomposition.md) | Derivation behind the framing; assumptions audit; traceability |
+| [`docs/data_card.md`](docs/data_card.md) | Dataset, schema, delay simulation, splits, leakage and bias registers |
 | [`docs/decision_policy.md`](docs/decision_policy.md) | Actions, expected cost, threshold derivation, action log schema |
-| [`docs/mvp_architecture.md`](docs/mvp_architecture.md) | The as-built pipeline |
-| [`docs/architecture.md`](docs/architecture.md) | Full architecture spec with data-driven stop criteria |
-| [`docs/roadmap.md`](docs/roadmap.md) | Weekly plan, gated on measured failure |
+| [`docs/evaluation_protocol.md`](docs/evaluation_protocol.md) | Cost matrix, temporal backtest, baselines, forbidden metrics, stop criteria |
+
+### Build, plan, and history
+
+| Document | Purpose |
+|---|---|
+| [`docs/mvp_architecture.md`](docs/mvp_architecture.md) | The as-built single decision pipeline |
+| [`docs/roadmap.md`](docs/roadmap.md) | Gated execution plan |
+| [`docs/README.md`](docs/README.md) | Documentation index with reading orders |
+| [`docs/daily_log/`](docs/daily_log/) | Session-by-session build record |
+| [`TODO.md`](TODO.md) | Open work items for the current phase |
+
+### Superseded (kept for context)
+
+| Document | Reason |
+|---|---|
+| [`docs/architecture.md`](docs/architecture.md) | Week 1 MVP specification; superseded by `mvp_architecture.md` and the v1.0 foundation documents |
+| [`docs/mvp_2_weeks.md`](docs/mvp_2_weeks.md) | Original 2-week plan; superseded by `mvp_architecture.md` |
 
 ### Reports
 
 | Report | Contents |
 |---|---|
-| [`reports/model_comparison.md`](reports/model_comparison.md) | Primary: 3-algorithm CV comparison, final test results, selection justification, failure analysis |
-| [`reports/mvp_backtest.md`](reports/mvp_backtest.md) | Supplementary: cost-sensitive policy backtest |
-| [`reports/sensitivity.md`](reports/sensitivity.md) | Supplementary: full cost sensitivity table |
-| [`reports/bootstrap.md`](reports/bootstrap.md) | Supplementary: 95% confidence intervals on cost per transaction |
+| [`reports/decision_backtest.md`](reports/decision_backtest.md) | Primary: policy vs. baseline comparison, data integrity, failure analysis, stop verdict |
+| [`reports/model_comparison.md`](reports/model_comparison.md) | Supporting: classifier comparison as policy inputs, selection justification |
+| [`reports/sensitivity.md`](reports/sensitivity.md) | Full cost sensitivity table across the 2× sweep |
+| [`reports/bootstrap.md`](reports/bootstrap.md) | 95% confidence intervals on cost per transaction |
 
 ### Paper materials
 
@@ -284,30 +327,6 @@ regenerates.
 | [`docs/paper/introduction_draft.md`](docs/paper/introduction_draft.md) | Section 1 skeleton |
 | [`docs/paper/reference_sheet.md`](docs/paper/reference_sheet.md) | Every number and claim, one page |
 
-Session-by-session build record: [`docs/daily_log/`](docs/daily_log/).
-
----
-
-## Evaluation Discipline
-
-This project pre-registers its evaluation and forbids practices that inflate
-results.
-
-- **Temporal splits only.** No random splits, no shuffling.
-- **Delay-aware.** A label may only be used after `label_time`.
-- **Cost-based (supplementary).** Every decision is scored by realized cost.
-- **Baseline-anchored.** Every improvement must beat a named baseline.
-- **Pre-registered.** Metrics and thresholds fixed before modeling.
-- **Honest.** Failures and non-findings are reported, not hidden.
-- **Stopping rules.** Each phase has a data-driven stop criterion.
-
-Forbidden metrics: raw accuracy as the sole criterion, AUC-only claims, F1
-without context. AUC is reported informationally but never used as the sole
-success criterion.
-
-See [`docs/evaluation_protocol.md`](docs/evaluation_protocol.md) for the full
-protocol.
-
 ---
 
 ## Repository Layout
@@ -315,6 +334,7 @@ protocol.
 ```text
 delayed-label-fraud-decisioning/
 ├── README.md
+├── TODO.md
 ├── requirements.txt
 ├── conftest.py
 ├── app/
@@ -323,6 +343,7 @@ delayed-label-fraud-decisioning/
 │   └── costs.yaml
 ├── data/
 │   ├── original/Base.csv
+│   ├── interim/
 │   └── processed/
 ├── notebooks/
 │   ├── 01_eda.ipynb
@@ -337,12 +358,13 @@ delayed-label-fraud-decisioning/
 │   └── feature_importances.json
 ├── docs/
 │   ├── problem_framing.md
+│   ├── first_principles_decomposition.md
 │   ├── data_card.md
 │   ├── decision_policy.md
 │   ├── evaluation_protocol.md
-│   ├── architecture.md
 │   ├── mvp_architecture.md
 │   ├── roadmap.md
+│   ├── README.md
 │   ├── daily_log/
 │   └── paper/
 ├── documentation/
@@ -356,8 +378,8 @@ delayed-label-fraud-decisioning/
 │   ├── paper.docx
 │   └── paper.pdf
 ├── reports/
+│   ├── decision_backtest.md
 │   ├── model_comparison.md
-│   ├── mvp_backtest.md
 │   ├── sensitivity.md
 │   ├── bootstrap.md
 │   └── cv_results.json
@@ -366,12 +388,10 @@ delayed-label-fraud-decisioning/
 │   ├── pipeline.py
 │   ├── data/
 │   │   ├── load.py
-│   │   ├── primary_split.py
 │   │   ├── simulate_delay.py
 │   │   └── split.py
 │   ├── models/
 │   │   ├── preprocess.py
-│   │   ├── train_baseline.py
 │   │   ├── train_compare.py
 │   │   ├── evaluate_compare.py
 │   │   └── score.py
@@ -411,8 +431,8 @@ delayed-label-fraud-decisioning/
 
 ## Non-Goals
 
-Deliberately excluded. Each is only added if a measured failure justifies it
-and the addition has its own stop criterion.
+Deliberately excluded. Each is only added if a measured failure justifies
+it and the addition has its own stop criterion.
 
 - Neural networks, deep learning, CNNs, RNNs, transformers, LLMs
 - Pretrained foundation models
@@ -435,8 +455,8 @@ and the addition has its own stop criterion.
 
 ```bibtex
 @misc{delayed_label_fraud_2026,
-  title  = {Delayed-Label Fraud Decisioning: A Three-Algorithm Classification
-            Study with a Cost-Sensitive Policy under Delayed and Censored
+  title  = {Delayed-Label Fraud Decisioning: A Cost-Sensitive Policy on
+            the Bank Account Fraud Dataset under Delayed and Censored
             Labels},
   author = {Talingting, Ken Ira Lacson and [Co-author names]},
   year   = {2026},
@@ -459,4 +479,4 @@ National University Philippines.
 
 ## License
 
-TBD - will be added before public release.
+TBD — will be added before public release.

@@ -39,7 +39,7 @@ REPLACEMENTS = [
     (
         "decision_policy.md",
         "**Verdict: success stop.** Amount scaling is adopted as the new default. Both thresholds were exceeded, and the policy's advantage over the strongest baseline nearly doubled.",
-        "**Verdict: success stop.** Amount scaling is adopted as the new default. Both thresholds were exceeded, and the policy's advantage over the strongest baseline more than doubled. The result survives a full cost sensitivity analysis and bootstrap CIs on the test set (see `reports/mvp_backtest.md` §Sensitivity and §Statistical Rigor).",
+        "**Verdict: success stop.** Amount scaling is adopted as the new default. Both thresholds were exceeded, and the policy's advantage over the strongest baseline more than doubled. The result survives a full cost sensitivity analysis and bootstrap CIs on the test set (see `reports/decision_backtest.md` §Sensitivity and §Statistical Rigor).",
     ),
 
     # ------------------------------------------------------------------
@@ -98,7 +98,7 @@ REPLACEMENTS = [
     (
         "evaluation_protocol.md",
         "**MVP limitation, stated explicitly:** no bootstrap confidence intervals. The policy's advantage over the strongest baseline is large enough (26.4% constant, 58.8% amount-scaled) that a CI would not plausibly exclude zero, but this is an assertion rather than a measured fact. Formal significance testing is deferred.",
-        "**Bootstrap CIs computed.** 1,000 resamples of the test set (n = 227,491) with replacement give a 95% CI on the policy's advantage of **[52.77%, 60.91%]**, excluding zero. The policy and baseline CIs are disjoint. See `reports/bootstrap.md` for full output and `reports/mvp_backtest.md` §Statistical Rigor for interpretation.",
+        "**Bootstrap CIs computed.** 1,000 resamples of the test set (n = 227,491) with replacement give a 95% CI on the policy's advantage of **[52.77%, 60.91%]**, excluding zero. The policy and baseline CIs are disjoint. See `reports/bootstrap.md` for full output and `reports/decision_backtest.md` §Statistical Rigor for interpretation.",
     ),
     (
         "evaluation_protocol.md",

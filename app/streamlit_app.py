@@ -528,7 +528,7 @@ def batch_summary(df, preds, proba, routing, amounts) -> None:
     c3.metric("Est. expected savings", f"{saved:,.2f}", f"{pct:.1%}")
     st.caption(
         "Model-based estimates on this batch. Ground-truth costs are reported "
-        "in `reports/mvp_backtest.md` using labeled test data."
+        "in `reports/decision_backtest.md` using labeled test data."
     )
 
 

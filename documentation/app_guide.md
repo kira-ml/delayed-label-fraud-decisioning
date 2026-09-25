@@ -494,7 +494,7 @@ dataset. These are documented here so results are not over-interpreted.
 | [`docs/decision_policy.md`](../docs/decision_policy.md) | Policy design and edge cases |
 | [`docs/evaluation_protocol.md`](../docs/evaluation_protocol.md) | Metric definitions |
 | [`docs/data_card.md`](../docs/data_card.md) | Dataset and splits |
-| [`reports/mvp_backtest.md`](../reports/mvp_backtest.md) | Supplementary cost-sensitive results |
+| [`reports/decision_backtest.md`](../reports/decision_backtest.md) | Cost-sensitive policy results |
 
 ---
 

@@ -7,7 +7,7 @@ the policy and all 5 baselines.
 
 Does NOT retrain or rescore the model. Reads scored_test.parquet only.
 
-Required by evaluation_protocol.md §12.1.
+Required by evaluation_protocol.md §14.
 
 Run: python -m src.evaluation.sensitivity
 """
@@ -15,16 +15,10 @@ from __future__ import annotations
 
 import numpy as np
 import pandas as pd
-import yaml
 
-from src.common import DATA_PROCESSED, REPORTS, CONFIGS
+from src.common import DATA_PROCESSED, REPORTS, load_costs
 
 SEED = 42
-
-
-def load_costs() -> dict:
-    with open(CONFIGS / "costs.yaml") as f:
-        return yaml.safe_load(f)
 
 
 def load_data() -> pd.DataFrame:

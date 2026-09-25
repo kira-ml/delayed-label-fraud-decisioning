@@ -1,4 +1,4 @@
-"""Chronological train/val/test split for the supplementary pipeline.
+"""Chronological train/val/test split for the decision pipeline.
 
 Splits:
     train: months 0,1,2
@@ -10,7 +10,7 @@ from pathlib import Path
 import pandas as pd
 
 from src.common import (
-    SUPP_TRAIN_MONTHS, SUPP_VAL_MONTHS, SUPP_TEST_MONTHS,
+    TRAIN_MONTHS, VAL_MONTHS, TEST_MONTHS,
 )
 
 IN_PATH = Path("data/interim/labeled.parquet")
@@ -19,9 +19,9 @@ OUT_DIR = Path("data/processed")
 
 def split(df: pd.DataFrame):
     observed = df[df["observed"]].copy()
-    train = observed[observed["month"].isin(SUPP_TRAIN_MONTHS)].copy()
-    val = observed[observed["month"].isin(SUPP_VAL_MONTHS)].copy()
-    test = observed[observed["month"].isin(SUPP_TEST_MONTHS)].copy()
+    train = observed[observed["month"].isin(TRAIN_MONTHS)].copy()
+    val = observed[observed["month"].isin(VAL_MONTHS)].copy()
+    test = observed[observed["month"].isin(TEST_MONTHS)].copy()
     censored = df[~df["observed"]].copy()
     return train, val, test, censored
 

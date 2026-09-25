@@ -14,7 +14,7 @@ PIPELINE_ARTIFACTS = [
     "models/best_model.pkl",
     "models/preprocessing.pkl",
     "reports/model_comparison.md",
-    "reports/mvp_backtest.md",
+    "reports/decision_backtest.md",
 ]
 
 

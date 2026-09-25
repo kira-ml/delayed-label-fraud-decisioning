@@ -1,4 +1,4 @@
-# Model Comparison: Primary 3-Algorithm Study
+# Classifier Comparison (Policy Inputs)
 
 - CV strategy: 2-fold expanding-window by month (train months 0..k, validate month k+1)
 - Training rows: 397,039

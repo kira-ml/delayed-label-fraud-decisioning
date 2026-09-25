@@ -149,9 +149,9 @@ produces the best policy input.
 
 | # | Classifier | Role | Class imbalance handling |
 |---|---|---|---|
-| 1 | Logistic Regression | Linear baseline; interpretable | `class_weight='balanced'` |
-| 2 | Random Forest | Non-linear ensemble; robust | `class_weight='balanced_subsample'` |
-| 3 | LightGBM | Gradient boosting; strong tabular | **None** (cost asymmetry handled by policy) |
+| 1 | Logistic Regression | Linear baseline; interpretable | **None** — calibration must be preserved |
+| 2 | Random Forest | Non-linear ensemble; robust | **None** — calibration must be preserved |
+| 3 | LightGBM | Gradient boosting; strong tabular | **None** — calibration must be preserved |
 
 **Rule:** Any weighting that distorts calibrated probabilities is rejected.
 The policy depends on `p` being a real probability, not a reweighted score.

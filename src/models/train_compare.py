@@ -1,4 +1,4 @@
-"""Primary 3-algorithm training with 5-fold time-series CV.
+"""Classifier comparison with time-series CV.
 
 Trains Logistic Regression, Random Forest, and LightGBM under identical
 folds and preprocessing. Writes reports/model_comparison.md and
@@ -32,9 +32,9 @@ REPORT_PATH = Path("reports/model_comparison.md")
 RESULTS_PATH = Path("reports/cv_results.json")
 
 ALGORITHMS = ["logistic_regression", "random_forest", "lightgbm"]
-N_SPLITS = 5
+MAX_SPLITS = 5
 
-# Small, documented grids (see docs/evaluation_protocol.md §4.4).
+# Small, documented grids (see docs/evaluation_protocol.md §5 and §8).
 # No class_weight is used: the decision policy assumes p_fraud is a
 # calibrated probability, and class reweighting would break that
 # assumption. Cost asymmetry is handled by the policy, not the training
@@ -117,7 +117,7 @@ def main() -> None:
     costs = load_costs()
 
     months = sorted(train["month"].unique())
-    n_folds = min(N_SPLITS, len(months) - 1)
+    n_folds = min(MAX_SPLITS, len(months) - 1)
 
     # grid_results[alg][config_idx] = list of per-fold metric dicts
     grid_results: dict[str, list[list[dict]]] = {
@@ -177,7 +177,7 @@ def main() -> None:
     )
 
     # Markdown report
-    lines = ["# Model Comparison: 3-Algorithm Study\n",
+    lines = ["# Classifier Comparison (Policy Inputs)\n",
              f"- CV strategy: {n_folds}-fold expanding-window by month "
              "(train months 0..k, validate month k+1)",
              f"- Training rows: {len(train):,}",
@@ -193,7 +193,7 @@ def main() -> None:
         "across the expanding-window folds. All configurations within an "
         "algorithm were evaluated on the same folds with the same "
         "preprocessing, so the selection is fair and reproducible "
-        "(see `docs/evaluation_protocol.md` §4.4 and §8).",
+        "(see `docs/evaluation_protocol.md` §5 and §8).",
         "",
         "## Selection Criterion: Realized Cost After the Policy\n",
         "| Algorithm | Realized cost/txn (mean ± SD) |",

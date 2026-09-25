@@ -384,9 +384,9 @@ Fraud is 1.1029% of transactions. The response is:
 
 | Classifier | Handling |
 |---|---|
-| Logistic Regression | `class_weight='balanced'` |
-| Random Forest | `class_weight='balanced_subsample'` |
-| LightGBM | **None** — cost asymmetry is handled by the policy, not the training objective |
+| Logistic Regression | **None** — calibration must be preserved |
+| Random Forest | **None** — calibration must be preserved |
+| LightGBM | **None** — calibration must be preserved |
 
 **Rule:** any weighting that materially distorts calibrated probabilities is
 rejected. The decision policy depends on `p` being a real probability, not a

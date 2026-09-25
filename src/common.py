@@ -27,7 +27,6 @@ DATA_RAW       = Path("data/original")
 DATA_INTERIM   = Path("data/interim")
 DATA_PROCESSED = Path("data/processed")
 MODELS         = Path("models")
-ARTIFACTS      = Path("artifacts")
 REPORTS        = Path("reports")
 CONFIGS        = Path("configs")
 
@@ -61,10 +60,10 @@ CATEGORICAL_COLS = [
 # Split month definitions
 # ---------------------------------------------------------------------------
 # Single chronological split — docs/data_card.md §5.2
-SUPP_TRAIN_MONTHS    = [0, 1, 2]
-SUPP_VAL_MONTHS      = [3, 4]
-SUPP_TEST_MONTHS     = [5, 6]
-SUPP_CENSORED_MONTHS = [7]
+TRAIN_MONTHS    = [0, 1, 2]
+VAL_MONTHS      = [3, 4]
+TEST_MONTHS     = [5, 6]
+CENSORED_MONTHS = [7]
 
 # ---------------------------------------------------------------------------
 # Cost configuration
