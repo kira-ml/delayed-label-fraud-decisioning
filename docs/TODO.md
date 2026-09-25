@@ -1,240 +1,287 @@
-# TODO — 2026-09-25
+# TODO — 2026-09-26
 
 > **Repository:** `delayed-label-fraud-decisioning`  
-> **Scope:** Pipeline validation follow-ups from the code review on 2026-09-25  
+> **Scope:** Submission package (P3) plus documentation follow-ups  
 > **Status:** Open  
-> **Priority order:** Critical → Moderate → Minor → Hygiene
+> **Priority order:** Submission → Documentation → Optional
 
-Items are ordered so that a reviewer never sees an unresolved correctness or
-consistency issue. Do them top to bottom.
-
----
-
-## Critical — Correctness
-
-### C1. Fix `select_best()` tiebreak in `evaluate_compare.py`
-
-**File:** `src/models/evaluate_compare.py`  
-**Function:** `select_best()`  
-**Problem:** The tiebreak loop picks the first algorithm in `SIMPLICITY_ORDER`
-that exists in `means`, which is always `logistic_regression` — regardless of
-whether LR is actually within the noise band of the best classifier.
-
-**Current code:**
-
-```python
-for alg in SIMPLICITY_ORDER:
-    if alg in means:
-        tiebreak = alg
-        break
-```
-
-**Required behavior:** Tiebreak only among algorithms whose CV cost is inside
-the pre-registered 5% relative band of the best classifier. If no algorithm
-qualifies, fall back to the best.
-
-**Fix:**
-
-```python
-tiebreak_candidates = [
-    alg for alg in SIMPLICITY_ORDER
-    if alg in means
-    and (means[alg] - best_mean) / best_mean < MIN_RELATIVE_EFFECT
-]
-tiebreak = tiebreak_candidates[0] if tiebreak_candidates else best_alg
-```
-
-**Validation:**  
-- [ ] Re-run `python -m src.pipeline`  
-- [ ] Confirm selected classifier is still `logistic_regression`  
-- [ ] Confirm policy cost/txn = `0.007491`  
-- [ ] Confirm no change to `models/best_model.pkl` behavior
+All TODO 2026-09-25 items are closed. The framework is frozen at v1.0.
+This TODO tracks the remaining submission work and non-blocking
+documentation cleanups. No pipeline or code changes are in scope unless
+a specific measured failure appears.
 
 ---
 
-## Moderate — Protocol and Code Consistency
+## Submission — P3 (Blocking)
 
-### M1. Fix class-weight tables in two docs
+### S1. Generate `paper/paper.docx`
 
-**Files:** `docs/evaluation_protocol.md` §5, `docs/data_card.md` §9.2
+**Input:** `paper/paper_imrad.md`  
+**Output:** `paper/paper.docx`  
+**Format:** IEEE conference paper, 6–10 pages excluding appendices, numbered
+citations in order of first appearance.
 
-**Problem:** Both tables list `class_weight='balanced'` for LR and
-`class_weight='balanced_subsample'` for RF. The code in `train_compare.py`
-deliberately uses **no class weights** for any classifier, because reweighting
-distorts calibrated probabilities. Both docs also state the rule:
-"Any weighting that materially distorts calibrated probabilities is rejected."
-The table contradicts the rule.
+**Required sections:**
 
-**Fix:** Update both tables to reflect no `class_weight` for all three
-classifiers. Add one line citing the calibration rule as the reason.
+- Title, abstract, keywords
+- Introduction (problem, objective, significance, related work)
+- Methods (dataset, EDA, preprocessing, three algorithms, tuning, metrics,
+  calibration gate, decision policy)
+- Results (EDA findings, classifier comparison, calibration, policy
+  backtest, bootstrap CI, sensitivity sweep, action distribution)
+- Discussion (why LR was selected under the noise-band guard, error
+  analysis, cost-matrix tradeoffs, limitations)
+- Conclusion and recommendations
+- References (IEEE numbered)
+- Appendices (data dictionary, contribution record, signed declaration)
 
-- [ ] Update `docs/evaluation_protocol.md` §5 table  
-- [ ] Update `docs/data_card.md` §9.2 table  
-- [ ] Confirm `train_compare.py` comment still matches
+**Numbers to use (verified from the 2026-09-25 pipeline run):**
 
----
-
-### M2. Rename `mvp_backtest.md` → `decision_backtest.md`
-
-**Files:** `src/evaluation/backtest.py`, `README.md`, `docs/README.md`
-
-**Problem:** `mvp_backtest.md` is a legacy filename from the two-layer era.
-The report now describes a single decision-pipeline backtest.
-
-**Fix:**
-
-- [ ] Change `OUT = REPORTS / "mvp_backtest.md"` to
-      `OUT = REPORTS / "decision_backtest.md"` in `backtest.py`
-- [ ] Rename the existing file on disk
-- [ ] Update `README.md` link
-- [ ] Update `docs/README.md` link
-- [ ] Search repo for any other `mvp_backtest` reference
-
----
-
-### M3. Remove "supplementary" and "Primary" labels
-
-**Files:** `src/common.py`, `src/data/split.py`, `src/models/train_compare.py`
-
-**Problem:** Vocabulary inherited from the retired two-layer architecture.
-
-| File | Change |
+| Fact | Value |
 |---|---|
-| `src/common.py` | Rename `SUPP_TRAIN_MONTHS` → `TRAIN_MONTHS` |
-| `src/common.py` | Rename `SUPP_VAL_MONTHS` → `VAL_MONTHS` |
-| `src/common.py` | Rename `SUPP_TEST_MONTHS` → `TEST_MONTHS` |
-| `src/common.py` | Rename `SUPP_CENSORED_MONTHS` → `CENSORED_MONTHS` |
-| `src/common.py` | Remove `ARTIFACTS = Path("artifacts")` (unused) |
-| `src/data/split.py` | Docstring: remove "supplementary pipeline" |
-| `src/data/split.py` | Update imports of renamed constants |
-| `src/models/train_compare.py` | Docstring: remove "Primary" |
-| `src/models/train_compare.py` | Report title: `"# Classifier Comparison (Policy Inputs)"` |
+| Selected classifier | LogisticRegression (`C=10.0`, `max_iter=1000`) |
+| Selection rule | Noise-band guard: LGBM vs LR gap 1.07% < 5% |
+| Policy cost/txn | 0.007491 |
+| Strongest baseline | 0.018737 |
+| Policy advantage | 60.02% |
+| Bootstrap CI | [56.00%, 64.16%] |
+| Sensitivity minimum | 50.38% at `review_cost=0.04` |
+| Calibration ECE | 0.0033 |
+| Test rows | 227,491 |
+| Censored rows | 96,843 (9.68%) |
+| Tests | 58 / 58 passing |
 
-- [ ] All renames done  
-- [ ] All imports updated  
-- [ ] `pytest` still passes (`58 passed`)  
-- [ ] Pipeline re-run produces identical numbers
+**Rule:** every number in the paper must appear in
+`docs/paper/reference_sheet.md`. Every claim must be traceable to a v1.0
+foundation document.
 
----
-
-## Minor — Stale References
-
-### N1. Fix stale docstrings and section references
-
-| File | Issue | Fix |
-|---|---|---|
-| `src/evaluation/calibration.py` | Docstring says it reads `artifacts/model.txt` | Update to `models/best_model.pkl` + `models/preprocessing.pkl` |
-| `src/evaluation/calibration.py` | Prints `architecture.md §9.2` | Update to `evaluation_protocol.md §17.1` |
-| `src/evaluation/sensitivity.py` | Docstring cites `evaluation_protocol.md §12.1` | Should be §14 |
-| `src/evaluation/bootstrap.py` | Docstring cites `evaluation_protocol.md §14` | Should be §13.1 |
-| `src/models/train_compare.py` | Comment cites `evaluation_protocol.md §4.4` | Should be §5 and §8 |
-
-- [ ] All five updated  
-- [ ] Grep repo for `§4.4`, `§12.1`, `architecture.md §9.2`, `artifacts/model.txt`
+- [ ] Draft complete
+- [ ] Section order matches IEEE format
+- [ ] Every number cross-checked against `reports/decision_backtest.md`,
+      `reports/bootstrap.md`, and `reports/sensitivity.md`
+- [ ] Related Work cites BAF, ULB, IEEE-CIS with positioning rationale
+- [ ] Limitations section names synthetic data and single delay regime
 
 ---
 
-## Minor — Code Quality
+### S2. Generate `paper/paper.pdf`
 
-### Q1. Share `load_costs()` across evaluation modules
+**Input:** `paper/paper.docx`  
+**Output:** `paper/paper.pdf`  
+**Format:** same as S1.
 
-**Files:** `src/evaluation/sensitivity.py`, `src/evaluation/bootstrap.py`
-
-**Problem:** Both define their own `load_costs()`. `src/common.py` already has
-one.
-
-- [ ] Import `load_costs` from `src.common` in both files  
-- [ ] Delete the local copies  
-- [ ] Confirm pipeline still runs
+- [ ] PDF renders correctly
+- [ ] Page count within 6–10 excluding appendices
+- [ ] Figures and tables legible in print and on screen
+- [ ] Citations resolve correctly
 
 ---
 
-### Q2. Clarify `N_SPLITS` in `train_compare.py`
+### S3. Sign `documentation/contribution_record.md`
 
-**File:** `src/models/train_compare.py`
+**Contents required:**
 
-**Problem:** `N_SPLITS = 5`, but effective folds = 2 because training has only
-3 months. Rename clarifies intent.
+- Member names
+- Tasks assigned
+- Actual contributions
+- Signature per member
 
-- [ ] Rename `N_SPLITS` → `MAX_SPLITS`  
-- [ ] Print effective fold count in the report header
-
----
-
-### Q3. Clarify `--analyses` docstring in `pipeline.py`
-
-**File:** `src/pipeline.py`
-
-**Problem:** `--analyses` runs the pipeline **and** analyses, but the docstring
-reads as if it only runs analyses.
-
-- [ ] Update docstring to: "run the pipeline, then calibration, sensitivity,
-      and bootstrap"
+- [ ] All members listed
+- [ ] Tasks reflect actual work
+- [ ] Signatures present
 
 ---
 
-### Q4. Fix daily-log config-count entry
+### S4. Sign `documentation/ownership_declaration.md`
 
-**File:** `docs/daily_log/2026-09-24.md`
+**Contents required:**
 
-**Problem:** Log says "3 algorithms × 4 configs × 2 folds". RF has only 3
-configs.
+- Statement of original work
+- Attribution of external sources
+- Instructor signature
+- All member signatures
 
-- [ ] Change to "LR: 4 configs, RF: 3 configs, LGBM: 4 configs; 2 folds"
+- [ ] Declaration reads correctly
+- [ ] Instructor signature
+- [ ] All member signatures
+- [ ] Date completed
 
 ---
 
-## Submission — P2 (unchanged from 2026-09-24 log)
+### S5. Assemble ZIP archive
 
-- [ ] Generate `paper/paper.docx` from `paper/paper_imrad.md`
-- [ ] Generate `paper/paper.pdf`
-- [ ] Sign `documentation/contribution_record.md`
-- [ ] Sign `documentation/ownership_declaration.md`
-- [ ] Assemble ZIP in `GROUPNAME_PROJECTTITLE/` layout
-- [ ] Final checklist against course PDF
+**Layout required:**
+
+```
+GROUPNAME_PROJECTTITLE/
+├── README.md
+├── paper/
+│   ├── paper.docx
+│   └── paper.pdf
+├── documentation/
+│   ├── data_dictionary.md
+│   ├── technical_documentation.md
+│   ├── app_guide.md
+│   ├── contribution_record.md
+│   └── ownership_declaration.md
+├── src/
+├── tests/
+├── configs/
+├── models/
+├── reports/
+└── requirements.txt
+```
+
+**Rules:**
+
+- Do not include `data/original/Base.csv` (too large, license requires
+  separate download)
+- Do not include `data/processed/` or `data/interim/` (regenerable)
+- Include `models/*.pkl` and `models/*.json` (whitelisted, required by app)
+- Include the deployed URL in `README.md` and `documentation/app_guide.md`
+
+- [ ] Folder structure correct
+- [ ] No oversized files
+- [ ] ZIP opens cleanly
+- [ ] README inside ZIP points to the deployed URL
+
+---
+
+### S6. Final checklist against course PDF
+
+**Checklist categories:**
+
+- [ ] Deployable application (Streamlit URL works)
+- [ ] Source code (repo link + ZIP)
+- [ ] Technical documentation
+- [ ] Dataset package (original, processed, data dictionary, source,
+      license)
+- [ ] IMRaD paper (DOCX + PDF)
+- [ ] Contribution record
+- [ ] Ownership declaration (signed PDF)
+- [ ] All filenames match course PDF requirements
+- [ ] All declared URLs open successfully
+
+---
+
+## Documentation Follow-Ups (Non-blocking)
+
+### D1. Add M4 entry to `TODO.md` if needed
+
+**Check:** verify `documentation/technical_documentation.md` v1.1 no longer
+describes the retired two-pipeline architecture in any section. If any
+section still does, log it as M4.
+
+- [ ] §5 no longer mentions `--primary` / `--all`
+- [ ] §6.2 no longer mentions `--primary`
+- [ ] §8 no longer lists `primary_train.parquet` / `primary_test.parquet`
+- [ ] §9 no longer mentions `--all`
+- [ ] §12 no longer lists `--primary` / `--all`
+
+If any fails, add an M4 entry and fix.
+
+---
+
+### D2. Mark superseded documents
+
+**Files:** `docs/architecture.md`, `docs/mvp_2_weeks.md`
+
+**Action:** add a banner at the top of each file:
+
+```markdown
+> **Superseded.** This document has been replaced by
+> `mvp_architecture.md` and the v1.0 foundation documents
+> (`problem_framing.md`, `data_card.md`, `decision_policy.md`,
+> `evaluation_protocol.md`). It is kept for historical context only.
+```
+
+- [ ] `docs/architecture.md` banner added
+- [ ] `docs/mvp_2_weeks.md` banner added
+- [ ] `docs/README.md` already lists both under Superseded (verify)
+
+---
+
+### D3. Update `docs/mvp_architecture.md` to v1.1
+
+**Changes:**
+
+- §13: remove deviations that no longer exist (two classifier paths,
+  `train_baseline.py`, `primary_split.py`, `mvp_backtest.md` name)
+- Update ECE to 0.0033
+- Update test count to 58
+- State selected classifier: LogisticRegression
+- State action log as-built schema
+- Confirm unified pipeline is the sole path
+
+- [ ] §13 cleaned
+- [ ] Numbers match the 2026-09-25 run
+- [ ] Changelog entry added
+
+---
+
+## Optional / Deferred
+
+Not required for submission. Each requires a specific measured failure
+before it is added, and its own stop criterion written before work starts.
+
+| Item | Gate |
+|---|---|
+| Additional delay regimes | A measured failure of the 1-month regime |
+| Rule-based threshold baseline | A reason to compare against a rule, not just the classifier + 0.5 baseline |
+| Capacity-aware decisioning | A measured review-queue overflow |
+| Rolling-window evaluation | A measured drift that static splits hide |
+| Cost-sensitive training | A calibration failure that reweighting would fix |
+| Calibration application | ECE > 0.05 after retraining |
+| Fairness-aware policy | A measured segment disparity |
+| Drift detection | A measured distribution shift |
+
+**Rule:** none of these are started until a measured failure justifies
+them.
+
+- [ ] No deferred items started without a measured failure
+- [ ] Any started item has its stop criterion written first
 
 ---
 
 ## Definition of Done
 
-- [ ] All Critical items resolved  
-- [ ] All Moderate items resolved  
-- [ ] All Minor items resolved  
-- [ ] `pytest` reports `58 passed`  
-- [ ] `python -m src.pipeline` runs clean end-to-end  
-- [ ] Policy cost/txn = `0.007491`  
-- [ ] Bootstrap CI = `[56.00%, 64.16%]`  
-- [ ] Sensitivity minimum = `50.38%`  
-- [ ] ECE = `0.0033`  
-- [ ] Selected classifier = `logistic_regression`  
-- [ ] No remaining references to `mvp_backtest`, `SUPP_`, `Primary`, or
-      `artifacts/model.txt` in source or docs  
-- [ ] Reports regenerated with updated titles  
-- [ ] Daily log entry for 2026-09-25 written
+- [ ] All blocking S1–S6 items complete
+- [ ] All non-blocking D1–D3 items complete
+- [ ] `pytest -q` → 58 passed
+- [ ] `python -m src.pipeline --analyses` produces verified numbers
+- [ ] All greps from 2026-09-25 still return empty
+- [ ] `git status` clean
+- [ ] Repository and ZIP archive accessible
+- [ ] Final course checklist signed off
 
 ---
 
 ## Suggested Commit Sequence
 
-Keep commits focused so each is reviewable and revertable.
-
-1. `fix(selection): restrict tiebreak to algorithms within noise band`
-2. `docs(protocol): remove class_weight from LR/RF tables`
-3. `refactor(reports): rename mvp_backtest.md to decision_backtest.md`
-4. `refactor(src): remove SUPP_ prefixes and Primary/Supplementary labels`
-5. `docs(refs): fix stale section and artifact references`
-6. `refactor(eval): share load_costs from src.common`
-7. `chore(pipeline): clarify --analyses docstring`
-8. `docs(log): correct config count in 2026-09-24 entry`
+1. `docs(paper): add IMRaD DOCX and PDF`
+2. `docs(submission): sign contribution record and ownership declaration`
+3. `docs(tech-doc): apply M4 fixes if needed`
+4. `docs(superseded): add banners to architecture.md and mvp_2_weeks.md`
+5. `docs(mvp-arch): update to v1.1`
+6. `chore(submission): assemble ZIP archive`
+7. `docs: mark TODO 2026-09-26 items complete`
 
 ---
 
 ## Notes
 
-- Do **not** re-run the full pipeline more than necessary. One clean run after
-  all edits is sufficient, except to validate C1 which needs one run on its own.
-- Do **not** regenerate reports between each fix; regenerate once at the end.
-- Do **not** touch `problem_framing.md`, `data_card.md` §1–8, or
-  `decision_policy.md` — those are frozen v1.0.
-- The test window has already been used once. The changes above do not require
-  re-evaluating it; only re-running the pipeline against the same split.
+- The framework is frozen at v1.0. Do **not** change `problem_framing.md`,
+  `data_card.md`, `decision_policy.md`, `evaluation_protocol.md`, or the
+  pipeline source. The remaining work is packaging and communication.
+- The test window has already been used once. No further test-window
+  evaluation is permitted unless the framework is explicitly reopened.
+- Do not regenerate reports between edits. One clean pipeline run after all
+  changes is sufficient.
+- Do not swap datasets. BAF is the correct choice for the delayed-label
+  framing; ULB and IEEE-CIS lack the monthly temporal granularity required
+  by `data_card.md` §5.
+- If a professor or reviewer asks why BAF, the answer is: "It is the only
+  public fraud dataset with monthly temporal granularity, which is
+  required to evaluate a delayed-label decision policy. ULB has no time
+  structure; IEEE-CIS has production data but no monthly delay regime.
+  BAF is peer-reviewed from NeurIPS 2022."
