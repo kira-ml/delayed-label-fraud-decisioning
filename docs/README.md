@@ -12,7 +12,7 @@ Read in this order.
 
 1. [`problem_framing.md`](problem_framing.md) — what problem this solves and why it exists
 2. [`evaluation_protocol.md`](evaluation_protocol.md) §1–4 — what claims are allowed
-3. [`../reports/mvp_backtest.md`](../reports/mvp_backtest.md) — the result
+3. [`../reports/decision_backtest.md`](../reports/decision_backtest.md) — the result
 4. [`decision_policy.md`](decision_policy.md) §5–6 — how a score becomes an action
 
 Everything else is depth. Stop after those four if you only have 30 minutes.
@@ -41,7 +41,8 @@ Understand the built system before the plan.
 2. [`data_card.md`](data_card.md) §2–5 — dataset, delay simulation, splits
 3. [`decision_policy.md`](decision_policy.md) — the policy in full
 4. [`evaluation_protocol.md`](evaluation_protocol.md) §7–9 — the backtest
-5. [`architecture.md`](architecture.md) §9 — data-driven stop criteria
+5. [`evaluation_protocol.md`](evaluation_protocol.md) §17 — stop criteria
+   and verdicts
 
 ---
 
@@ -52,23 +53,29 @@ Understand the built system before the plan.
 | Document | Purpose |
 |---|---|
 | [`problem_framing.md`](problem_framing.md) | First-principles problem decomposition, scope, success criteria |
+| [`first_principles_decomposition.md`](first_principles_decomposition.md) | Derivation behind the decision-centric framing; assumptions audit; traceability matrix |
 | [`data_card.md`](data_card.md) | Dataset, schema, delay simulation, splits, leakage and bias registers |
 | [`decision_policy.md`](decision_policy.md) | Actions, expected cost, threshold derivation, action log schema |
-| [`evaluation_protocol.md`](evaluation_protocol.md) | Cost matrix, temporal backtest, baselines, forbidden metrics |
+| [`evaluation_protocol.md`](evaluation_protocol.md) | Cost matrix, temporal backtest, baselines, forbidden metrics, stop criteria |
 
 ### Build and implementation
 
 | Document | Purpose |
 |---|---|
-| [`mvp_architecture.md`](mvp_architecture.md) | The as-built 2-week pipeline — **read this for what exists** |
-| [`architecture.md`](architecture.md) | Full post-MVP architecture spec, with data-driven stop criteria (§9) |
-| [`mvp_2_weeks.md`](mvp_2_weeks.md) | Original 2-week plan (superseded by `mvp_architecture.md`) |
+| [`mvp_architecture.md`](mvp_architecture.md) | The as-built single decision pipeline — **read this for what exists** |
+
+### Superseded (kept for context)
+
+| Document | Reason |
+|---|---|
+| [`architecture.md`](architecture.md) | Week 1 MVP specification; superseded by `mvp_architecture.md` and the v1.0 foundation documents |
+| [`mvp_2_weeks.md`](mvp_2_weeks.md) | Original 2-week plan; superseded by `mvp_architecture.md` |
 
 ### Process and plan
 
 | Document | Purpose |
 |---|---|
-| [`roadmap.md`](roadmap.md) | Gated weekly plan; Week 2+ requires a measured failure |
+| [`roadmap.md`](roadmap.md) | Gated execution plan for the unified decision pipeline |
 | [`daily_log/`](daily_log/) | Session-by-session build record |
 
 ### Paper materials
@@ -86,9 +93,9 @@ Understand the built system before the plan.
 
 | Report | Contents |
 |---|---|
-| [`model_comparison.md`](../reports/model_comparison.md) | Primary course deliverable: 3-algorithm CV comparison, final test results, selection justification, failure analysis |
-| [`mvp_backtest.md`](../reports/mvp_backtest.md) | Supplementary deliverable: baseline comparison, sensitivity, bootstrap, stopping decisions |
-| [`sensitivity.md`](../reports/sensitivity.md) | Full cost sensitivity table |
+| [`decision_backtest.md`](../reports/decision_backtest.md) | Primary deliverable: policy vs. baseline comparison, data integrity, failure analysis, stop verdict |
+| [`model_comparison.md`](../reports/model_comparison.md) | Supporting: classifier comparison as policy inputs, selection justification, final test results |
+| [`sensitivity.md`](../reports/sensitivity.md) | Full cost sensitivity table across the 2× sweep |
 | [`bootstrap.md`](../reports/bootstrap.md) | 95% confidence intervals on cost per transaction |
 
 ---
@@ -109,6 +116,7 @@ protocol wins and the other document is updated. See
 ## Repository Root
 
 - [`../README.md`](../README.md) — project overview and reproduce commands
+- [`../TODO.md`](../TODO.md) — open work items for the current phase
 - [`../reports/`](../reports/) — evaluation outputs
 - [`../src/`](../src/) — pipeline source
 - [`../tests/`](../tests/) — unit tests for the policy and cost matrix
