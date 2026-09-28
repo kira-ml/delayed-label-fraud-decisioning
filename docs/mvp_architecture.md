@@ -5,8 +5,8 @@
 > **Institution:** National University Philippines  
 > **Instructor:** Ken Oliver Caparros  
 > **Document:** Architecture — as-built system  
-> **Status:** v1.0 — first-principles revision; single decision pipeline  
-> **Last updated:** 2026-09-24
+> **Status:** v1.1 — layout synced with archive move; deviations cleared  
+> **Last updated:** 2026-09-28
 
 ---
 
@@ -143,15 +143,16 @@ delayed-label-fraud-decisioning/
 │   └── feature_importances.json    # whitelisted
 ├── docs/
 │   ├── problem_framing.md          # root framing
+│   ├── first_principles_decomposition.md
 │   ├── evaluation_protocol.md
 │   ├── decision_policy.md
 │   ├── data_card.md
 │   ├── mvp_architecture.md         <- this file
-│   ├── architecture.md             # full spec (post-submission)
-│   ├── mvp_2_weeks.md              # superseded
 │   ├── roadmap.md
-│   ├── daily_log/
-│   └── paper/
+│   ├── README.md
+│   ├── TODO.md
+│   ├── paper/
+│   └── archive/                    # superseded + historical, out of reading path
 ├── documentation/
 │   ├── data_dictionary.md
 │   ├── technical_documentation.md
@@ -163,8 +164,8 @@ delayed-label-fraud-decisioning/
 │   ├── paper.docx
 │   └── paper.pdf
 ├── reports/
-│   ├── model_comparison.md         # primary deliverable
-│   ├── mvp_backtest.md             # legacy name; kept for history
+│   ├── decision_backtest.md        # primary deliverable
+│   ├── model_comparison.md         # supporting: classifier comparison
 │   ├── sensitivity.md
 │   ├── bootstrap.md
 │   └── cv_results.json
@@ -176,9 +177,9 @@ delayed-label-fraud-decisioning/
 │   │   ├── simulate_delay.py
 │   │   └── split.py
 │   ├── models/
+│   │   ├── preprocess.py
 │   │   ├── train_compare.py        # LR / RF / LGBM comparison
 │   │   ├── evaluate_compare.py     # selection + final test evaluation
-│   │   ├── train_baseline.py       # single-LGBM path (see §13)
 │   │   └── score.py
 │   ├── policy/
 │   │   └── decide.py               # argmin expected cost
@@ -199,8 +200,8 @@ delayed-label-fraud-decisioning/
 
 **Note:** the file layout does **not** label any component as "primary" or
 "supplementary." Every component in `src/` is part of the single pipeline.
-The distinction is recorded only where the as-built code physically has two
-parallel paths (§13).
+The as-built code has one classifier training path, matching the framing.
+§13 records any remaining deviations from the framing.
 
 ---
 
@@ -398,7 +399,8 @@ Creating any of these files is out of scope for this submission. See §14.
   - Trains Logistic Regression with a documented grid
   - Trains Random Forest with a documented grid
   - Trains LightGBM with a documented grid
-  - Uses 5-fold expanding-window CV by month on the training window
+  - Uses expanding-window CV by month on the training window
+    (2 folds on the current training window; `MAX_SPLITS=5` is a cap)
   - Computes per-fold realized cost after the policy as the selection
     criterion (not macro F1)
   - Records supporting metrics: macro F1, accuracy, per-class precision /
@@ -432,8 +434,8 @@ Creating any of these files is out of scope for this submission. See §14.
   computes ECE, prints gate verdict
 - **Gate:** ECE < 0.05 required for a classifier to be admissible
 - **Not in the automated pipeline.** Run manually after each retrain.
-- **Result (current build):** ECE = 0.0040; gate passed; no calibration
-  step applied.
+- **Result (current build):** ECE = 0.0033; gate passed; no calibration
+step applied.
 
 ---
 
@@ -545,7 +547,7 @@ streamlit run app/streamlit_app.py
 
 ```bash
 pytest
-# 60 passed
+# 58 passed
 ```
 
 If any step fails, the pipeline fails loudly. Do not swallow errors.
@@ -586,35 +588,23 @@ When `amount_scaled: true`, `fraud_loss` is per-row:
 
 ## 13. As-Built Deviations From the Framing
 
-The framing in `docs/problem_framing.md` calls for **one** classifier
-training path. The as-built code physically has **two**:
+The as-built code has **one** classifier training path, matching the framing
+in `docs/problem_framing.md`. The earlier two-path deviation (comparison
+path + single-LGBM path) was resolved on 2026-09-25. The unified pipeline
+runs the classifier comparison on `train 0-2 / val 3-4`, selects a
+classifier, retrains it on the full training window, and evaluates the
+policy on `test 5-6`.
 
-| Path | Scripts | Split | Purpose |
-|---|---|---|---|
-| Comparison path | `train_compare.py`, `evaluate_compare.py` | train 0-5 / test 6-7 (inherited) | The three-algorithm comparison |
-| Single-LGBM path | `train_baseline.py` | train 0-2 / val 3-4 / test 5-6 | The classifier that feeds the policy |
-
-This duplication is an artifact of the PDF-driven two-layer build. In the
-framing, both paths collapse into one: the comparison runs on the
-`train 0-2 / val 3-4` split, the selected classifier is retrained on the
-full training window (0-2), and the policy is evaluated on `test 5-6`.
-
-**Status:** the code still has both paths. Unifying them is a code change,
-not a documentation change. It is recorded here so the architecture document
-does not falsely claim a single path exists.
-
-**Other deviations:**
+**Remaining deviations:**
 
 | Deviation | Current state | Framing requires | Resolution |
 |---|---|---|---|
-| Two classifier training paths | Present | One path | Deferred to code phase |
-| `reports/mvp_backtest.md` name | Legacy filename in repo | One report named for what it contains | Rename during code phase |
 | Action log omits `cost_config_hash` | Present | Full schema in `decision_policy.md` §10.1 | Add when a second cost matrix is introduced |
 | Action log omits `decision_time` | Present | Full schema | BAF has month granularity only; column stays out |
-| `configs/policy.yaml` absent | Absent | Absent (per decision_policy.md §14.2) | No change needed |
+| `configs/policy.yaml` absent | Absent | Absent (per `decision_policy.md` §14.2) | No change needed |
 
-Every deviation above is recorded, none is hidden, and each has a resolution
-plan.
+Every remaining deviation is recorded, none is hidden, and each has a
+resolution plan.
 
 ---
 
@@ -647,7 +637,7 @@ Do not add any of the following in this submission:
 - Config framework, plugin system
 
 Each is documented as future work in `docs/roadmap.md` and
-`docs/architecture.md`.
+`docs/archive/architecture.md`.
 
 ---
 
@@ -693,7 +683,7 @@ Test each step manually before moving to the next.
 ### 16.2 Classifier Layer
 
 - [x] Three classifiers trained under identical folds
-- [x] Calibration gate run (ECE = 0.0040, passed)
+- [x] Calibration gate run (ECE = 0.0033, passed)
 - [x] Selection by validation realized cost
 - [x] Test window evaluated once, after selection
 - [x] `models/best_model.pkl` saved
@@ -756,3 +746,4 @@ Test each step manually before moving to the next.
 |---|---|---|
 | 2026-09-22 | v0.4 — restructured into two-layer architecture (primary + supplementary) | Align with course deliverables |
 | 2026-09-24 | v1.0 — first-principles revision; two-layer architecture removed; single decision pipeline adopted; components reorganized by pipeline layer (data / classifier / decision / evaluation / application); §13 added to record as-built deviations from framing; DoD restructured by layer; guiding rules rewritten; repository layout annotations updated to remove primary/supplementary labels | Derive from `problem_framing.md` v1.0, `evaluation_protocol.md` v1.0, `decision_policy.md` v1.0, and `data_card.md` v1.0 |
+| 2026-09-28 | v1.1 — §3 layout synced with archive move (superseded docs now under `docs/archive/`; `train_baseline.py` and `mvp_backtest.md` removed); §7.1 "5-fold" corrected to actual fold count; §11.4 test count corrected to 58; §13 deviations cleared; §14 reference updated to archive path | TODO 2026-09-28 Tier 1 + Tier 1B |

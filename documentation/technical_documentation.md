@@ -1,4 +1,4 @@
-﻿# Technical Documentation
+# Technical Documentation
 
 > **Repository:** `delayed-label-fraud-decisioning`  
 > **Course:** Introduction to Machine Learning - Final Group Project  
@@ -6,7 +6,7 @@
 > **Instructor:** Ken Oliver Caparros  
 > **Document:** Technical Documentation  
 > **Status:** v1.1 — unified decision pipeline  
-> **Last updated:** 2026-09-25
+> **Last updated:** 2026-09-29
 
 ---
 
@@ -93,12 +93,16 @@ https://www.kaggle.com/datasets/sgpjesus/bank-account-fraud-dataset-neurips-2022
 
 Place `Base.csv` at:
 
+
 ```
 data/original/Base.csv
 ```
 
-The `load.py` script also searches the legacy path
-`data/raw/baf/Base.csv` if the primary path is missing.
+
+`data/original/Base.csv` is the only path `load.py` searches; if the file
+is missing, the pipeline fails loudly with a message pointing at the Kaggle
+link above.
+
 
 **License:** CC BY 4.0. Academic and non-commercial use permitted with
 attribution. See [`docs/data_card.md`](../docs/data_card.md) section 2.
@@ -110,7 +114,6 @@ attribution. See [`docs/data_card.md`](../docs/data_card.md) section 2.
 ```
 delayed-label-fraud-decisioning/
 ├── README.md
-├── TODO.md                         # open work items
 ├── requirements.txt
 ├── conftest.py                     # pytest path bootstrap
 ├── app/
@@ -141,7 +144,10 @@ delayed-label-fraud-decisioning/
 │   ├── evaluation_protocol.md
 │   ├── mvp_architecture.md
 │   ├── roadmap.md
-│   └── daily_log/
+│   ├── README.md
+│   ├── TODO.md
+│   ├── paper/
+│   └── archive/                    # superseded + historical
 ├── documentation/                  # course-required deliverables
 │   ├── data_dictionary.md
 │   ├── app_guide.md
@@ -221,8 +227,8 @@ Runs eight steps in order:
 8. `backtest` — realized cost vs. canonical baselines; write
    `reports/decision_backtest.md`
 
-**Expected runtime:** 3-5 minutes on a modern laptop. Most of it is the
-3-algorithm CV.
+**Expected runtime:** 8-10 minutes on a modern laptop. Most of it is the
+3-algorithm CV on the training window.
 
 ### 5.1 Standalone Analyses
 
@@ -407,11 +413,11 @@ streamlit run app/streamlit_app.py
   simplicity tiebreak)
 - `reports/decision_backtest.md` shows:
   - Policy cost/txn = **0.007491**
-  - Strongest baseline cost/txn = **0.018737**
-  - Policy advantage = **60.02%**
+  - Strongest baseline cost/txn = **0.017798** (LGBM + static 0.5)
+  - Policy advantage = **57.91%**
   - Approve / review / block = 205,395 / 21,371 / 725
-- `reports/bootstrap.md` shows 95% CI on advantage = **[56.00%, 64.16%]**
-- `reports/sensitivity.md` shows minimum advantage = **50.38%** at
+- `reports/bootstrap.md` shows 95% CI on advantage = **[53.95%, 62.13%]**
+- `reports/sensitivity.md` shows minimum advantage = **47.76%** at
   `review_cost=0.04`
 - `src.evaluation.calibration` prints **ECE = 0.0033** (gate passed)
 - Test rows = 227,491

@@ -212,10 +212,10 @@ window, and validate the result with bootstrap CIs and cost sensitivity.
 
 **Definition of Done:**
 
-- [x] Policy cost/txn = 0.007491 vs strongest baseline 0.018737
-- [x] Policy advantage = 60.02%
-- [x] Bootstrap 95% CI on advantage = [56.00%, 64.16%] (excludes zero)
-- [x] Sensitivity minimum advantage = 50.38% across 2× sweep
+- [x] Policy cost/txn = 0.007491 vs strongest baseline 0.017798
+- [x] Policy advantage = 57.91%
+- [x] Bootstrap 95% CI on advantage = [53.95%, 62.13%] (excludes zero)
+- [x] Sensitivity minimum advantage = 47.76% across 2× sweep
 - [x] Amount-scaled `fraud_loss` adopted
 - [x] Censored count reported: 96,843 (9.68%)
 - [x] Failure analysis written
@@ -292,10 +292,10 @@ and every declared URL and file opens successfully.
 | Selected classifier | LogisticRegression (`C=10.0`, `max_iter=1000`) |
 | Selection rule | Noise-band guard: LGBM vs LR gap 1.07% < 5% |
 | Policy cost/txn | 0.007491 |
-| Strongest baseline | 0.018737 |
-| Policy advantage | 60.02% |
-| Bootstrap CI | [56.00%, 64.16%] |
-| Sensitivity minimum | 50.38% at `review_cost=0.04` |
+| Strongest baseline | LGBM + static 0.5 = 0.017798 |
+| Policy advantage | 57.91% |
+| Bootstrap CI | [53.95%, 62.13%] |
+| Sensitivity minimum | 47.76% at `review_cost=0.04` |
 | Calibration ECE | 0.0033 |
 | Test rows | 227,491 |
 | Censored rows | 96,843 (9.68%) |
@@ -318,8 +318,8 @@ and every declared URL and file opens successfully.
 
 - [ ] Add M4 entry to `TODO.md` if `technical_documentation.md` still
       describes retired architecture in any section
-- [ ] Mark `docs/architecture.md` and `docs/mvp_2_weeks.md` as superseded
-      at the top of each file
+- [x] Mark `docs/architecture.md` and `docs/mvp_2_weeks.md` as superseded
+      at the top of each file (files moved to `docs/archive/` on 2026-09-28)
 - [ ] Update `docs/mvp_architecture.md` §13 to remove deviations that no
       longer exist
 

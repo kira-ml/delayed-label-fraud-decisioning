@@ -367,10 +367,10 @@ The policy is compared against the **strongest** baseline, not the weakest.
 | Quantity | Value |
 |---|---:|
 | Policy cost/txn | 0.007491 |
-| Strongest baseline | 0.018737 |
-| Advantage | 60.02% |
-| Bootstrap CI | [56.00%, 64.16%] |
-| Sensitivity minimum | 50.38% at `review_cost=0.04` |
+| Strongest baseline | LGBM + static 0.5 = 0.017798 |
+| Advantage | 57.91% |
+| Bootstrap CI | [53.95%, 62.13%] |
+| Sensitivity minimum | 47.76% at `review_cost=0.04` |
 | Calibration ECE | 0.0033 |
 | Test rows | 227,491 |
 | Censored rows | 96,843 (9.68%) |
@@ -653,10 +653,10 @@ ECE < 0.05 on validation, or one calibration method must bring it below.
 | Selected classifier | LogisticRegression (`C=10.0`, `max_iter=1000`) |
 | Selection rule | Noise-band guard: 1.07% < 5% → non-finding → simplicity |
 | Policy cost/txn | 0.007491 |
-| Strongest baseline | 0.018737 |
-| Advantage | 60.02% |
-| Bootstrap CI | [56.00%, 64.16%] |
-| Sensitivity minimum | 50.38% at `review_cost=0.04` |
+| Strongest baseline | LGBM + static 0.5 = 0.017798 |
+| Advantage | 57.91% |
+| Bootstrap CI | [53.95%, 62.13%] |
+| Sensitivity minimum | 47.76% at `review_cost=0.04` |
 | Calibration ECE | 0.0033 |
 | Test rows | 227,491 |
 | Censored rows | 96,843 (9.68%) |
@@ -779,10 +779,10 @@ This is the state of the system as of `2026-09-24.md`.
 | Selected classifier | LogisticRegression |
 | Selection rule | Noise-band guard: LGBM vs LR gap 1.07% < 5% |
 | Policy cost/txn | 0.007491 |
-| Strongest baseline | 0.018737 |
-| Policy advantage | 60.02% |
-| Bootstrap CI | [56.00%, 64.16%] |
-| Sensitivity minimum | 50.38% at `review_cost=0.04` |
+| Strongest baseline | LGBM + static 0.5 = 0.017798 |
+| Policy advantage | 57.91% |
+| Bootstrap CI | [53.95%, 62.13%] |
+| Sensitivity minimum | 47.76% at `review_cost=0.04` |
 | Calibration ECE | 0.0033 |
 | Censored rows | 96,843 (9.68%) |
 | Tests | 58 / 58 passing |

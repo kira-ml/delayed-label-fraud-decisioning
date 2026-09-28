@@ -265,9 +265,11 @@ Correcting it would amount to tuning on the test window.
 
 ### 5.4 Cross-Validation on the Training Window
 
-Hyperparameter selection and diagnostics use **5-fold expanding-window
+Hyperparameter selection and diagnostics use **expanding-window
 cross-validation by month** on the training window (train months 0..k,
-validate month k+1).
+validate month k+1). The current training window yields **2 folds**
+(months 0 and 1 are used as successive validation months); `MAX_SPLITS=5`
+in `src/models/train_compare.py` is a cap, not the effective count.
 
 - Folds are contiguous in time (no shuffling).
 - Each fold's validation set is strictly after its training set.

@@ -1,4 +1,4 @@
-﻿# Decision Policy
+# Decision Policy
 
 > **Repository:** `delayed-label-fraud-decisioning`  
 > **Course:** Introduction to Machine Learning — Final Group Project  
@@ -373,6 +373,10 @@ to review. Under constant loss those same transactions were approved. The
 policy is exploiting signal the constant-loss version was leaving on the
 table.
 
+The numbers above describe the amount-scaling experiment at the time it
+was run. Current headline results are in `reports/decision_backtest.md`
+and `reports/bootstrap.md`.
+
 ### 7.3 Out-of-Scope Cost Realism
 
 `false_positive_cost` is also plausibly proportional to `amount` (lost
@@ -441,12 +445,12 @@ Calibration was measured on the validation window using the diagnostic in
 
 | Metric | Value |
 |---|---:|
-| ECE (10 quantile bins) | **0.0040** |
-| Brier (model) | 0.010050 |
+| ECE (10 quantile bins) | **0.0033** |
+| Brier (model) | 0.009444 |
 | Brier (trivial, predict val mean) | 0.010103 |
 
-**Verdict: gate passed.** ECE of 0.0040 is well below 0.05. No calibration
-step (Platt, isotonic, or otherwise) was applied. Raw LightGBM output is
+**Verdict: gate passed.** ECE of 0.0033 is well below 0.05. No calibration
+step (Platt, isotonic, or otherwise) was applied. Raw classifier output is
 used by the policy directly.
 
 **Reliability note:** the reliability table shows the model is well
@@ -540,7 +544,7 @@ claimed.
 
 | Failure mode | Cause | Symptom | Status |
 |---|---|---|---|
-| Uncalibrated `p` | Classifier outputs uncalibrated scores | Costs and thresholds wrong | Measured; ECE = 0.0040, gate passed |
+| Uncalibrated `p` | Classifier outputs uncalibrated scores | Costs and thresholds wrong | Measured; ECE = 0.0033, gate passed |
 | Wrong cost matrix | Costs do not reflect reality | Policy picks wrong action | All four parameters tested; sensitivity sweep complete |
 | Constant fraud loss | Amount ignored | Large transactions under-protected | Addressed — amount scaling adopted |
 | Degenerate thresholds | `fraud_loss <= residual_fraud_loss`, or `p_review >= p_block`, or thresholds outside [0,1] | Review band empty or misleading | Covered by unit tests; not triggered by current cost matrix |
@@ -648,7 +652,7 @@ there is a measured failure that requires it.
 - [x] Threshold edge cases (§6.5) handled and covered by unit tests
 - [x] Cost matrix in `configs/costs.yaml` with canonical keys
 - [x] Action log written to `data/processed/action_log.parquet`
-- [x] Calibration gate passed: ECE = 0.0040 on validation
+- [x] Calibration gate passed: ECE = 0.0033 on validation
 - [x] Policy compared against the canonical baseline set (random,
       approve-all, block-all, LR/RF/LGBM + static 0.5)
 - [x] Amount-scaled fraud loss evaluated and adopted (success stop, §7.2)
