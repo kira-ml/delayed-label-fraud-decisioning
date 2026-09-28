@@ -64,15 +64,14 @@ the primary metric, and test the result's robustness with a 2× sensitivity
 analysis on each cost parameter and a bootstrap confidence interval.
 
 The main findings are as follows. First, the cost-sensitive policy reduces
-realized cost per transaction by **56.9%** relative to the strongest
-baseline — a static 0.5 threshold on the same model's scores — with a 95%
-bootstrap confidence interval of **[52.8%, 60.9%]**. Second, the static
-threshold performs *near-identically to approve-all* (7.3% reduction), a
-failure mode that AUC-based evaluation would not reveal. Third, the
-result is robust across a 2× range on each of three cost parameters; the
-minimum advantage across all variations is 46.5%. Fourth, the cost rate
-used for amount scaling is derived from training-window amounts only, so
-the headline result does not depend on any test-set tuning.
+realized cost per transaction by **57.91%** relative to the strongest
+baseline (LightGBM + static 0.5), with a 95% bootstrap confidence interval of
+**[53.95%, 62.13%]**. Second, the static threshold performs *near-identically to
+approve-all* (7.3% reduction), a failure mode that AUC-based evaluation would
+not reveal. Third, the result is robust across a 2× range on each of three cost
+parameters; the minimum advantage across all variations is 47.76%. Fourth, the
+cost rate used for amount scaling is derived from training-window amounts only,
+so the headline result does not depend on any test-set tuning.
 
 This paper makes three contributions. It contributes a reproducible
 evaluation protocol for fraud decision policies under delayed and

@@ -18,18 +18,18 @@ paper must be traceable to this sheet.
 | Test rows | 227,491 (months 5–6) | evaluation_protocol.md §7.1 |
 | Features used | 29 | reports/mvp_backtest.md |
 | Val AUC | 0.9029 | daily log Task 7 |
-| ECE (val) | 0.0040 | decision_policy.md §9.1 |
+| ECE (val) | 0.0033 | decision_policy.md §9.2 |
 | Brier (test) | 0.011881 | reports/mvp_backtest.md §Calibration |
-| Policy cost/txn | 0.007566 | reports/mvp_backtest.md §Results |
-| Static-0.5 cost/txn | 0.017543 | reports/mvp_backtest.md §Results |
+| Policy cost/txn | 0.007491 | reports/mvp_backtest.md §Results |
+| Static-0.5 cost/txn | 0.017798 | reports/mvp_backtest.md §Results |
 | Approve-all cost/txn | 0.018928 | reports/mvp_backtest.md §Results |
-| **Policy advantage** | **56.87%** | reports/mvp_backtest.md §Interpretation |
-| Advantage 95% CI | [52.77%, 60.91%] | reports/bootstrap.md |
-| Min advantage across cost variations | 46.46% | reports/sensitivity.md |
+| **Policy advantage** | **57.91%** | reports/mvp_backtest.md §Interpretation |
+| Advantage 95% CI | [53.95%, 62.13%] | reports/bootstrap.md |
+| Min advantage across cost variations | 47.76% | reports/sensitivity.md |
 | Approve / Review / Block counts | 206,724 / 19,155 / 1,612 | reports/mvp_backtest.md §Action distribution |
 | Test suite | 13 tests, ~1.4 s | daily log (post-log update) |
 
-**The four numbers to preserve exactly: 56.87%, [52.77%, 60.91%], 96,843, 9.68%.**
+**The four numbers to preserve exactly: 57.91%, [53.95%, 62.13%], 96,843, 9.68%.**
 
 ---
 
@@ -37,11 +37,11 @@ paper must be traceable to this sheet.
 
 | Claim | Evidence |
 |---|---|
-| Cost-sensitive policy outperforms strongest baseline | 0.007566 vs 0.017543, 56.87% reduction |
-| Result is not statistical noise | Bootstrap CI [52.77%, 60.91%], excludes zero |
-| Result is robust to cost assumptions | Min advantage 46.46% across 2× range on 3 parameters |
+| Cost-sensitive policy outperforms strongest baseline | 0.007491 vs 0.017798, 57.91% reduction |
+| Result is not statistical noise | Bootstrap CI [53.95%, 62.13%], excludes zero |
+| Result is robust to cost assumptions | Min advantage 47.76% across 2× range on 3 parameters |
 | Result does not depend on test-set tuning | fraud_loss_rate derived from train window |
-| Calibration is adequate without post-hoc fix | ECE = 0.0040, below 0.05 threshold |
+| Calibration is adequate without post-hoc fix | ECE = 0.0033, below 0.05 threshold |
 | Censored labels excluded, not treated as negative | 96,843 month-7 rows marked and excluded |
 | Splits are temporal, not random | Chronological split; split.py asserts sum |
 | Pipeline reproduces from one command | `python -m src.pipeline` byte-for-byte |
