@@ -9,25 +9,24 @@ paper must be traceable to this sheet.
 
 | Number | Value | Source |
 |---|---:|---|
-| Dataset size | 1,000,000 rows | reports/mvp_backtest.md §Data Integrity |
+| Dataset size | 1,000,000 rows | reports/decision_backtest.md §Data Integrity |
 | Fraud rate (overall) | 1.1029% | data_card.md §4.1 |
-| Fraud rate (test) | 1.2576% | reports/mvp_backtest.md §Data Integrity |
-| Censored labels | 96,843 (9.68%) | reports/mvp_backtest.md §Data Integrity |
+| Fraud rate (test) | 1.2576% | reports/decision_backtest.md §Data Integrity |
+| Censored labels | 96,843 (9.68%) | reports/decision_backtest.md §Data Integrity |
 | Train rows | 397,039 (months 0–2) | evaluation_protocol.md §7.1 |
 | Val rows | 278,627 (months 3–4) | evaluation_protocol.md §7.1 |
 | Test rows | 227,491 (months 5–6) | evaluation_protocol.md §7.1 |
-| Features used | 29 | reports/mvp_backtest.md |
-| Val AUC | 0.9029 | daily log Task 7 |
+| Features used | 28 | docs/data_card.md §10.4 |
 | ECE (val) | 0.0033 | decision_policy.md §9.2 |
-| Brier (test) | 0.011881 | reports/mvp_backtest.md §Calibration |
-| Policy cost/txn | 0.007491 | reports/mvp_backtest.md §Results |
-| Static-0.5 cost/txn | 0.017798 | reports/mvp_backtest.md §Results |
-| Approve-all cost/txn | 0.018928 | reports/mvp_backtest.md §Results |
-| **Policy advantage** | **57.91%** | reports/mvp_backtest.md §Interpretation |
+| Brier (test) | 0.011506 | reports/decision_backtest.md §Calibration |
+| Policy cost/txn | 0.007491 | reports/decision_backtest.md §Results |
+| Static-0.5 cost/txn | 0.017798 | reports/decision_backtest.md §Results |
+| Approve-all cost/txn | 0.018928 | reports/decision_backtest.md §Results |
+| **Policy advantage** | **57.91%** | reports/decision_backtest.md §Interpretation |
 | Advantage 95% CI | [53.95%, 62.13%] | reports/bootstrap.md |
 | Min advantage across cost variations | 47.76% | reports/sensitivity.md |
-| Approve / Review / Block counts | 206,724 / 19,155 / 1,612 | reports/mvp_backtest.md §Action distribution |
-| Test suite | 13 tests, ~1.4 s | daily log (post-log update) |
+| Approve / Review / Block counts | 205,395 / 21,371 / 725 | reports/decision_backtest.md §Action distribution |
+| Test suite | 58 tests | pytest -q |
 
 **The four numbers to preserve exactly: 57.91%, [53.95%, 62.13%], 96,843, 9.68%.**
 
@@ -97,8 +96,8 @@ cost matrix, with transaction amount scaling the fraud loss term.
 | Methodology | decision_policy.md §5–6 |
 | Dataset | data_card.md §2–5 |
 | Experimental Setup | evaluation_protocol.md §7–9 |
-| Results | reports/mvp_backtest.md + reports/bootstrap.md + reports/sensitivity.md |
-| Discussion | reports/mvp_backtest.md §Interpretation |
-| Limitations | reports/mvp_backtest.md §Limitations |
+| Results | reports/decision_backtest.md + reports/bootstrap.md + reports/sensitivity.md |
+| Discussion | reports/decision_backtest.md §Interpretation |
+| Limitations | reports/decision_backtest.md §Limitations |
 | Conclusion | roadmap.md §5–7 |
 | References | (paper team must build) |
