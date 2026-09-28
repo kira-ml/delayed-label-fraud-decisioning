@@ -6,6 +6,7 @@ from src.common import DATA_PROCESSED, DATA_INTERIM, REPORTS, load_costs
 ACTION_LOG = DATA_PROCESSED / "action_log.parquet"
 TEST = DATA_PROCESSED / "test.parquet"
 LABELED = DATA_INTERIM / "labeled.parquet"
+SCORED = DATA_PROCESSED / "scored_test.parquet"
 OUT = REPORTS / "decision_backtest.md"
 
 SEED = 42
@@ -63,13 +64,20 @@ def main():
 
     log = pd.read_parquet(ACTION_LOG)
     test = pd.read_parquet(TEST)[["transaction_id", "fraud_bool", "month", "amount_proxy"]]
-    df = log.merge(test, on="transaction_id", how="left")
+    scored = pd.read_parquet(SCORED)[
+        ["transaction_id", "p_fraud_rf", "p_fraud_lgbm"]
+    ]
+    df = log.merge(test, on="transaction_id", how="left").merge(
+        scored, on="transaction_id", how="left"
+    )
     assert len(df) == len(log), "merge dropped rows"
     assert df["fraud_bool"].notna().all(), "merge produced NaN labels"
 
     n = len(df)
     y = df["fraud_bool"].to_numpy()
     p = df["p_fraud"].to_numpy()
+    p_rf = df["p_fraud_rf"].to_numpy()
+    p_lgbm = df["p_fraud_lgbm"].to_numpy()
     amounts = df["amount_proxy"].to_numpy()
 
     # Censored counts (dataset-wide)
@@ -83,13 +91,17 @@ def main():
     random_actions = rng.choice(RANDOM_ACTIONS, size=n)
     approve_actions = np.full(n, "approve", dtype=object)
     block_actions = np.full(n, "block", dtype=object)
-    static_actions = np.where(p >= 0.5, "block", "approve").astype(object)
+    static_lr = np.where(p >= 0.5, "block", "approve").astype(object)
+    static_rf = np.where(p_rf >= 0.5, "block", "approve").astype(object)
+    static_lgbm = np.where(p_lgbm >= 0.5, "block", "approve").astype(object)
 
     scenarios = {
         "Random": random_actions,
         "Approve-all": approve_actions,
         "Block-all": block_actions,
-        "Selected classifier + static 0.5": static_actions,
+        "LR + static 0.5": static_lr,
+        "RF + static 0.5": static_rf,
+        "LGBM + static 0.5": static_lgbm,
         "Cost-sensitive policy": df["action"].to_numpy(),
     }
 

@@ -17,6 +17,8 @@ import numpy as np
 import pandas as pd
 
 from src.common import DATA_PROCESSED, REPORTS, load_costs
+from src.policy.decide import choose_actions
+from src.evaluation.backtest import realized_cost
 
 SEED = 42
 
@@ -25,74 +27,51 @@ def load_data() -> pd.DataFrame:
     """scored_test.parquet already contains fraud_bool and amount_proxy.
     No join required."""
     df = pd.read_parquet(DATA_PROCESSED / "scored_test.parquet")
-    required = {"transaction_id", "fraud_bool", "amount_proxy", "p_fraud"}
+    required = {
+        "transaction_id", "fraud_bool", "amount_proxy",
+        "p_fraud", "p_fraud_rf", "p_fraud_lgbm",
+    }
     missing = required - set(df.columns)
     if missing:
         raise RuntimeError(f"scored_test.parquet missing columns: {missing}")
     return df
 
 
-def per_row_fraud_loss(amount: np.ndarray, costs: dict) -> np.ndarray:
-    if costs["amount_scaled"]:
-        return amount * costs["fraud_loss_rate"]
-    return np.full_like(amount, costs["fraud_loss"], dtype=float)
 
 
-def expected_costs(p, amount, costs):
-    fl = per_row_fraud_loss(amount, costs)
-    c_app = p * fl
-    c_rev = costs["review_cost"] + p * costs["residual_fraud_loss"]
-    c_blk = (1.0 - p) * costs["false_positive_cost"]
-    return c_app, c_rev, c_blk
 
 
-def realized_cost(actions, y, amount, costs):
-    """actions: 0=approve, 1=review, 2=block"""
-    fl = per_row_fraud_loss(amount, costs)
-    cost = np.zeros(len(actions), dtype=float)
-
-    m = actions == 0
-    cost[m] = y[m] * fl[m]
-
-    m = actions == 1
-    cost[m] = costs["review_cost"] + y[m] * costs["residual_fraud_loss"]
-
-    m = actions == 2
-    cost[m] = (1.0 - y[m]) * costs["false_positive_cost"]
-
-    return cost
 
 
-def baseline_actions(p, rng):
-    n = len(p)
+def baseline_actions(p_lr, p_rf, p_lgbm, rng):
+    n = len(p_lr)
     return {
-        "Random":         rng.integers(0, 3, size=n),
-        "Approve-all":    np.zeros(n, dtype=int),
-        "Block-all":      np.full(n, 2, dtype=int),
-        "Classifier+0.5": np.where(p >= 0.5, 2, 0),
+        "Random":         rng.choice(["approve", "review", "block"], size=n),
+        "Approve-all":    np.full(n, "approve", dtype=object),
+        "Block-all":      np.full(n, "block", dtype=object),
+        "LR+0.5":         np.where(p_lr >= 0.5, "block", "approve").astype(object),
+        "RF+0.5":         np.where(p_rf >= 0.5, "block", "approve").astype(object),
+        "LGBM+0.5":       np.where(p_lgbm >= 0.5, "block", "approve").astype(object),
     }
-
-
-def policy_actions(p, amount, costs):
-    c_app, c_rev, c_blk = expected_costs(p, amount, costs)
-    return np.argmin(np.stack([c_app, c_rev, c_blk], axis=1), axis=1)
 
 
 def evaluate(df, costs, rng):
     p = df["p_fraud"].to_numpy()
+    p_rf = df["p_fraud_rf"].to_numpy()
+    p_lgbm = df["p_fraud_lgbm"].to_numpy()
     y = df["fraud_bool"].to_numpy()
     amount = df["amount_proxy"].to_numpy()
 
     results = {}
-    for name, acts in baseline_actions(p, rng).items():
-        results[name] = realized_cost(acts, y, amount, costs).mean()
+    for name, acts in baseline_actions(p, p_rf, p_lgbm, rng).items():
+        results[name] = realized_cost(acts, y, costs, amounts=amount).mean()
 
-    pol = policy_actions(p, amount, costs)
-    results["Policy"] = realized_cost(pol, y, amount, costs).mean()
+    pol, _, _ = choose_actions(p, costs, amount)
+    results["Policy"] = realized_cost(pol, y, costs, amounts=amount).mean()
     return results
 
-
 def fmt_row(label, results):
+    
     policy = results["Policy"]
     baselines = {k: v for k, v in results.items() if k != "Policy"}
     strongest = min(baselines, key=baselines.get)

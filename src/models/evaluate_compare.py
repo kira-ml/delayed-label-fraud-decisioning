@@ -1,4 +1,4 @@
-"""Select the best primary model, retrain on full train split, evaluate once
+"""Select the classifier, retrain on full train split, evaluate once
 on the untouched test set, and save the model + preprocessing pipeline.
 """
 from __future__ import annotations
@@ -18,7 +18,7 @@ from sklearn.metrics import (
     roc_auc_score,
 )
 
-from src.common import SEED, MODELS, CATEGORICAL_COLS, load_costs
+from src.common import MODELS, CATEGORICAL_COLS, load_costs
 from src.models.preprocess import (
     build_preprocessor,
     get_feature_columns,

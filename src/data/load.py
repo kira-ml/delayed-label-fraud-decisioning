@@ -10,10 +10,9 @@ import pandas as pd
 
 from src.common import DATA_RAW, DATA_INTERIM, set_seed
 
-# Canonical path first (course-required layout), then the historical fallback
+# Canonical path (course-required layout)
 CANDIDATE_PATHS = [
-    DATA_RAW / "Base.csv",            # data/original/Base.csv  <- canonical
-    Path("data/raw/baf/Base.csv"),    # legacy path from data_card.md v0.2
+    DATA_RAW / "Base.csv",            # data/original/Base.csv  (canonical)
 ]
 OUT_PATH = DATA_INTERIM / "transactions.parquet"
 

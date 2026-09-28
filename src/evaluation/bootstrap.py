@@ -16,6 +16,8 @@ import numpy as np
 import pandas as pd
 
 from src.common import DATA_PROCESSED, REPORTS, load_costs
+from src.policy.decide import choose_actions
+from src.evaluation.backtest import realized_cost
 
 SEED = 42
 N_BOOT = 1000
@@ -24,45 +26,21 @@ def load_data() -> pd.DataFrame:
     """scored_test.parquet already contains fraud_bool and amount_proxy.
     No join required."""
     df = pd.read_parquet(DATA_PROCESSED / "scored_test.parquet")
-    required = {"transaction_id", "fraud_bool", "amount_proxy", "p_fraud"}
+    required = {
+        "transaction_id", "fraud_bool", "amount_proxy",
+        "p_fraud", "p_fraud_rf", "p_fraud_lgbm",
+    }
     missing = required - set(df.columns)
     if missing:
         raise RuntimeError(f"scored_test.parquet missing columns: {missing}")
     return df
 
 
-def per_row_fraud_loss(amount, costs):
-    if costs["amount_scaled"]:
-        return amount * costs["fraud_loss_rate"]
-    return np.full_like(amount, costs["fraud_loss"], dtype=float)
 
-
-def realized_cost(actions, y, amount, costs):
-    fl = per_row_fraud_loss(amount, costs)
-    cost = np.zeros(len(actions), dtype=float)
-
-    m = actions == 0
-    cost[m] = y[m] * fl[m]
-
-    m = actions == 1
-    cost[m] = costs["review_cost"] + y[m] * costs["residual_fraud_loss"]
-
-    m = actions == 2
-    cost[m] = (1.0 - y[m]) * costs["false_positive_cost"]
-
-    return cost
-
-
-def policy_actions(p, amount, costs):
-    fl = per_row_fraud_loss(amount, costs)
-    c_app = p * fl
-    c_rev = costs["review_cost"] + p * costs["residual_fraud_loss"]
-    c_blk = (1.0 - p) * costs["false_positive_cost"]
-    return np.argmin(np.stack([c_app, c_rev, c_blk], axis=1), axis=1)
 
 
 def static_actions(p):
-    return np.where(p >= 0.5, 2, 0)
+    return np.where(p >= 0.5, "block", "approve").astype(object)
 
 
 def main():
@@ -74,11 +52,25 @@ def main():
     amount = df["amount_proxy"].to_numpy()
     n = len(df)
 
-    pol_actions = policy_actions(p, amount, costs)
-    bas_actions = static_actions(p)
+    pol_actions, _, _ = choose_actions(p, costs, amount)
+    pol_cost = realized_cost(pol_actions, y, costs, amounts=amount)
 
-    pol_cost = realized_cost(pol_actions, y, amount, costs)
-    bas_cost = realized_cost(bas_actions, y, amount, costs)
+    rng_baselines = np.random.default_rng(SEED)
+    baselines = {
+        "Random":         rng_baselines.choice(["approve", "review", "block"], size=n),
+        "Approve-all":    np.full(n, "approve", dtype=object),
+        "Block-all":      np.full(n, "block", dtype=object),
+        "LR+0.5":         static_actions(p),
+        "RF+0.5":         static_actions(df["p_fraud_rf"].to_numpy()),
+        "LGBM+0.5":       static_actions(df["p_fraud_lgbm"].to_numpy()),
+    }
+    bas_costs = {
+        name: realized_cost(acts, y, costs, amounts=amount)
+        for name, acts in baselines.items()
+    }
+    strongest_name = min(bas_costs, key=lambda k: bas_costs[k].mean())
+    bas_cost = bas_costs[strongest_name]
+    print(f"[bootstrap] strongest baseline: {strongest_name}")
 
     pol_point = pol_cost.mean()
     bas_point = bas_cost.mean()
@@ -88,7 +80,7 @@ def main():
     print(f"[bootstrap] N={n:,}, iterations={N_BOOT}")
     print(f"[bootstrap] point estimates:")
     print(f"  Policy           : {pol_point:.6f}")
-    print(f"  Classifier + 0.5 : {bas_point:.6f}")
+    print(f"  {strongest_name:<16} : {bas_point:.6f}")
     print(f"  Difference       : {diff_point:.6f}")
     print(f"  Advantage        : {adv_point:.2f}%")
     print()
@@ -140,7 +132,7 @@ def main():
         "| Quantity | Point estimate | 95% CI |",
         "|---|---:|---|",
         f"| Policy cost/txn | {pol_point:.6f} | [{pol_lo:.6f}, {pol_hi:.6f}] |",
-        f"| Classifier + 0.5 cost/txn | {bas_point:.6f} | [{bas_lo:.6f}, {bas_hi:.6f}] |",
+        f"| {strongest_name} cost/txn | {bas_point:.6f} | [{bas_lo:.6f}, {bas_hi:.6f}] |",
         f"| Difference (baseline − policy) | {diff_point:.6f} | [{dif_lo:.6f}, {dif_hi:.6f}] |",
         f"| Advantage (%) | {adv_point:.2f}% | [{adv_lo:.2f}%, {adv_hi:.2f}%] |",
         "",

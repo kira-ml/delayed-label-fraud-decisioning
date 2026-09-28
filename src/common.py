@@ -71,7 +71,7 @@ CENSORED_MONTHS = [7]
 def load_costs(path: Path | str = COSTS_PATH) -> dict[str, Any]:
     """Load the frozen cost matrix from configs/costs.yaml.
 
-    See docs/evaluation_protocol.md §5.1 for the schema and rationale.
+    See docs/evaluation_protocol.md §9.2 for the schema and rationale.
     """
     with open(path) as f:
         return yaml.safe_load(f)

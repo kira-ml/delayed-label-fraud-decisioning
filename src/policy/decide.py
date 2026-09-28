@@ -38,7 +38,12 @@ def choose_actions(p: np.ndarray,
     p = np.asarray(p, dtype=float)
     n = len(p)
 
-    if costs.get("amount_scaled", False) and amounts is not None:
+    if costs.get("amount_scaled", False):
+        if amounts is None:
+            raise ValueError(
+                "costs['amount_scaled'] is True but amounts is None; "
+                "amount-scaled policy requires per-row amounts"
+            )
         amounts = np.asarray(amounts, dtype=float)
         fraud_loss = amounts * float(costs["fraud_loss_rate"])
     else:
