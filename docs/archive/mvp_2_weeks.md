@@ -11,7 +11,7 @@
 > was adopted instead of deferred; (2) the baseline set is 5 (rule-based
 > threshold deferred) rather than 4; (3) ECE, bootstrap CIs, and full cost
 > sensitivity were run beyond the original MVP scope. The as-built
-> architecture is `mvp_architecture.md` v0.2. This file is retained as the
+> architecture is `mvp_architecture.md` v1.1. This file is retained as the
 > original plan and is not the source of truth for what exists in the repo.
 
 ## 1. Purpose

@@ -5,6 +5,11 @@
 > **Status:** v0.3 — Week 1 MVP with data-driven stop criteria  
 > **Last updated:** 2026-09-22
 
+> **Superseded.** This document has been replaced by
+> `mvp_architecture.md` and the v1.0 foundation documents
+> (`problem_framing.md`, `data_card.md`, `decision_policy.md`,
+> `evaluation_protocol.md`). It is kept for historical context only.
+
 ---
 
 ## 1. Purpose of This Document

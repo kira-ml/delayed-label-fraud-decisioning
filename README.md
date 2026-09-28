@@ -51,16 +51,18 @@ the objective.
 
 Under a 1-month delayed-label regime with a chronological train /
 validation / test split, the cost-sensitive policy reduces realized cost
-per transaction by **60.02%** relative to the strongest baseline
-(selected classifier + static 0.5), with a 95% bootstrap confidence
-interval of **[56.00%, 64.16%]**.
+per transaction by **57.91%** relative to the strongest baseline
+(LightGBM + static 0.5), with a 95% bootstrap confidence interval of
+**[53.95%, 62.13%]**.
 
 | Baseline | Cost per transaction |
 |---|---:|
 | Random | 0.047484 |
 | Approve-all | 0.018928 |
 | Block-all | 0.098742 |
-| Selected classifier + static 0.5 (strongest baseline) | 0.018737 |
+| LR + static 0.5 | 0.018737 |
+| RF + static 0.5 | 0.018928 |
+| **LGBM + static 0.5 (strongest baseline)** | **0.017798** |
 | **Cost-sensitive policy (ours)** | **0.007491** |
 
 Action distribution on the test window:
@@ -73,7 +75,7 @@ Action distribution on the test window:
 
 The result is robust to a 2× variation in each cost parameter
 (`false_positive_cost`, `review_cost`, `residual_fraud_loss`); the minimum
-advantage across all variations is **50.38%** (at `review_cost=0.04`).
+advantage across all variations is **47.76%** (at `review_cost=0.04`).
 
 Primary report: [`reports/decision_backtest.md`](reports/decision_backtest.md).
 Supporting sensitivity and bootstrap:
@@ -299,15 +301,15 @@ reports regenerates.
 | [`docs/mvp_architecture.md`](docs/mvp_architecture.md) | The as-built single decision pipeline |
 | [`docs/roadmap.md`](docs/roadmap.md) | Gated execution plan |
 | [`docs/README.md`](docs/README.md) | Documentation index with reading orders |
-| [`docs/daily_log/`](docs/daily_log/) | Session-by-session build record |
-| [`TODO.md`](TODO.md) | Open work items for the current phase |
+| [`docs/TODO.md`](docs/TODO.md) | Open work items for the current phase |
 
-### Superseded (kept for context)
+### Archive (superseded and historical)
 
 | Document | Reason |
 |---|---|
-| [`docs/architecture.md`](docs/architecture.md) | Week 1 MVP specification; superseded by `mvp_architecture.md` and the v1.0 foundation documents |
-| [`docs/mvp_2_weeks.md`](docs/mvp_2_weeks.md) | Original 2-week plan; superseded by `mvp_architecture.md` |
+| [`docs/archive/architecture.md`](docs/archive/architecture.md) | Week 1 MVP specification; superseded by `mvp_architecture.md` and the v1.0 foundation documents |
+| [`docs/archive/mvp_2_weeks.md`](docs/archive/mvp_2_weeks.md) | Original 2-week plan; superseded by `mvp_architecture.md` |
+| [`docs/archive/daily_log/`](docs/archive/daily_log/) | Session-by-session build record |
 
 ### Reports
 
@@ -334,7 +336,6 @@ reports regenerates.
 ```text
 delayed-label-fraud-decisioning/
 ├── README.md
-├── TODO.md
 ├── requirements.txt
 ├── conftest.py
 ├── app/
@@ -365,8 +366,9 @@ delayed-label-fraud-decisioning/
 │   ├── mvp_architecture.md
 │   ├── roadmap.md
 │   ├── README.md
-│   ├── daily_log/
-│   └── paper/
+│   ├── TODO.md
+│   ├── paper/
+│   └── archive/
 ├── documentation/
 │   ├── data_dictionary.md
 │   ├── technical_documentation.md

@@ -1,7 +1,10 @@
 # Documentation Index
 
-This folder contains every project document. Start with the reading order
-that matches who you are, then dip into the reference docs as needed.
+This folder contains every live project document. Start with the reading
+order that matches who you are, then dip into the reference docs as needed.
+
+> Superseded and historical documents are in `docs/archive/`. They are kept
+> for audit and are not part of the current project definition.
 
 ---
 
@@ -64,19 +67,12 @@ Understand the built system before the plan.
 |---|---|
 | [`mvp_architecture.md`](mvp_architecture.md) | The as-built single decision pipeline — **read this for what exists** |
 
-### Superseded (kept for context)
-
-| Document | Reason |
-|---|---|
-| [`architecture.md`](architecture.md) | Week 1 MVP specification; superseded by `mvp_architecture.md` and the v1.0 foundation documents |
-| [`mvp_2_weeks.md`](mvp_2_weeks.md) | Original 2-week plan; superseded by `mvp_architecture.md` |
-
 ### Process and plan
 
 | Document | Purpose |
 |---|---|
 | [`roadmap.md`](roadmap.md) | Gated execution plan for the unified decision pipeline |
-| [`daily_log/`](daily_log/) | Session-by-session build record |
+| [`TODO.md`](TODO.md) | Open work items for the current phase |
 
 ### Paper materials
 
@@ -104,8 +100,8 @@ Understand the built system before the plan.
 
 - **Source of truth** — describes what currently exists; if it disagrees with code, the code is wrong.
 - **Specification** — describes what should exist post-MVP; not yet built.
-- **Superseded** — kept for context; a newer document replaces it.
-- **Historical** — session log; preserves the state at a moment in time.
+- **Superseded** — kept for context; a newer document replaces it. Archived under `docs/archive/`.
+- **Historical** — session log; preserves the state at a moment in time. Archived under `docs/archive/daily_log/`.
 
 If two documents disagree and neither is marked superseded, the evaluation
 protocol wins and the other document is updated. See
@@ -116,7 +112,19 @@ protocol wins and the other document is updated. See
 ## Repository Root
 
 - [`../README.md`](../README.md) — project overview and reproduce commands
-- [`../TODO.md`](../TODO.md) — open work items for the current phase
 - [`../reports/`](../reports/) — evaluation outputs
 - [`../src/`](../src/) — pipeline source
 - [`../tests/`](../tests/) — unit tests for the policy and cost matrix
+
+---
+
+## Archive
+
+Superseded and historical documents are in [`archive/`](archive/):
+
+- [`archive/architecture.md`](archive/architecture.md) — Week 1 MVP specification; superseded by `mvp_architecture.md` and the v1.0 foundation documents
+- [`archive/mvp_2_weeks.md`](archive/mvp_2_weeks.md) — original 2-week plan; superseded by `mvp_architecture.md`
+- [`archive/daily_log/`](archive/daily_log/) — session-by-session build record
+
+None of these are part of the current project definition. They are kept
+for audit.
