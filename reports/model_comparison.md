@@ -12,7 +12,7 @@
 | random_forest | `{'n_estimators': 400, 'n_jobs': -1, 'random_state': 42}` |
 | lightgbm | `{'n_estimators': 300, 'learning_rate': 0.05, 'verbose': -1, 'random_state': 42}` |
 
-Each algorithm's configuration was selected by mean realized cost across the expanding-window folds. All configurations within an algorithm were evaluated on the same folds with the same preprocessing, so the selection is fair and reproducible (see `docs/evaluation_protocol.md` §4.4 and §8).
+Each algorithm's configuration was selected by mean realized cost across the expanding-window folds. All configurations within an algorithm were evaluated on the same folds with the same preprocessing, so the selection is fair and reproducible (see `docs/evaluation_protocol.md` §5 and §8).
 
 ## Selection Criterion: Realized Cost After the Policy
 

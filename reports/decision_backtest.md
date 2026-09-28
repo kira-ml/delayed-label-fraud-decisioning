@@ -1,6 +1,6 @@
 # Backtest Report
 
-_Generated: 2026-09-25 14:52:11 UTC_
+_Generated: 2026-09-28 16:37:48 UTC_
 
 ## Setup
 
@@ -25,7 +25,9 @@ _Generated: 2026-09-25 14:52:11 UTC_
 | Random | 0.047484 | 10802.09 | -6496.21 |
 | Approve-all | 0.018928 | 4305.87 | 0.00 |
 | Block-all | 0.098742 | 22463.00 | -18157.13 |
-| Selected classifier + static 0.5 | 0.018737 | 4262.45 | 43.42 |
+| LR + static 0.5 | 0.018737 | 4262.45 | 43.42 |
+| RF + static 0.5 | 0.018928 | 4305.87 | 0.00 |
+| LGBM + static 0.5 | 0.017798 | 4048.95 | 256.92 |
 | Cost-sensitive policy | 0.007491 | 1704.17 | 2601.71 |
 
 ## Ranking metrics (on the policy's scores)
@@ -49,7 +51,7 @@ _Generated: 2026-09-25 14:52:11 UTC_
 
 ## Interpretation
 
-The cost-sensitive policy achieves **0.007491** cost per transaction. The strongest non-policy baseline is **Selected classifier + static 0.5** at **0.018737**.
+The cost-sensitive policy achieves **0.007491** cost per transaction. The strongest non-policy baseline is **LGBM + static 0.5** at **0.017798**.
 **Result:** the policy does beat the strongest baseline on realized cost per transaction under the same split, delay regime, and cost matrix.
 
 ## Limitations

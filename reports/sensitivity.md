@@ -10,12 +10,12 @@ Base config: `{'fraud_loss': 1.0, 'false_positive_cost': 0.1, 'review_cost': 0.0
 
 | Config                       |    Policy | Strongest base |      Cost |      Adv |
 |------------------------------|-----------|----------------|-----------|----------|
-| baseline                     | 0.007491 | Classifier+0.5 | 0.018737 |   60.02% |
-| false_positive_cost=0.05     | 0.007037 | Classifier+0.5 | 0.018736 |   62.44% |
-| false_positive_cost=0.2      | 0.007625 | Classifier+0.5 | 0.018739 |   59.31% |
-| review_cost=0.01             | 0.006253 | Classifier+0.5 | 0.018737 |   66.63% |
-| review_cost=0.04             | 0.009298 | Classifier+0.5 | 0.018737 |   50.38% |
-| residual_fraud_loss=0.15     | 0.006588 | Classifier+0.5 | 0.018737 |   64.84% |
-| residual_fraud_loss=0.6      | 0.008700 | Classifier+0.5 | 0.018737 |   53.57% |
+| baseline                     | 0.007491 | LGBM+0.5       | 0.017798 |   57.91% |
+| false_positive_cost=0.05     | 0.007037 | LGBM+0.5       | 0.017752 |   60.36% |
+| false_positive_cost=0.2      | 0.007625 | LGBM+0.5       | 0.017890 |   57.38% |
+| review_cost=0.01             | 0.006253 | LGBM+0.5       | 0.017798 |   64.87% |
+| review_cost=0.04             | 0.009298 | LGBM+0.5       | 0.017798 |   47.76% |
+| residual_fraud_loss=0.15     | 0.006588 | LGBM+0.5       | 0.017798 |   62.99% |
+| residual_fraud_loss=0.6      | 0.008700 | LGBM+0.5       | 0.017798 |   51.12% |
 
 One-at-a-time variation. Amount scaling is held fixed at the train-calibrated rate. Decisions are recomputed at each setting; the model is not retrained.
