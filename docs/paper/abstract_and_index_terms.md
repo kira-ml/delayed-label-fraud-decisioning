@@ -7,7 +7,7 @@ transaction in real time, yet fraud labels arrive weeks to months later and
 are frequently censored before the evaluation window closes. We frame this
 as a cost-sensitive decision problem rather than a classification problem
 and evaluate it under a temporal backtest on the Bank Account Fraud (BAF)
-dataset with a simulated one-month label delay. A LightGBM classifier
+dataset with a simulated one-month label delay. A LogisticRegression classifier
 feeding an argmin-of-expected-cost policy reduces realized cost per
 transaction by 57.91% relative to the strongest baseline, LightGBM +
 static 0.5 at 0.017798, with a 95% bootstrap confidence interval of
@@ -26,9 +26,9 @@ derived from proposed credit limit.
 ## Index Terms
 
 Cost-sensitive learning, fraud detection, delayed feedback, censored
-labels, decision policy, temporal backtest, LightGBM, Bank Account Fraud
-dataset, expected-cost minimization, false-positive cost, bootstrap
-confidence intervals, sensitivity analysis, machine learning.
+labels, decision policy, temporal backtest, LogisticRegression, Bank
+Account Fraud dataset, expected-cost minimization, false-positive cost,
+bootstrap confidence intervals, sensitivity analysis, machine learning.
 
 ## Notes for the Team
 
