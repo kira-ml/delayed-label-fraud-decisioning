@@ -64,7 +64,7 @@ red error and stops.
 
 | File | Purpose |
 |---|---|
-| `models/best_model.pkl` | Selected LightGBM classifier |
+| `models/best_model.pkl` | Selected LogisticRegression classifier |
 | `models/preprocessing.pkl` | Fitted preprocessing pipeline |
 | `models/feature_columns.json` | Training-time feature order |
 | `models/feature_defaults.json` | Median/mode per feature for manual input |
@@ -80,15 +80,15 @@ The sidebar shows the model that is currently deployed.
 
 | Field | Value |
 |---|---|
-| Algorithm | LightGBM (`LGBMClassifier`) |
-| Training window | Months 0-5 of the BAF dataset |
-| Test window | Months 6-7 |
+| Algorithm | LogisticRegression (`C=10.0`, `max_iter=1000`) |
+| Training window | Months 0-2 of the BAF dataset |
+| Test window | Months 5-6 |
 | Features | 28 |
-| Macro F1 (test) | 0.5336 |
-| ROC-AUC (test) | 0.8766 |
-| Precision (fraud) | 0.3096 |
-| Recall (fraud) | 0.0424 |
-| Calibration ECE | 0.0040 |
+| Macro F1 (test) | 0.5031 |
+| ROC-AUC (test) | 0.8753 |
+| Precision (fraud) | 0.7826 |
+| Recall (fraud) | 0.0063 |
+| Calibration ECE (validation) | 0.0033 |
 
 The sidebar also shows:
 
@@ -239,10 +239,10 @@ When `amount_scaled: true` (the default), `fraud_loss` is per-row:
 fraud_loss(amount) = amount_proxy * fraud_loss_rate
 ```
 
-### 6.2 Derived Thresholds
+### 6.2 Derived Thresholds (Diagnostic View)
 
-For the constant-loss case, the argmin rule is equivalent to two thresholds
-on `p`:
+For the constant-loss case only, the argmin rule can be expressed as two
+thresholds on `p`:
 
 | Condition | Action |
 |---|---|
@@ -253,9 +253,11 @@ on `p`:
 These values are shown live in the sidebar **Derived thresholds** panel.
 They change when you move the cost what-if sliders.
 
-When `amount_scaled: true`, the review threshold becomes amount-dependent.
-The sidebar shows the constant-loss view as a diagnostic. The argmin remains
-the source of truth.
+**This table is a diagnostic view, not the decision rule.** The deployed
+policy is the argmin in §6.1. Under the default `amount_scaled: true`, the
+review threshold becomes amount-dependent and this fixed-threshold table
+no longer describes the policy's behavior. The argmin remains the source
+of truth in all cases.
 
 ### 6.3 Why This Matters
 
@@ -423,10 +425,9 @@ dataset. These are documented here so results are not over-interpreted.
 | Synthetic data | BAF is a synthetic dataset. Results are not production estimates. |
 | Amount proxy | `proposed_credit_limit` is used as a transaction amount proxy. It is not a true transaction amount. |
 | Single delay regime | The supplementary analysis assumes a 1-month label delay. The deployed classifier does not model delay. |
-| Recall at 0.5 | At threshold 0.5, fraud recall is 0.0424. The cost-sensitive policy catches more fraud by using derived thresholds below 0.5. |
-| Drift | The test window has a slightly higher fraud rate (~1.40%) than the training window (~1.03%). The app displays a drift banner when a batch mean `p_fraud` is far from the training rate. |
-| No capacity constraint | The review capacity panel ranks rows by expected savings but does not enforce a hard cap on the policy. |
-| No recalibration | The ECE on validation is 0.0040, so no calibration step was applied. If the model is retrained, recalibration may be warranted. |
+| Recall at 0.5 | At threshold 0.5, fraud recall is 0.0063. The cost-sensitive policy routes more fraud to review/block by minimizing expected cost rather than applying a fixed threshold. |
+| Drift | The test window has a slightly higher fraud rate (1.2576%) than the training window (0.9813%). The app displays a drift banner when a batch mean `p_fraud` is far from the training rate. |
+| No recalibration | The ECE on validation is 0.0033, so no calibration step was applied. If the model is retrained, recalibration may be warranted. |
 | Manual input uses medians | Manual input fills unexposed features with training-time medians or modes. Predictions for sparse manual entries are approximate. |
 
 ---
@@ -435,7 +436,7 @@ dataset. These are documented here so results are not over-interpreted.
 
 | Symptom | Cause | Fix |
 |---|---|---|
-| Red error "Missing artifact: models/best_model.pkl" on startup | Model file not present | Run `python -m src.pipeline --primary` locally, or push the model files to GitHub for cloud deployment |
+| Red error "Missing artifact: models/best_model.pkl" on startup | Model file not present | Run `python -m src.pipeline` locally, or push the model files to GitHub for cloud deployment |
 | Red error "Missing required columns" on upload | CSV lacks a feature | Check the CSV against the 28 features in `documentation/data_dictionary.md` |
 | Prediction fails with a Python error | Preprocessing failed on an unseen category | Reload the page. If it persists, ensure `models/preprocessing.pkl` matches the deployed model |
 | Sidebar shows stale test metrics | `reports/model_comparison.md` was updated but the app was not redeployed | Push the commit; Streamlit Cloud rebuilds automatically |
