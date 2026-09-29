@@ -1,7 +1,7 @@
 # Paper Reference Sheet
 
-One-page lookup for the paper team. Every number and claim used in the
-paper must be traceable to this sheet.
+One-page headline lookup for the paper team, followed by supporting tables.
+Every number and claim used in the paper must be traceable to this sheet.
 
 ---
 
@@ -29,6 +29,100 @@ paper must be traceable to this sheet.
 | Test suite | 58 tests | pytest -q |
 
 **The four numbers to preserve exactly: 57.91%, [53.95%, 62.13%], 96,843, 9.68%.**
+
+### 1.1 Split Summary
+
+| Split | Rows | Fraud rate | Source |
+|---|---:|---:|---|
+| Train (months 0–2) | 397,039 | 0.9813% | reports/decision_backtest.md §Data Integrity; eda_summary.json |
+| Validation (months 3–4) | 278,627 | 1.0207% | reports/decision_backtest.md §Data Integrity; eda_summary.json |
+| Test (months 5–6) | 227,491 | 1.2576% | reports/decision_backtest.md §Data Integrity; eda_summary.json |
+| Censored (month 7) | 96,843 | — | reports/decision_backtest.md §Data Integrity |
+
+### 1.2 EDA Findings (paper-relevant)
+
+| Number | Value | Source |
+|---|---:|---|
+| Fraud rate (month 0) | 1.13% | eda_summary.json |
+| Fraud rate (month 7) | 1.47% | eda_summary.json |
+| `proposed_credit_limit` mean | 515.85 | eda_summary.json |
+| `proposed_credit_limit` median | 200 | eda_summary.json |
+| `proposed_credit_limit` skew | 1.30 | eda_summary.json |
+| `proposed_credit_limit` IQR-flagged share | 24.17% | eda_summary.json |
+| Point-biserial r (`credit_risk_score`) | 0.0706 | eda_summary.json |
+| Point-biserial r (`proposed_credit_limit`) | 0.0689 | eda_summary.json |
+| `mean(amount_proxy on train)` | 521.1626 | decision_policy.md §7.1 |
+| `fraud_loss_rate` | 0.0019187869 | configs/costs.yaml; decision_policy.md §7.1 |
+
+### 1.3 Classifier Cross-Validation
+
+| Number | Value | Source |
+|---|---:|---|
+| LightGBM CV realized cost (mean ± SD) | 0.005852 ± 0.000300 | reports/model_comparison.md; reports/cv_results.json |
+| Logistic Regression CV realized cost (mean ± SD) | 0.005915 ± 0.000338 | reports/model_comparison.md; reports/cv_results.json |
+| Random Forest CV realized cost (mean ± SD) | 0.006515 ± 0.000579 | reports/model_comparison.md; reports/cv_results.json |
+| Top gap (absolute) | 0.000063 | reports/model_comparison.md |
+| Top gap (relative) | 1.07% | reports/model_comparison.md |
+| Noise-band threshold | 5% | evaluation_protocol.md §8, §17.1 |
+
+### 1.4 Selected Classifier Behavior at the 0.5 Cut (supporting)
+
+These numbers describe the raw classifier at the naive 0.5 probability cut. **This is not the deployed operating point.** The deployed system is the argmin policy; see §1.8.
+
+| Metric | Value | Source |
+|---|---:|---|
+| Macro F1 | 0.5031 | reports/model_comparison.md §Final Test Results |
+| Accuracy | 0.9875 | reports/model_comparison.md §Final Test Results |
+| Precision (fraud) | 0.7826 | reports/model_comparison.md §Final Test Results |
+| Recall (fraud) | 0.0063 | reports/model_comparison.md §Final Test Results |
+| ROC-AUC | 0.8753 | reports/model_comparison.md §Final Test Results |
+| Confusion matrix (TN, FP, FN, TP) | (224,625, 5, 2,843, 18) | reports/model_comparison.md §Final Test Results |
+
+### 1.5 Static-Threshold Baselines vs Approve-All
+
+| Comparison | Reduction | Source |
+|---|---:|---|
+| LightGBM + 0.5 vs approve-all | 5.97% | reports/decision_backtest.md §Results |
+| Logistic Regression + 0.5 vs approve-all | 1.01% | reports/decision_backtest.md §Results |
+| Random Forest + 0.5 vs approve-all | 0% | reports/decision_backtest.md §Results |
+
+### 1.6 Bootstrap Details (full)
+
+| Quantity | Point estimate | 95% CI | Source |
+|---|---:|---|---|
+| Policy cost/txn | 0.007491 | [0.007196, 0.007797] | reports/bootstrap.md |
+| LGBM+0.5 cost/txn | 0.017798 | [0.016967, 0.018670] | reports/bootstrap.md |
+| Difference (baseline − policy) | 0.010307 | [0.009602, 0.011058] | reports/bootstrap.md |
+| Advantage (%) | 57.91% | [53.95%, 62.13%] | reports/bootstrap.md |
+| Resamples | 1,000 | — | reports/bootstrap.md |
+| Seed | 42 | — | reports/bootstrap.md |
+
+### 1.7 Cost Sensitivity Sweep (full)
+
+| Configuration | Policy cost/txn | Strongest baseline | Advantage | Source |
+|---|---:|---|---:|---|
+| Baseline | 0.007491 | LGBM + 0.5 (0.017798) | 57.91% | reports/sensitivity.md |
+| `false_positive_cost = 0.05` | 0.007037 | LGBM + 0.5 (0.017752) | 60.36% | reports/sensitivity.md |
+| `false_positive_cost = 0.20` | 0.007625 | LGBM + 0.5 (0.017890) | 57.38% | reports/sensitivity.md |
+| `review_cost = 0.01` | 0.006253 | LGBM + 0.5 (0.017798) | 64.87% | reports/sensitivity.md |
+| `review_cost = 0.04` | 0.009298 | LGBM + 0.5 (0.017798) | 47.76% | reports/sensitivity.md |
+| `residual_fraud_loss = 0.15` | 0.006588 | LGBM + 0.5 (0.017798) | 62.99% | reports/sensitivity.md |
+| `residual_fraud_loss = 0.60` | 0.008700 | LGBM + 0.5 (0.017798) | 51.12% | reports/sensitivity.md |
+
+### 1.8 Policy Operational Metrics
+
+The metrics in §1.4 describe the classifier at 0.5. These describe the deployed policy, which routes by argmin.
+
+| Metric | Value | Source |
+|---|---:|---|
+| Policy operational precision | 0.0654 | reports/model_comparison.md §Final Test Results |
+| Policy operational recall | 0.5051 | reports/model_comparison.md §Final Test Results |
+| Precision@1% | 0.2431 | reports/decision_backtest.md §Ranking metrics |
+| Precision@5% | 0.1189 | reports/decision_backtest.md §Ranking metrics |
+| Precision@10% | 0.0775 | reports/decision_backtest.md §Ranking metrics |
+| Recall@1% | 0.1933 | reports/decision_backtest.md §Ranking metrics |
+| Recall@5% | 0.4729 | reports/decision_backtest.md §Ranking metrics |
+| Recall@10% | 0.6162 | reports/decision_backtest.md §Ranking metrics |
 
 ---
 
@@ -69,9 +163,8 @@ paper must be traceable to this sheet.
 
 At decision time, a LogisticRegression classifier produces a fraud
 probability for each transaction. A cost-sensitive policy then selects the
-action —
-approve, review, or block — that minimizes expected cost under a fixed
-cost matrix, with transaction amount scaling the fraud loss term.
+action — approve, review, or block — that minimizes expected cost under a
+fixed cost matrix, with transaction amount scaling the fraud loss term.
 
 ---
 
