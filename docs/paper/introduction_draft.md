@@ -58,7 +58,7 @@ We evaluate this framing on the Bank Account Fraud (BAF) dataset, a
 public 1-million-row synthetic benchmark designed for fraud research.
 Because BAF provides only month-level time granularity, we simulate a
 one-month label delay and hold out the final month as censored. We
-compare a cost-sensitive policy against five baselines under an identical
+compare a cost-sensitive policy against six baselines under an identical
 temporal split and cost matrix, report realized cost per transaction as
 the primary metric, and test the result's robustness with a 2× sensitivity
 analysis on each cost parameter and a bootstrap confidence interval.
@@ -67,7 +67,7 @@ The main findings are as follows. First, the cost-sensitive policy reduces
 realized cost per transaction by **57.91%** relative to the strongest
 baseline (LightGBM + static 0.5), with a 95% bootstrap confidence interval of
 **[53.95%, 62.13%]**. Second, the static threshold performs *near-identically to
-approve-all* (7.3% reduction), a failure mode that AUC-based evaluation would
+approve-all* (5.97% reduction), a failure mode that AUC-based evaluation would
 not reveal. Third, the result is robust across a 2× range on each of three cost
 parameters; the minimum advantage across all variations is 47.76%. Fourth, the
 cost rate used for amount scaling is derived from training-window amounts only,
@@ -77,7 +77,7 @@ This paper makes three contributions. It contributes a reproducible
 evaluation protocol for fraud decision policies under delayed and
 censored labels, including pre-registered stop criteria and an explicit
 prohibition on random splits. It contributes a temporal backtest on BAF
-with five canonical baselines, censored-label reporting, cost sensitivity,
+with six canonical baselines, censored-label reporting, cost sensitivity,
 and bootstrap confidence intervals. And it contributes a documented
 negative result at the framing level: static thresholds on highly
 imbalanced fraud data are not decision rules, and reporting them without a
