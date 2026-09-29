@@ -33,7 +33,7 @@ See `abstract_and_index_terms.md`.
 | 5. Experimental Setup | evaluation_protocol.md §7-9 | to write |
 | 6. Results | paper/results_narrative.md | to write |
 | 7. Discussion | paper/discussion_notes.md | to write |
-| 8. Limitations | reports/mvp_backtest.md §Limitations | to write |
+| 8. Limitations | reports/decision_backtest.md §Limitations | to write |
 | 9. Conclusion & Future Work | roadmap.md §5-7 | to write |
 | References | paper/references.md | to write |
 
@@ -63,7 +63,7 @@ is a demonstrated reduction in realized cost with measured uncertainty.
 
 ## Length Target
 
-8–10 pages IEEE two-column. Section budget:
+6–10 pages IEEE two-column (excluding appendices). Section budget:
 
 | Section | Pages |
 |---|---|
