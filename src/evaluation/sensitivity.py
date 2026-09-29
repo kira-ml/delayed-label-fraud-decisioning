@@ -3,7 +3,7 @@ Full cost sensitivity analysis.
 
 Varies false_positive_cost, review_cost, residual_fraud_loss one at a time.
 For each variation, recomputes decisions via argmin and realized cost for
-the policy and all 5 baselines.
+the policy and all 6 baselines.
 
 Does NOT retrain or rescore the model. Reads scored_test.parquet only.
 

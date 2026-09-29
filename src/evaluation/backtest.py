@@ -220,7 +220,9 @@ def main():
         L.append("- Constant `fraud_loss`; amount-scaled sensitivity not enabled in this run.")
     L.append("- BAF is synthetic data; results are not production estimates.")
     L.append("- Censored labels are excluded, not modelled.")
-    L.append("- No hyperparameter tuning, no calibration step, no capacity constraint.")
+    L.append("- Hyperparameter grid per algorithm evaluated on the same folds; selection by mean realized cost.")
+    L.append("- No calibration step applied (ECE = 0.0033, below the 0.05 gate).")
+    L.append("- No capacity constraint on the review queue.")
     L.append("")
 
     OUT.write_text("\n".join(L), encoding="utf-8")

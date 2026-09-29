@@ -1,6 +1,6 @@
 # Backtest Report
 
-_Generated: 2026-09-28 16:37:48 UTC_
+_Generated: 2026-09-29 11:39:49 UTC_
 
 ## Setup
 
@@ -60,4 +60,6 @@ The cost-sensitive policy achieves **0.007491** cost per transaction. The strong
 - Amount-scaled `fraud_loss` uses `amount_proxy = proposed_credit_limit`.
 - BAF is synthetic data; results are not production estimates.
 - Censored labels are excluded, not modelled.
-- No hyperparameter tuning, no calibration step, no capacity constraint.
+- Hyperparameter grid per algorithm evaluated on the same folds; selection by mean realized cost.
+- No calibration step applied (ECE = 0.0033, below the 0.05 gate).
+- No capacity constraint on the review queue.
