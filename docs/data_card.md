@@ -498,7 +498,7 @@ Requirements:
 - One command to rebuild all data artifacts
 
 ```bash
-python -m src.pipeline --primary
+python -m src.pipeline
 ```
 
 ---

@@ -145,7 +145,7 @@ These columns are created by the project pipeline. They are not in the raw
 | Type | float64 |
 | Created by | `src/data/load.py` |
 | Formula | Copy of `proposed_credit_limit` |
-| Purpose | Cost input for the supplementary policy; not a model feature |
+| Purpose | Cost input for the decision policy; not a model feature |
 | Used as feature | No (reserved for cost scaling) |
 | Note | Real transaction amount is not available in BAF. `proposed_credit_limit` is used as a proxy and documented as a limitation. |
 
@@ -156,7 +156,7 @@ These columns are created by the project pipeline. They are not in the raw
 | Type | int64 |
 | Created by | `src/data/simulate_delay.py` |
 | Formula | `month + 1` |
-| Purpose | Supplementary delay simulation only |
+| Purpose | Delay simulation only |
 | Used as feature | No (encodes label delay) |
 
 ### 4.4 `observed`
@@ -166,7 +166,7 @@ These columns are created by the project pipeline. They are not in the raw
 | Type | bool |
 | Created by | `src/data/simulate_delay.py` |
 | Formula | `label_month <= 7` |
-| Purpose | Supplementary delay simulation only; marks censored labels |
+| Purpose | Delay simulation only; marks censored labels |
 | Used as feature | No (encodes delay simulation) |
 
 ---
@@ -240,20 +240,12 @@ Encoding and scaling per algorithm is documented in
 
 ## 9. Consistency Notes
 
-Two counts in `docs/data_card.md` do not match the code:
+The data card (`docs/data_card.md`) and this dictionary are now aligned.
+Both reflect the `FEATURE_EXCLUDE` list in `src/common.py`, which is the
+source of truth for which columns are model features.
 
-| Source | Claimed | Actual |
-|---|---|---|
-| `data_card.md` section 4.3 | Numeric = 26 | Numeric = 23 |
-| `data_card.md` section 11.4 | 29 features | 28 features |
-
-The data card's counts treat `proposed_credit_limit` as a feature and
-double-count derived columns. This data dictionary reflects the actual
-`FEATURE_EXCLUDE` list in `src/common.py`, which is the source of truth.
-
-To align the data card, update:
-- `docs/data_card.md` section 4.3: Numeric `26` -> `23`
-- `docs/data_card.md` section 11.4: `29 features` -> `28 features`
+If a future edit introduces a discrepancy, document it here rather than
+leaving the two documents to disagree.
 
 ---
 
