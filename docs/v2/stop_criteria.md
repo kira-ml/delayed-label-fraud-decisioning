@@ -4,8 +4,8 @@
 > **Branch:** `v2`  
 > **Purpose:** Portfolio / resume — operational extension of the V1 final-project system  
 > **Document:** V2 Stop Criteria  
-> **Status:** v2.0-draft — meta-level gates; does not duplicate per-hypothesis kill criteria  
-> **Last updated:** 2026-10-02
+> **Status:** v2.0.1 — Phase A complete; Phase B entered; Phase C skipped; see §4 and §9  
+> **Last updated:** 2026-10-03
 
 ---
 
@@ -70,6 +70,7 @@ modes:
 | `falsification_plan.md` §5 | Verdict format | Inherited |
 | `falsification_plan.md` §6 | Non-findings discipline | Inherited |
 | `falsification_plan.md` §7 | V1 amendment rules | Inherited |
+| `falsification_plan.md` §12 | Phase A results | Referenced (§4.1) |
 | `evaluation_framework.md` §8 | Verdicts and stop criteria per hypothesis | Referenced |
 | `evaluation_framework.md` §9 | Forbidden practices | Inherited |
 | **This document** | **Phase gates, time-boxes, project stop, abandon rules, scope gate** | **New** |
@@ -85,18 +86,20 @@ criteria. This document wins for phase and project stop.
 This table consolidates the kill criteria for convenience. The source of
 truth is `falsification_plan.md` §3.
 
-| ID | Kill criterion (from `falsification_plan.md` §3) |
-|---|---|
-| H1 | Advantage < 5% at any capacity `K ≥ 4,550` |
-| H2 | Advantage < 5% at 2-month delay |
-| H3 | Model choice flips in either rolling step |
-| H4 | Max PSI < 0.1 across all features and adjacent month pairs |
-| H5 | Max block-rate disparity < 5 percentage points |
-| H6 | Any action stratum has ECE ≥ 0.05 |
+| ID | Kill criterion (from `falsification_plan.md` §3) | Phase A verdict |
+|---|---|---|
+| H1 | Advantage < 5% at any capacity `K ≥ 4,550` | survived |
+| H2 | Advantage < 5% at 2-month delay | survived |
+| H3 | Model choice flips in either rolling step | confirmed |
+| H4 | Max PSI < 0.1 across all features and adjacent month pairs | survived |
+| H5 | Max block-rate disparity < 5 percentage points | killed |
+| H6 | Any action stratum has ECE ≥ 0.05 | killed |
 
 **No rule in this document modifies these criteria.** Changes to a kill
 criterion are dated amendments to `falsification_plan.md`, not edits to
-this table.
+this table. The Phase A verdict column is informational; the verdicts
+themselves and their evidence are recorded in `falsification_plan.md`
+§12 and will be reported in full in `reports/v2_falsification.md`.
 
 ---
 
@@ -117,6 +120,14 @@ hypothesis has a verdict from the set in `falsification_plan.md` §5. A
 `Blocked` verdict does not count as an exit — it is a diagnostic signal
 that must be resolved before the report is finalized.
 
+**Phase A status as of 2026-10-03:** tests executed. All six hypotheses
+have verdicts (three survived, one confirmed, two killed). No `Blocked`
+verdicts. Verdicts and evidence are recorded in `falsification_plan.md`
+§12 and in the six intermediate JSON files under
+`reports/v2/intermediate/`. The one remaining Phase A exit item is
+`reports/v2_falsification.md` — the assembled report. Phase A exits when
+that file exists.
+
 ### 4.2 Phase B — Depth on Survivors
 
 | Gate | Criterion |
@@ -129,6 +140,17 @@ Phase A. If H1 and H4 survive, Phase B consists of exactly two builds:
 capacity-aware policy and drift detector. No other components enter
 Phase B without the mid-flight scope gate (§8).
 
+**Phase B scope as of 2026-10-03:** the survivors are **H1 (capacity)**
+and **H4 (drift)**. Phase B consists of exactly two builds:
+
+1. **Capacity-aware policy** — `docs/v2/protocols/decision_policy_capacity.md`
+   then `src/policy/decide_capacity.py` and `configs/policy.yaml`.
+2. **Drift detector** — `docs/v2/protocols/monitoring.md` then
+   `src/monitoring/drift_detector.py`.
+
+**H3 is not in Phase B scope.** H3 was `confirmed` (a paper note, not a
+code build). **H5 and H6 are not in Phase B scope.** Both were killed.
+
 ### 4.3 Phase C — Causal Evaluation (Conditional)
 
 | Gate | Criterion |
@@ -138,6 +160,14 @@ Phase B without the mid-flight scope gate (§8).
 
 **Note:** Phase C is skipped if H6 survived. The direct estimate is
 approximately unbiased, and no causal machinery is built.
+
+**Phase C status as of 2026-10-03: SKIPPED.** H6 was killed by its
+pre-registered kill criterion (block stratum ECE = 0.0600 ≥ 0.05), but
+the materiality check — required by `falsification_plan.md` §3 H6's
+"If killed" clause — bounds the plausible bias on V1's 57.91% advantage
+to approximately 2.1%. This is below the 5% materiality threshold that
+gates the causal machinery. Per the H6 clause, no IPW, doubly robust,
+or randomized logging work is authorized. Phase C does not run.
 
 ### 4.4 Phase D — Communication
 
@@ -162,6 +192,9 @@ Phase A ──► Phase B ──► Phase D
 
 Phase C is not on the critical path. It is inserted between B and D
 only when H6 is killed.
+
+**Current path:** `Phase A → Phase B → Phase D`. Phase C is skipped
+per §4.3.
 
 ---
 
@@ -221,6 +254,16 @@ Any of:
 **Outcome:** V2 is paused. Diagnose root cause. Do not proceed. Do not
 report V2 as complete or abandoned until the root cause is resolved.
 
+### 5.5 Current State
+
+As of 2026-10-03, Phase A has executed with zero `Blocked` verdicts. The
+abandon criteria (§5.4) are not triggered: fewer than one `Blocked`
+verdict, V1's headline is not contradicted by any V2 result (it is
+strengthened by H1 and H2, confirmed-with-fragility by H3, and
+challenged-but-not-broken by H4), and the falsification plan executed on
+existing artifacts as designed. V2 is on the Complete Stop (§5.1)
+trajectory, pending Phase B execution and Phase D communication.
+
 ---
 
 ## 6. Time-Boxes
@@ -249,6 +292,10 @@ two days, the overrun is recorded and the *cause* is named. Repeated
 overruns of the same kind signal a problem with the falsification plan,
 not with the test.
 
+**Phase A actuals as of 2026-10-03:** Phase A completed in one working
+day. No hypothesis exceeded its per-hypothesis time-box. No time-box
+overruns. The `Blocked` diagnostic in §7 was not triggered.
+
 ---
 
 ## 7. Abandon Criteria
@@ -273,6 +320,12 @@ at Phase A exit:
   the reason.
 - Do **not** open a new V2 attempt until the reason for abandonment is
   understood. Rebooting the same plan will fail the same way.
+
+**Status as of 2026-10-03:** neither abandon criterion is met. No
+`Blocked` verdicts. The surviving hypotheses (H1, H4) do not require
+re-touching V1's frozen test window: H1 re-ranks frozen scores, H4 uses
+`data/interim/transactions.parquet` (raw features, never the test
+window).
 
 ---
 
@@ -310,13 +363,20 @@ It is a scope violation.
 - [x] Time-boxes defined per phase (§6)
 - [x] Abandon criteria defined (§7)
 - [x] Mid-flight scope gate defined (§8)
+- [x] Phase A completion recorded (§4.1, §5.5, §6)
+- [x] Phase B scope recorded (§4.2)
+- [x] Phase C skip recorded (§4.3)
 
 **Downstream (not blockers for this doc):**
 
 - [ ] `docs/v2/documentation_map.md` — V1→V2 doc status table
 - [ ] `docs/v2/README.md` — reading order for the folder
 - [ ] `docs/v2/cut_list.md` — written at Phase D
-- [ ] Run Phase A tests; write `reports/v2_falsification.md`
+- [x] Run Phase A tests (2026-10-03; six verdicts recorded)
+- [ ] Write `reports/v2_falsification.md` — the sole remaining Phase A
+      exit item
+- [ ] Phase B builds: capacity-aware policy, drift detector
+- [ ] Phase D deliverables: V1 paper subsection, cut list, README update
 
 ---
 
@@ -351,3 +411,4 @@ It is a scope violation.
 | Date | Change | Reason |
 |---|---|---|
 | 2026-10-02 | v2.0-draft — initial stop criteria; phase gates for A/B/C/D; project-level stop conditions; time-boxes; abandon criteria; mid-flight scope gate; per-hypothesis kill criteria referenced from `falsification_plan.md` §3 | Meta-level companion to `falsification_plan.md` and `evaluation_framework.md`; adds the phase, project, and scope stop rules that do not exist elsewhere |
+| 2026-10-03 | v2.0.1 — Phase A completion recorded in §4.1, §5.5, §6, §7, §9; Phase B scope recorded in §4.2 (H1 + H4); Phase C skip recorded in §4.3 (materiality check below threshold); §3 verdict column added; §10 DoD updated | Record Phase A execution results and the Phase B/C decisions they imply |
