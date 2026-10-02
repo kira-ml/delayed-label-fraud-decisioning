@@ -4,8 +4,8 @@
 > **Branch:** `v2`  
 > **Purpose:** Portfolio / resume — operational extension of the V1 final-project system  
 > **Document:** V2 Problem Framing / charter  
-> **Status:** v2.0-draft — decision-centric framing, V1 inheritance, falsification-first  
-> **Last updated:** 2026-10-02
+> **Status:** v2.0.1 — Phase A complete; see §6.4; charter frozen through Phase B  
+> **Last updated:** 2026-10-03
 
 ---
 
@@ -133,7 +133,7 @@ with a cheapest test and a kill criterion, detailed in
 | H3 | LR still wins under rolling monthly retraining | Load-bearing property 1; V1's classifier conclusion |
 | H4 | Feature drift is measurable month-over-month | Validity of the static split |
 | H5 | Block rate differs >5pp across protected groups | Group disparity |
-| H6 | Direct cost estimate matches causal estimate | Confounding of the V1 advantage |
+| H6 | Direct cost estimate is not materially confounded | Confounding of the V1 advantage |
 
 ### 5.2 Out of Scope
 
@@ -211,6 +211,42 @@ V2 succeeds if:
 - A finding reported without a kill criterion that was written before the
   test.
 
+### 6.4 Phase A Execution Summary
+
+Phase A executed on 2026-10-03. All six hypotheses tested against their
+pre-registered kill criteria. No kill criteria were modified after
+results were seen. No `Blocked` verdicts.
+
+| ID | Verdict | Key number |
+|---|---|---|
+| H1 | survived | advantage 44.25% at K=4,550 (2% capacity) |
+| H2 | survived | advantage 58.08% at 2-month delay; CI [56.35%, 59.72%] |
+| H3 | confirmed (fragile margin) | LR both steps; gap 4.25% / 4.17% (V1: 1.07%) |
+| H4 | survived | max PSI 3.94 (`velocity_4w`, months 0→1); 23/28 features drift |
+| H5 | killed | max block-rate disparity 2.26pp (`customer_age`) < 5pp |
+| H6 | killed (bias immaterial) | block stratum ECE 0.0600 (n=725); bias on V1 headline ~2.1% |
+
+**Three survived. One confirmed. Two killed.** V1's headline is not
+overturned by any V2 test:
+
+- **Strengthened by H1** (capacity-robust) and **H2** (delay-robust).
+- **Confirmed-with-fragility by H3** (LR still wins, but margin is 4×
+  tighter than V1's single split implied).
+- **Challenged-but-not-broken by H4** (drift is real, but concentrated
+  on low-importance features for the LR classifier).
+- **Two proposed concerns (H5, H6) were tested and dismissed.** The
+  system has no fairness disparity above threshold and no material
+  confounding in the direct estimate.
+
+Full verdicts and evidence are in `falsification_plan.md` §12. The
+assembled report will be `reports/v2_falsification.md`.
+
+**Phase B is bounded by H1 and H4.** Two components earn a Phase B
+build: a capacity-aware policy and a drift detector. **Phase C is
+skipped** — H6's materiality check bounds the bias on V1's headline to
+approximately 2.1%, below the 5% threshold that would authorize causal
+machinery. **Phase D communication** follows Phase B.
+
 ---
 
 ## 7. Relationship to V1 Documents
@@ -221,12 +257,14 @@ The full mapping is in `docs/v2/documentation_map.md`. The governing rules:
   inherited unchanged.** V2 does not re-derive the decision-centric
   framing.
 - **V1's `evaluation_protocol.md` is extended, not replaced.** V2 metrics
-  (capacity utilization, multi-regime censoring, IPW estimates, group
-  disparity) are added as sections.
+  (capacity utilization, multi-regime censoring, group disparity) are
+  added as sections. No IPW estimates are added — Phase C is skipped
+  per §6.4.
 - **V1's `decision_policy.md` is extended.** §8 (Capacity Override) moves
-  from "specification, deferred" to "implemented" **only if H1 survives**.
-- **V1's `data_card.md` is extended** with multi-regime delay rules **only
-  if H2 survives**.
+  from "specification, deferred" to "implemented" in Phase B, gated on
+  H1's survival.
+- **V1's `data_card.md` is extended** with multi-regime delay rules,
+  gated on H2's survival.
 - **V1's `mvp_architecture.md` remains the as-built description of V1.**
   V2's as-built architecture is written as `docs/v2/architecture.md`
   **after** components are built, not before.
@@ -257,8 +295,8 @@ V2's organizing principle is the scientific falsification loop:
    "kept for future work" unless the future work has its own falsifiable
    hypothesis and kill criterion.
 
-The full falsification plan is the next document written, before any V2
-code.
+The full falsification plan was the first document written, before any V2
+code. It executed in Phase A on 2026-10-03.
 
 ---
 
@@ -280,6 +318,13 @@ code.
 V1's paper must be amended, not quietly left standing. The V2 falsification
 plan must anticipate this outcome.
 
+**Post-Phase-A note on this risk:** H3 tested V1's classifier selection
+under rolling retraining and confirmed LR at both steps, but with a gap
+of 4.25% / 4.17% — four times tighter than V1's static split (1.07%).
+The classifier conclusion holds, but is recorded in V1's paper as a
+fragility note rather than a strong confirmation. H1 did not invalidate
+the classifier selection.
+
 ---
 
 ## 10. Definition of Done for This Document
@@ -293,13 +338,23 @@ plan must anticipate this outcome.
 - [x] V1→V2 document relationship rules are stated (§7)
 - [x] Falsification discipline is the organizing principle (§8)
 - [x] Risks are named before work begins (§9)
+- [x] Phase A execution summary added (§6.4)
 
 **Not yet done (downstream, not blockers for this doc):**
 
-- [ ] `docs/v2/falsification_plan.md` — the six cheapest tests and their kill criteria
+- [x] `docs/v2/falsification_plan.md` — the six cheapest tests and their
+      kill criteria (2026-10-02; Phase A results in §12)
+- [x] `docs/v2/evaluation_framework.md` — metric definitions and
+      per-hypothesis framework (2026-10-02)
+- [x] `docs/v2/stop_criteria.md` — phase gates and project stop (2026-10-02)
 - [ ] `docs/v2/documentation_map.md` — V1→V2 status table
 - [ ] `docs/v2/README.md` — reading order for the folder
-- [ ] `docs/v2/cut_list.md` — what V2 does not do and why
+- [ ] `docs/v2/cut_list.md` — written at Phase D
+- [x] Run Phase A tests (2026-10-03; six verdicts recorded in
+      `falsification_plan.md` §12)
+- [ ] `reports/v2_falsification.md` — Phase A assembled report
+- [ ] Conditional protocol docs — written during Phase B, only for
+      survivors H1 and H4
 
 ---
 
@@ -336,7 +391,12 @@ plan must anticipate this outcome.
 - `docs/evaluation_protocol.md` — V1 evaluation standard
 - `docs/decision_policy.md` — V1 policy definition
 - `docs/data_card.md` — V1 dataset and split definition
-- `docs/v2/falsification_plan.md` — the six tests (to be written)
+- `docs/v2/falsification_plan.md` — the six tests (written 2026-10-02;
+  Phase A results in §12)
+- `docs/v2/evaluation_framework.md` — metric definitions and
+  per-hypothesis framework (written 2026-10-02)
+- `docs/v2/stop_criteria.md` — phase gates and project stop
+  (written 2026-10-02)
 - `docs/v2/documentation_map.md` — V1→V2 doc status (to be written)
 - Jesus et al., "Turning the Tables: Biased, Imbalanced, Dynamic Tabular
   Datasets for ML Evaluation," NeurIPS 2022
@@ -349,3 +409,4 @@ plan must anticipate this outcome.
 | Date | Change | Reason |
 |---|---|---|
 | 2026-10-02 | v2.0-draft — initial V2 charter; V1 conclusion restated; hypotheses H1–H6 scoped; falsification discipline adopted; cut list referenced; base-rate assumption stated | First-principles scoping of V2 as an operational-reality test of V1's conclusion, not a feature extension |
+| 2026-10-03 | v2.0.1 — Phase A execution summary added (§6.4); §5.1 H6 wording aligned with the diagnostic actually tested; §6.4 records six verdicts and the Phase B/C/D paths; §7 reference to IPW estimates removed (Phase C skipped); §9 post-Phase-A note added to the classifier-selection risk; §10 DoD updated; §12 references updated with document status | Record Phase A completion in the V2 charter and align the charter with what was executed |
