@@ -4,8 +4,8 @@
 > **Branch:** `v2`  
 > **Purpose:** Portfolio / resume — operational extension of the V1 final-project system  
 > **Document:** V2 Evaluation Framework  
-> **Status:** v2.0-draft — additive to V1's evaluation protocol; no new metrics without definition  
-> **Last updated:** 2026-10-02
+> **Status:** v2.0.1 — additive to V1's evaluation protocol; §5.1 aligned with the 2026-10-03 H1 amendment; Phase A complete  
+> **Last updated:** 2026-10-03
 
 ---
 
@@ -157,13 +157,19 @@ and reused across hypotheses where applicable.
 | Cost-capacity curve | `cost/txn` as a function of `K` | `K ∈ {1%, 2%, 5%, 10%, 20%} × 227,491` |
 | Cost at unconstrained capacity | V1's number restated as reference (0.007491) | Reference |
 | Advantage vs. strongest baseline | `(baseline_cost - policy_cost) / baseline_cost` | Each capacity level |
-| Review-band savings distribution | Distribution of `p_fraud * fraud_loss(amount) - review_cost` within the band | Diagnostic |
+| Review-band savings distribution | Distribution of `min(c_approve, c_block) - c_review` within the band | Diagnostic |
 
 **Capacity levels tested:** `K ∈ {1%, 2%, 5%, 10%, 20%} × 227,491`.
 That is `{2,275, 4,550, 11,375, 22,749, 45,498}` reviews.
 
-**Ranking rule within the band:** descending by expected savings
-`p_fraud * fraud_loss(amount) - review_cost`. Ties broken by
+**Ranking rule within the band:** descending by the argmin gap
+`min(c_approve, c_block) - c_review`, where `c_approve`, `c_review`, and
+`c_block` are the per-row expected costs returned by
+`src/policy/decide.py` `choose_actions()`. This is the actual value of
+routing a review-band transaction to review instead of its next-best
+action. See `falsification_plan.md` §11 (amendment 2026-10-03) for the
+change from the original pre-registered formula
+(`p_fraud * fraud_loss(amount) - review_cost`). Ties broken by
 `transaction_id` ascending for reproducibility.
 
 ### 5.2 Multi-Regime Delay Metrics (for H2)
@@ -493,13 +499,16 @@ In addition to all forbidden practices in V1's
 - [x] Reporting format defined (§7)
 - [x] Verdicts and stop criteria defined (§8)
 - [x] V2-specific forbidden practices defined (§9)
+- [x] §5.1 ranking rule aligned with the 2026-10-03 H1 amendment
 
 **Downstream (not blockers for this doc):**
 
 - [ ] `docs/v2/documentation_map.md` — V1→V2 doc status table
 - [ ] `docs/v2/README.md` — reading order for the folder
-- [ ] `docs/v2/cut_list.md` — what V2 does not do and why
-- [ ] Run Phase A tests; write `reports/v2_falsification.md`
+- [ ] `docs/v2/cut_list.md` — written at Phase D
+- [x] Run Phase A tests (2026-10-03; six verdicts recorded in
+      `falsification_plan.md` §12)
+- [ ] Write `reports/v2_falsification.md`
 - [ ] Conditional protocol docs — written only after survivors are known
 - [ ] V1 amendments — if any hypothesis killed
 
@@ -534,3 +543,4 @@ In addition to all forbidden practices in V1's
 | Date | Change | Reason |
 |---|---|---|
 | 2026-10-02 | v2.0-draft — initial V2 evaluation framework; six new metric categories defined; per-hypothesis evaluation specified for H1–H6; re-analysis vs. new-experiment distinction added; verdict format and reporting format defined; V2-specific forbidden practices listed | Derived from `docs/v2/problem_framing.md` §5–§6 and `docs/v2/falsification_plan.md` §3; extends V1's `docs/evaluation_protocol.md` without replacement |
+| 2026-10-03 | v2.0.1 — §5.1 ranking rule aligned with the 2026-10-03 H1 amendment in `falsification_plan.md` §11; §5.1 review-band savings distribution updated to the same formula; §10 DoD updated for Phase A completion | Correct a stale formula that contradicted the pre-registered amendment; record Phase A completion |
