@@ -4,7 +4,7 @@
 > **Branch:** `v2`  
 > **Purpose:** Portfolio / resume — operational extension of the V1 final-project system  
 > **Document:** V2 Falsification Plan  
-> **Status:** v2.0.1-draft — H1 ranking formula amended before execution; see §11  
+> **Status:** v2.0.2 — Phase A complete; all six hypotheses have verdicts; see §11 and §12  
 > **Last updated:** 2026-10-03
 
 ---
@@ -96,12 +96,12 @@ a full re-run with a new delay regime. This is by design.
 
 | ID | Hypothesis | Cost | Kill criterion (pre-registered) | Status |
 |---|---|---|---|---|
-| H1 | Advantage stays >5% at plausible review capacity | Zero new code | Advantage <5% at any capacity ≥2% of test volume | not started |
-| H2 | Advantage stays >5% at 2-month delay | Full re-run | Advantage <5% at 2-month delay | not started |
-| H3 | LR still wins under rolling monthly retraining | Minor code | Model choice flips in either rolling step | not started |
-| H4 | Feature drift is measurable month-over-month | Zero new code | Max PSI <0.1 across all features and all adjacent month pairs | not started |
-| H5 | Block rate differs >5pp across protected groups | Zero new code | Max disparity <5pp across all tested groupings | not started |
-| H6 | Direct cost estimate is not materially confounded | Zero new code | Any action-stratum ECE ≥0.05 | not started |
+| H1 | Advantage stays >5% at plausible review capacity | Zero new code | Advantage <5% at any capacity ≥2% of test volume | survived |
+| H2 | Advantage stays >5% at 2-month delay | Full re-run | Advantage <5% at 2-month delay | survived |
+| H3 | LR still wins under rolling monthly retraining | Minor code | Model choice flips in either rolling step | confirmed |
+| H4 | Feature drift is measurable month-over-month | Zero new code | Max PSI <0.1 across all features and all adjacent month pairs | survived |
+| H5 | Block rate differs >5pp across protected groups | Zero new code | Max disparity <5pp across all tested groupings | killed |
+| H6 | Direct cost estimate is not materially confounded | Zero new code | Any action-stratum ECE ≥0.05 | killed |
 
 ---
 
@@ -164,7 +164,8 @@ envelope.
 **Effort.**  
 Half a day.
 
-**Status.** `not started`
+**Status.** `survived` — advantage 44.25% at K=4,550 (2% capacity); kill
+criterion not met. See §12 for details.
 
 ---
 
@@ -215,7 +216,8 @@ a stated delay envelope.
 **Effort.**  
 One day (mostly pipeline runtime).
 
-**Status.** `not started`
+**Status.** `survived` — advantage 58.08% at 2-month delay, CI
+[56.35%, 59.72%]; kill criterion not met. See §12 for details.
 
 ---
 
@@ -267,7 +269,9 @@ classifier becomes the V2 default for any subsequent V2 experiments.
 **Effort.**  
 One day.
 
-**Status.** `not started`
+**Status.** `confirmed` — LR selected at both rolling steps; margin is
+4× tighter than V1's static split (4.25% / 4.17% vs. 1.07%). See §12 for
+the fragility note.
 
 ---
 
@@ -323,7 +327,9 @@ static split is not invalidated by drift at month granularity.
 **Effort.**  
 Half a day.
 
-**Status.** `not started`
+**Status.** `survived` — max PSI 3.94 (`velocity_4w`, months 0→1); 23 of
+28 features drift; kill criterion not met. Drift is concentrated on
+low-importance features. See §12 for details.
 
 ---
 
@@ -380,7 +386,10 @@ measured on the tested groupings.
 **Effort.**  
 Half a day.
 
-**Status.** `not started`
+**Status.** `killed` — max block-rate disparity 2.26pp
+(`customer_age`); 1.36pp (`employment_status`); 1.76pp
+(`housing_status`). All below the 5pp threshold. See §12 for the
+review-rate pre-registration limitation.
 
 ---
 
@@ -448,7 +457,10 @@ advantage).
 Half a day for the diagnostic. Full causal machinery is a Phase B
 project if H6 is killed.
 
-**Status.** `not started`
+**Status.** `killed` — block stratum ECE 0.0600 (n=725, 0.32% of test
+window); kill criterion met. Materiality check bounds bias on V1's
+headline to ~2.1%, below the 5% threshold that would require causal
+machinery. See §12 for details.
 
 ---
 
@@ -576,13 +588,16 @@ report is written.
 - [x] Non-findings discipline is defined (§6)
 - [x] V1 amendment rules are defined (§7)
 - [x] Relationship to the V2 problem framing is stated (§8)
+- [x] Phase A executed; all six hypotheses have verdicts (§12)
 
 **Downstream (not blockers for this doc):**
 
+- [x] `docs/v2/evaluation_framework.md` — metric definitions (2026-10-02)
+- [x] `docs/v2/stop_criteria.md` — phase gates and project stop (2026-10-02)
 - [ ] `docs/v2/documentation_map.md` — V1→V2 doc status table
 - [ ] `docs/v2/README.md` — reading order for the folder
-- [ ] `docs/v2/cut_list.md` — what V2 does not do and why
-- [ ] Run Phase A tests, write `reports/v2_falsification.md`
+- [ ] `docs/v2/cut_list.md` — written at Phase D
+- [ ] `reports/v2_falsification.md` — Phase A assembled report
 - [ ] Conditional protocol docs — written only after survivors are known
 
 ---
@@ -654,9 +669,73 @@ change the kill criterion.
 
 ---
 
-## 12. Changelog
+## 12. Phase A Results
+
+Phase A completed on 2026-10-03. All six hypotheses tested against
+their pre-registered kill criteria. No `Blocked` verdicts. No kill
+criteria modified after results were seen.
+
+### 12.1 Verdict Summary
+
+| ID | Verdict | Key number |
+|---|---|---|
+| H1 | **survived** | advantage 44.25% at K=4,550 (2% capacity); 58.08% at ≥10% capacity |
+| H2 | **survived** | advantage 58.08% at 2-month delay; 95% CI [56.35%, 59.72%] |
+| H3 | **confirmed** (fragile margin) | LR both steps; gap 4.25% / 4.17% (V1: 1.07%) |
+| H4 | **survived** | max PSI 3.94 (`velocity_4w`, months 0→1); 23/28 features drift |
+| H5 | **killed** | max block-rate disparity 2.26pp (`customer_age`) < 5pp |
+| H6 | **killed** (bias immaterial) | block stratum ECE 0.0600 (n=725); bias on V1 headline ~2.1% |
+
+### 12.2 Evidence Files
+
+Every verdict traces to an intermediate JSON under
+`reports/v2/intermediate/`. The assembled report
+(`reports/v2_falsification.md`) will cite these files.
+
+| ID | Evidence |
+|---|---|
+| H1 | `h1_capacity.json` |
+| H2 | `h2_delay_2m.json` |
+| H3 | `h3_rolling_retrain.json` |
+| H4 | `h4_drift.json`, `h4_importance_crossref.json` |
+| H5 | `h5_fairness.json` |
+| H6 | `h6_stratified_calibration.json` |
+
+### 12.3 Implications for Phase B and Phase C
+
+- **Phase B (depth on survivors)** is bounded by H1 and H4. Two
+  components earn a Phase B build: the capacity-aware policy
+  (`src/policy/decide_capacity.py`) and the drift detector
+  (`src/monitoring/drift_detector.py`).
+- **Phase B does not include H3 work.** H3 was `confirmed`, which is a
+  paper note (fragility margin on classifier selection), not a code
+  build.
+- **Phase C (causal evaluation) is skipped.** H6 was `killed`, but the
+  materiality check bounds the bias on V1's headline to ~2.1%, below
+  the 5% threshold that gates the causal machinery. No IPW, doubly
+  robust, or randomized logging work is authorized.
+- **H5 non-finding is dropped from scope.** No fairness constraint is
+  built. A limitations note is added to V1's paper; the review-rate
+  pre-registration limitation is recorded in `docs/v2/cut_list.md` at
+  Phase D.
+
+### 12.4 Post-Phase-A Status
+
+- V1's headline (57.91% advantage) is **not overturned** by any V2 test.
+- V1's headline is **strengthened** by H1 (capacity-robust) and H2
+  (delay-robust).
+- V1's classifier conclusion is **confirmed but fragile** per H3.
+- V1's static split is **challenged but not broken** per H4 (drift is
+  real, but concentrated on low-importance features).
+- Two proposed concerns (H5, H6) were tested and found not to require
+  remediation.
+
+---
+
+## 13. Changelog
 
 | Date | Change | Reason |
 |---|---|---|
 | 2026-10-02 | v2.0-draft — initial falsification plan; six hypotheses H1–H6; cheapest tests pre-registered; kill criteria pre-registered; execution order defined; verdict format defined; V1 amendment rules defined | First-principles scoping of V2 as a falsification exercise on V1's conclusion, derived from `docs/v2/problem_framing.md` §5.1 and §8 |
 | 2026-10-03 | v2.0.1 — H1 ranking formula amended before execution; see §11 Amendments | Correct the ranking formula before results are seen; preserve falsification discipline |
+| 2026-10-03 | v2.0.2 — Phase A complete; all six verdicts recorded in §12; hypothesis statuses updated from `not started`; §12 added and Changelog renumbered to §13 | Record Phase A execution results and freeze the falsification plan for the report |
