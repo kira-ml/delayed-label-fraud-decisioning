@@ -1,0 +1,276 @@
+{
+  "hypothesis": "H5",
+  "kill_criterion": "max block-rate disparity < 0.05 across all tested groupings",
+  "disparity_threshold": 0.05,
+  "min_group_size": 500,
+  "test_window_rows": 227491,
+  "groupings": [
+    {
+      "name": "customer_age",
+      "column": "customer_age_bin",
+      "groups": [
+        {
+          "group": "[0-25)",
+          "n": 60685,
+          "n_block": 14,
+          "n_review": 1984,
+          "n_approve": 58687,
+          "n_fraud": 347,
+          "block_rate": 0.00023069951388316717,
+          "review_rate": 0.03269341682458598,
+          "fraud_rate": 0.005718052236961358,
+          "meets_sample_size": true
+        },
+        {
+          "group": "[25-35)",
+          "n": 65618,
+          "n_block": 65,
+          "n_review": 4518,
+          "n_approve": 61035,
+          "n_fraud": 653,
+          "block_rate": 0.0009905818525404615,
+          "review_rate": 0.06885305861196622,
+          "fraud_rate": 0.009951537687829559,
+          "meets_sample_size": true
+        },
+        {
+          "group": "[35-45)",
+          "n": 59351,
+          "n_block": 184,
+          "n_review": 7127,
+          "n_approve": 52040,
+          "n_fraud": 820,
+          "block_rate": 0.00310020050209769,
+          "review_rate": 0.12008222270896868,
+          "fraud_rate": 0.013816110933261445,
+          "meets_sample_size": true
+        },
+        {
+          "group": "[45-55)",
+          "n": 31764,
+          "n_block": 281,
+          "n_review": 5950,
+          "n_approve": 25533,
+          "n_fraud": 677,
+          "block_rate": 0.008846492885027075,
+          "review_rate": 0.18731897745875833,
+          "fraud_rate": 0.021313436594887294,
+          "meets_sample_size": true
+        },
+        {
+          "group": "[55-65)",
+          "n": 7796,
+          "n_block": 129,
+          "n_review": 1401,
+          "n_approve": 6266,
+          "n_fraud": 269,
+          "block_rate": 0.01654694715238584,
+          "review_rate": 0.1797075423293997,
+          "fraud_rate": 0.034504874294510005,
+          "meets_sample_size": true
+        },
+        {
+          "group": "[65+",
+          "n": 2277,
+          "n_block": 52,
+          "n_review": 391,
+          "n_approve": 1834,
+          "n_fraud": 95,
+          "block_rate": 0.022837066315327184,
+          "review_rate": 0.1717171717171717,
+          "fraud_rate": 0.041721563460693896,
+          "meets_sample_size": true
+        }
+      ],
+      "block_rate_disparity": 0.022606366801444018,
+      "review_rate_disparity": 0.15462556063417235
+    },
+    {
+      "name": "employment_status",
+      "column": "employment_status",
+      "groups": [
+        {
+          "group": "CA",
+          "n": 174600,
+          "n_block": 602,
+          "n_review": 18486,
+          "n_approve": 155512,
+          "n_fraud": 2395,
+          "block_rate": 0.0034478808705612827,
+          "review_rate": 0.10587628865979382,
+          "fraud_rate": 0.013717067583046964,
+          "meets_sample_size": true
+        },
+        {
+          "group": "CB",
+          "n": 24762,
+          "n_block": 15,
+          "n_review": 1479,
+          "n_approve": 23268,
+          "n_fraud": 212,
+          "block_rate": 0.000605766900896535,
+          "review_rate": 0.05972861642839835,
+          "fraud_rate": 0.008561505532671028,
+          "meets_sample_size": true
+        },
+        {
+          "group": "CC",
+          "n": 7879,
+          "n_block": 107,
+          "n_review": 1032,
+          "n_approve": 6740,
+          "n_fraud": 211,
+          "block_rate": 0.01358040360451834,
+          "review_rate": 0.13098108897068156,
+          "fraud_rate": 0.026780048229470745,
+          "meets_sample_size": true
+        },
+        {
+          "group": "CD",
+          "n": 4329,
+          "n_block": 0,
+          "n_review": 109,
+          "n_approve": 4220,
+          "n_fraud": 12,
+          "block_rate": 0.0,
+          "review_rate": 0.025179025179025177,
+          "fraud_rate": 0.002772002772002772,
+          "meets_sample_size": true
+        },
+        {
+          "group": "CE",
+          "n": 5860,
+          "n_block": 0,
+          "n_review": 115,
+          "n_approve": 5745,
+          "n_fraud": 11,
+          "block_rate": 0.0,
+          "review_rate": 0.01962457337883959,
+          "fraud_rate": 0.0018771331058020477,
+          "meets_sample_size": true
+        },
+        {
+          "group": "CF",
+          "n": 9972,
+          "n_block": 1,
+          "n_review": 136,
+          "n_approve": 9835,
+          "n_fraud": 19,
+          "block_rate": 0.00010028078620136381,
+          "review_rate": 0.01363818692338548,
+          "fraud_rate": 0.0019053349378259125,
+          "meets_sample_size": true
+        },
+        {
+          "group": "CG",
+          "n": 89,
+          "n_block": 0,
+          "n_review": 14,
+          "n_approve": 75,
+          "n_fraud": 1,
+          "block_rate": 0.0,
+          "review_rate": 0.15730337078651685,
+          "fraud_rate": 0.011235955056179775,
+          "meets_sample_size": false
+        }
+      ],
+      "block_rate_disparity": 0.01358040360451834,
+      "review_rate_disparity": 0.11734290204729608
+    },
+    {
+      "name": "housing_status",
+      "column": "housing_status",
+      "groups": [
+        {
+          "group": "BA",
+          "n": 40070,
+          "n_block": 705,
+          "n_review": 13932,
+          "n_approve": 25433,
+          "n_fraud": 1680,
+          "block_rate": 0.01759421013226853,
+          "review_rate": 0.3476915398053407,
+          "fraud_rate": 0.041926628400299475,
+          "meets_sample_size": true
+        },
+        {
+          "group": "BB",
+          "n": 66113,
+          "n_block": 4,
+          "n_review": 2807,
+          "n_approve": 63302,
+          "n_fraud": 435,
+          "block_rate": 6.050247303858545e-05,
+          "review_rate": 0.04245761045482734,
+          "fraud_rate": 0.006579643942946168,
+          "meets_sample_size": true
+        },
+        {
+          "group": "BC",
+          "n": 71727,
+          "n_block": 11,
+          "n_review": 3163,
+          "n_approve": 68553,
+          "n_fraud": 526,
+          "block_rate": 0.00015335926499086816,
+          "review_rate": 0.044097759560556,
+          "fraud_rate": 0.007333361216836059,
+          "meets_sample_size": true
+        },
+        {
+          "group": "BD",
+          "n": 7609,
+          "n_block": 5,
+          "n_review": 779,
+          "n_approve": 6825,
+          "n_fraud": 63,
+          "block_rate": 0.000657116572479958,
+          "review_rate": 0.10237876199237744,
+          "fraud_rate": 0.00827966881324747,
+          "meets_sample_size": true
+        },
+        {
+          "group": "BE",
+          "n": 41594,
+          "n_block": 0,
+          "n_review": 663,
+          "n_approve": 40931,
+          "n_fraud": 157,
+          "block_rate": 0.0,
+          "review_rate": 0.01593979900947252,
+          "fraud_rate": 0.0037745828725296916,
+          "meets_sample_size": true
+        },
+        {
+          "group": "BF",
+          "n": 333,
+          "n_block": 0,
+          "n_review": 23,
+          "n_approve": 310,
+          "n_fraud": 0,
+          "block_rate": 0.0,
+          "review_rate": 0.06906906906906907,
+          "fraud_rate": 0.0,
+          "meets_sample_size": false
+        },
+        {
+          "group": "BG",
+          "n": 45,
+          "n_block": 0,
+          "n_review": 4,
+          "n_approve": 41,
+          "n_fraud": 0,
+          "block_rate": 0.0,
+          "review_rate": 0.08888888888888889,
+          "fraud_rate": 0.0,
+          "meets_sample_size": false
+        }
+      ],
+      "block_rate_disparity": 0.01759421013226853,
+      "review_rate_disparity": 0.33175174079586817
+    }
+  ],
+  "max_block_rate_disparity": 0.022606366801444018,
+  "max_block_rate_disparity_grouping": "customer_age",
+  "verdict": "killed"
+}

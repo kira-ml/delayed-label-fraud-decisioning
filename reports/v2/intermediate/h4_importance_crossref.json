@@ -1,0 +1,315 @@
+{
+  "rows": [
+    {
+      "feature": "housing_status",
+      "importance": 3.1310574289276594,
+      "importance_share": 0.19018167059948507,
+      "max_psi": 0.0856621616488419,
+      "max_psi_pair": [
+        2,
+        3
+      ],
+      "drifted": false
+    },
+    {
+      "feature": "device_os",
+      "importance": 2.4700135843457973,
+      "importance_share": 0.15002960518523248,
+      "max_psi": 0.03370553494558696,
+      "max_psi_pair": [
+        0,
+        1
+      ],
+      "drifted": false
+    },
+    {
+      "feature": "employment_status",
+      "importance": 2.3673605402106603,
+      "importance_share": 0.14379441855295494,
+      "max_psi": 0.024744131349594915,
+      "max_psi_pair": [
+        0,
+        1
+      ],
+      "drifted": false
+    },
+    {
+      "feature": "payment_type",
+      "importance": 2.3357690918161547,
+      "importance_share": 0.14187554144236098,
+      "max_psi": 0.17304952243686836,
+      "max_psi_pair": [
+        0,
+        1
+      ],
+      "drifted": true
+    },
+    {
+      "feature": "source",
+      "importance": 2.1570104127798078,
+      "importance_share": 0.13101766834837145,
+      "max_psi": 0.003766787736927649,
+      "max_psi_pair": [
+        6,
+        7
+      ],
+      "drifted": false
+    },
+    {
+      "feature": "has_other_cards",
+      "importance": 0.4852157142234958,
+      "importance_share": 0.029472195009770545,
+      "max_psi": 0.0,
+      "max_psi_pair": [
+        null,
+        null
+      ],
+      "drifted": false
+    },
+    {
+      "feature": "phone_home_valid",
+      "importance": 0.4642905491698357,
+      "importance_share": 0.02820119218155414,
+      "max_psi": 0.0,
+      "max_psi_pair": [
+        null,
+        null
+      ],
+      "drifted": false
+    },
+    {
+      "feature": "prev_address_months_count",
+      "importance": 0.3551963729671729,
+      "importance_share": 0.02157476863173034,
+      "max_psi": 0.043034209143825365,
+      "max_psi_pair": [
+        1,
+        2
+      ],
+      "drifted": false
+    },
+    {
+      "feature": "keep_alive_session",
+      "importance": 0.3292370321802641,
+      "importance_share": 0.01999798797197524,
+      "max_psi": 0.0,
+      "max_psi_pair": [
+        null,
+        null
+      ],
+      "drifted": false
+    },
+    {
+      "feature": "income",
+      "importance": 0.30683070002758994,
+      "importance_share": 0.0186370184664552,
+      "max_psi": 0.05349653443844918,
+      "max_psi_pair": [
+        2,
+        3
+      ],
+      "drifted": false
+    },
+    {
+      "feature": "name_email_similarity",
+      "importance": 0.3024369598670277,
+      "importance_share": 0.01837014094571871,
+      "max_psi": 0.18929192079034887,
+      "max_psi_pair": [
+        6,
+        7
+      ],
+      "drifted": true
+    },
+    {
+      "feature": "email_is_free",
+      "importance": 0.29128836011367115,
+      "importance_share": 0.017692970573067797,
+      "max_psi": 0.0,
+      "max_psi_pair": [
+        null,
+        null
+      ],
+      "drifted": false
+    },
+    {
+      "feature": "credit_risk_score",
+      "importance": 0.2371774892228218,
+      "importance_share": 0.014406254804606387,
+      "max_psi": 0.2896179509899074,
+      "max_psi_pair": [
+        2,
+        3
+      ],
+      "drifted": true
+    },
+    {
+      "feature": "customer_age",
+      "importance": 0.23707525798910273,
+      "importance_share": 0.01440004523890615,
+      "max_psi": 0.0354587963453154,
+      "max_psi_pair": [
+        6,
+        7
+      ],
+      "drifted": false
+    },
+    {
+      "feature": "bank_months_count",
+      "importance": 0.18042647139213194,
+      "importance_share": 0.0109591754634401,
+      "max_psi": 0.09226416059694116,
+      "max_psi_pair": [
+        0,
+        1
+      ],
+      "drifted": false
+    },
+    {
+      "feature": "device_distinct_emails_8w",
+      "importance": 0.17687204701357576,
+      "importance_share": 0.0107432783163332,
+      "max_psi": 0.02317132988790714,
+      "max_psi_pair": [
+        2,
+        3
+      ],
+      "drifted": false
+    },
+    {
+      "feature": "date_of_birth_distinct_emails_4w",
+      "importance": 0.14737647820148597,
+      "importance_share": 0.008951705763195303,
+      "max_psi": 0.08891921310195548,
+      "max_psi_pair": [
+        0,
+        1
+      ],
+      "drifted": false
+    },
+    {
+      "feature": "zip_count_4w",
+      "importance": 0.0877356177065006,
+      "importance_share": 0.005329096231944443,
+      "max_psi": 0.282734807143192,
+      "max_psi_pair": [
+        6,
+        7
+      ],
+      "drifted": true
+    },
+    {
+      "feature": "phone_mobile_valid",
+      "importance": 0.08617516136526746,
+      "importance_share": 0.00523431349460739,
+      "max_psi": 0.0,
+      "max_psi_pair": [
+        null,
+        null
+      ],
+      "drifted": false
+    },
+    {
+      "feature": "foreign_request",
+      "importance": 0.08609342702824148,
+      "importance_share": 0.005229348918545217,
+      "max_psi": 0.0,
+      "max_psi_pair": [
+        null,
+        null
+      ],
+      "drifted": false
+    },
+    {
+      "feature": "velocity_4w",
+      "importance": 0.08129005388363728,
+      "importance_share": 0.004937590127820515,
+      "max_psi": 3.942928399273718,
+      "max_psi_pair": [
+        0,
+        1
+      ],
+      "drifted": true
+    },
+    {
+      "feature": "days_since_request",
+      "importance": 0.04487160415083109,
+      "importance_share": 0.002725519040641337,
+      "max_psi": 0.047809052793960485,
+      "max_psi_pair": [
+        0,
+        1
+      ],
+      "drifted": false
+    },
+    {
+      "feature": "current_address_months_count",
+      "importance": 0.03742472797102823,
+      "importance_share": 0.0022731928266480446,
+      "max_psi": 0.1108366411608894,
+      "max_psi_pair": [
+        6,
+        7
+      ],
+      "drifted": true
+    },
+    {
+      "feature": "intended_balcon_amount",
+      "importance": 0.03025123523540892,
+      "importance_share": 0.001837472031529767,
+      "max_psi": 0.0774648768579311,
+      "max_psi_pair": [
+        6,
+        7
+      ],
+      "drifted": false
+    },
+    {
+      "feature": "session_length_in_minutes",
+      "importance": 0.015922758394176884,
+      "importance_share": 0.0009671546628238158,
+      "max_psi": 0.07561476053982284,
+      "max_psi_pair": [
+        2,
+        3
+      ],
+      "drifted": false
+    },
+    {
+      "feature": "velocity_6h",
+      "importance": 0.012409299617749265,
+      "importance_share": 0.000753745782644868,
+      "max_psi": 0.16565782587597425,
+      "max_psi_pair": [
+        0,
+        1
+      ],
+      "drifted": true
+    },
+    {
+      "feature": "velocity_24h",
+      "importance": 0.005031558258792019,
+      "importance_share": 0.00030561884510161473,
+      "max_psi": 0.3271957220875365,
+      "max_psi_pair": [
+        6,
+        7
+      ],
+      "drifted": true
+    },
+    {
+      "feature": "bank_branch_count_8w",
+      "importance": 0.0016679269134274384,
+      "importance_share": 0.0001013105425351819,
+      "max_psi": 0.11217975533552084,
+      "max_psi_pair": [
+        0,
+        1
+      ],
+      "drifted": true
+    }
+  ],
+  "drifted_importance_share": 0.18835249154938072,
+  "total_importance_share": 0.9999999999999999,
+  "top5_drifted_count": 1
+}

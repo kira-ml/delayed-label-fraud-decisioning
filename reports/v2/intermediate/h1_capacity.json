@@ -1,0 +1,95 @@
+{
+  "hypothesis": "H1",
+  "kill_criterion": "advantage < 5% at any K >= 4550 (2% of test volume)",
+  "advantage_threshold": 0.05,
+  "min_capacity_for_kill": 4550,
+  "test_rows": 227491,
+  "cost_matrix": {
+    "fraud_loss": 1.0,
+    "false_positive_cost": 0.1,
+    "review_cost": 0.02,
+    "residual_fraud_loss": 0.3,
+    "amount_scaled": true,
+    "fraud_loss_rate": 0.0019187869
+  },
+  "unconstrained_policy_cost_per_txn": 0.0074911340788031185,
+  "review_band_size": 21371,
+  "strongest_baseline": "LGBM+0.5",
+  "strongest_baseline_cost_per_txn": 0.01779829433060209,
+  "baselines": {
+    "Random": 0.04748358271975595,
+    "Approve-all": 0.018927662768258965,
+    "Block-all": 0.09874236782993617,
+    "LR+0.5": 0.018736793537647647,
+    "RF+0.5": 0.018927662768258965,
+    "LGBM+0.5": 0.01779829433060209
+  },
+  "capacity_levels": [
+    {
+      "K": 2275,
+      "K_frac": 0.01,
+      "in_kill_zone": false,
+      "policy_cost_per_txn": 0.010344202913148214,
+      "advantage_vs_strongest": 0.4188093127911384,
+      "action_counts": {
+        "approve": 220107,
+        "review": 2275,
+        "block": 5109
+      },
+      "verdict": "pass"
+    },
+    {
+      "K": 4550,
+      "K_frac": 0.02,
+      "in_kill_zone": true,
+      "policy_cost_per_txn": 0.009923042168107752,
+      "advantage_vs_strongest": 0.4424722962893001,
+      "action_counts": {
+        "approve": 219344,
+        "review": 4550,
+        "block": 3597
+      },
+      "verdict": "pass"
+    },
+    {
+      "K": 11375,
+      "K_frac": 0.05,
+      "in_kill_zone": true,
+      "policy_cost_per_txn": 0.008345528478361784,
+      "advantage_vs_strongest": 0.5311051540476762,
+      "action_counts": {
+        "approve": 214743,
+        "review": 11375,
+        "block": 1373
+      },
+      "verdict": "pass"
+    },
+    {
+      "K": 22750,
+      "K_frac": 0.1,
+      "in_kill_zone": true,
+      "policy_cost_per_txn": 0.0074911340788031185,
+      "advantage_vs_strongest": 0.5791094393847063,
+      "action_counts": {
+        "approve": 205395,
+        "review": 21371,
+        "block": 725
+      },
+      "verdict": "pass"
+    },
+    {
+      "K": 45499,
+      "K_frac": 0.2,
+      "in_kill_zone": true,
+      "policy_cost_per_txn": 0.0074911340788031185,
+      "advantage_vs_strongest": 0.5791094393847063,
+      "action_counts": {
+        "approve": 205395,
+        "review": 21371,
+        "block": 725
+      },
+      "verdict": "pass"
+    }
+  ],
+  "verdict": "survived"
+}

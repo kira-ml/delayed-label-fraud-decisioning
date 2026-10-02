@@ -1,0 +1,94 @@
+{
+  "hypothesis": "H2",
+  "delay_months": 2,
+  "last_month": 7,
+  "kill_criterion": "advantage < 5% at 2-month delay",
+  "advantage_threshold": 0.05,
+  "split": {
+    "train_months": [
+      0,
+      1
+    ],
+    "val_months": [
+      2,
+      3
+    ],
+    "test_months": [
+      4,
+      5
+    ],
+    "censored_months": [
+      6,
+      7
+    ]
+  },
+  "n_total": 1000000,
+  "n_censored": 205011,
+  "censored_rate": 0.205011,
+  "n_train": 260060,
+  "n_val": 287915,
+  "n_test": 247014,
+  "fraud_rate_train": 0.010374528954856571,
+  "fraud_rate_val": 0.00899571053956897,
+  "fraud_rate_test": 0.01159043616960982,
+  "per_algorithm_best": {
+    "logistic_regression": {
+      "config_idx": 3,
+      "config": {
+        "C": 10.0,
+        "max_iter": 1000
+      },
+      "val_cost": 0.006286748876477432
+    },
+    "random_forest": {
+      "config_idx": 2,
+      "config": {
+        "n_estimators": 400,
+        "n_jobs": -1,
+        "random_state": 42
+      },
+      "val_cost": 0.006783350277866731
+    },
+    "lightgbm": {
+      "config_idx": 3,
+      "config": {
+        "n_estimators": 500,
+        "learning_rate": 0.05,
+        "verbose": -1,
+        "random_state": 42
+      },
+      "val_cost": 0.006105125918767693
+    }
+  },
+  "selected_algorithm": "logistic_regression",
+  "selection_is_finding": false,
+  "selection_top_gap_relative": 0.02974925662899336,
+  "policy_cost_per_txn": 0.007288948034374572,
+  "baselines": {
+    "Random": 0.047043387240731295,
+    "Approve-all": 0.018502271698656758,
+    "Block-all": 0.09884095638303901,
+    "LR+0.5": 0.018227889160015224,
+    "RF+0.5": 0.018475083951605985,
+    "LGBM+0.5": 0.01738587430450096
+  },
+  "strongest_baseline": "LGBM+0.5",
+  "strongest_baseline_cost_per_txn": 0.01738587430450096,
+  "advantage": 0.5807545880803034,
+  "advantage_ci_95": [
+    0.5634826159690326,
+    0.5971711929765519
+  ],
+  "advantage_excludes_zero": true,
+  "policy_cost_ci_95": [
+    0.007019870551168556,
+    0.007554688356899813
+  ],
+  "baseline_cost_ci_95": [
+    0.016514308933064326,
+    0.01818800082493553
+  ],
+  "ece_val": 0.0034758591058133134,
+  "brier_val": 0.008426198344992818,
+  "verdict": "survived"
+}
