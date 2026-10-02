@@ -4,8 +4,8 @@
 > **Branch:** `v2`  
 > **Purpose:** Portfolio / resume — operational extension of the V1 final-project system  
 > **Document:** V2 Falsification Plan  
-> **Status:** v2.0-draft — six hypotheses, cheapest tests, kill criteria pre-registered  
-> **Last updated:** 2026-10-02
+> **Status:** v2.0.1-draft — H1 ranking formula amended before execution; see §11  
+> **Last updated:** 2026-10-03
 
 ---
 
@@ -128,8 +128,10 @@ with a capacity cap. Procedure:
 2. Identify transactions in the review band (i.e., where the argmin is
    `review` under no constraint).
 3. For each capacity level `K ∈ {1%, 2%, 5%, 10%, 20%} × 227,491`:
-   - Rank review-band transactions by expected savings
-     (`p_fraud * fraud_loss(amount) - review_cost`).
+   - Rank review-band transactions by the actual argmin gap
+     `min(c_approve, c_block) - c_review`, where `c_*` are the expected
+     costs returned by `src/policy/decide.py` `choose_actions()`
+     (see §11 Amendments, 2026-10-03).
    - Keep top-`K` in review.
    - Route the rest by approve-vs-block argmin only.
 4. Compute realized cost per transaction at each `K`.
@@ -605,8 +607,56 @@ report is written.
 
 ---
 
-## 11. Changelog
+## 11. Amendments
+
+### 2026-10-03 — H1 ranking formula corrected before execution
+
+**Original (as pre-registered on 2026-10-02, §3 H1):**
+
+```
+expected_savings = p_fraud * fraud_loss(amount) - review_cost
+```
+
+**Amended (before H1 ran):**
+
+```
+expected_savings = min(c_approve, c_block) - c_review
+```
+
+where `c_approve`, `c_review`, and `c_block` are the per-row expected
+costs returned by `src/policy/decide.py` `choose_actions()`.
+
+**Reason:** the original formula ignored `residual_fraud_loss` and the
+`block` alternative. It is a two-action ranking heuristic applied to a
+three-action policy: it frames the choice as "approve vs. review" when
+the actual choice at each transaction is "approve / review / block." The
+amended formula is the actual value of routing a transaction to review
+instead of its next-best action, which is what the capacity allocation
+problem requires.
+
+**Discipline check:** this amendment is dated before H1's first
+execution. No H1 results were seen before the formula was changed. The
+change distinguishes "design error caught in review" from "goalposts
+moved after results." It is the former.
+
+**Source of truth:** the amended formula uses the same components that
+`src/policy/decide.py` `choose_actions()` returns per row
+(`c_approve`, `c_review`, `c_block`), so ranking is consistent with
+action selection. The original formula would have required re-deriving
+`fraud_loss(amount)` and `review_cost` separately from the costs dict,
+duplicating logic that already exists in `choose_actions()`.
+
+**Effect on kill criterion:** none. The kill criterion (§3 H1) is
+"advantage < 5% at any tested capacity `K ≥ 4,550`." It is a property of
+the outcome, not of the ranking formula. The amendment changes which
+transactions stay in the review band when capacity binds; it does not
+change the kill criterion.
+
+---
+
+## 12. Changelog
 
 | Date | Change | Reason |
 |---|---|---|
 | 2026-10-02 | v2.0-draft — initial falsification plan; six hypotheses H1–H6; cheapest tests pre-registered; kill criteria pre-registered; execution order defined; verdict format defined; V1 amendment rules defined | First-principles scoping of V2 as a falsification exercise on V1's conclusion, derived from `docs/v2/problem_framing.md` §5.1 and §8 |
+| 2026-10-03 | v2.0.1 — H1 ranking formula amended before execution; see §11 Amendments | Correct the ranking formula before results are seen; preserve falsification discipline |
