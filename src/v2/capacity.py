@@ -29,6 +29,7 @@ import pandas as pd
 from src.common import DATA_PROCESSED, load_costs
 from src.policy.decide import choose_actions
 from src.evaluation.backtest import realized_cost
+from src.policy.decide_capacity import apply_capacity
 
 IN_PATH = DATA_PROCESSED / "scored_test.parquet"
 OUT_DIR = Path("reports/v2/intermediate")
@@ -56,51 +57,6 @@ def _baseline_actions(p_lr, p_rf, p_lgbm):
     }
 
 
-def _apply_capacity(
-    c_approve: np.ndarray,
-    c_review: np.ndarray,
-    c_block: np.ndarray,
-    K: int,
-) -> np.ndarray:
-    """Return actions under a capacity constraint of K reviews.
-
-    Rows whose unconstrained argmin is `review` are ranked by
-    `min(c_approve, c_block) - c_review` (descending). The top-K stay
-    in review; the rest are routed by approve-vs-block argmin only.
-    Rows not in the review band keep their unconstrained argmin action.
-    """
-    n = len(c_approve)
-    cost_matrix = np.column_stack([c_approve, c_review, c_block])
-    idx = np.argmin(cost_matrix, axis=1)   # 0=approve, 1=review, 2=block
-
-    actions = np.empty(n, dtype=object)
-    actions[idx == 0] = "approve"
-    actions[idx == 2] = "block"
-
-    review_idx = np.where(idx == 1)[0]
-    if len(review_idx) == 0:
-        return actions
-
-    # Savings of review vs the next-best non-review action (always > 0
-    # inside the review band by construction).
-    best_non_review = np.minimum(c_approve, c_block)
-    savings = best_non_review - c_review
-
-    if len(review_idx) <= K:
-        actions[review_idx] = "review"
-        return actions
-
-    # Rank review-band rows by savings, descending.
-    order = review_idx[np.argsort(-savings[review_idx])]
-    keep = order[:K]
-    overflow = order[K:]
-
-    actions[keep] = "review"
-    overflow_actions = np.where(
-        c_approve[overflow] <= c_block[overflow], "approve", "block"
-    )
-    actions[overflow] = overflow_actions
-    return actions
 
 
 def main() -> None:
@@ -191,7 +147,7 @@ def main() -> None:
     kill_triggered = False
     for frac in CAPACITY_FRACTIONS:
         K = int(np.ceil(frac * n))
-        actions = _apply_capacity(c_app, c_rev, c_blk, K)
+        actions = apply_capacity(c_app, c_rev, c_blk, K)
         cost = realized_cost(actions, y, costs, amounts=amount)
         mean_cost = float(cost.mean())
         adv = (strongest_cost - mean_cost) / strongest_cost
