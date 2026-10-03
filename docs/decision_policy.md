@@ -1,4 +1,4 @@
-# Decision Policy
+﻿# Decision Policy
 
 > **Repository:** `delayed-label-fraud-decisioning`  
 > **Course:** Introduction to Machine Learning — Final Group Project  
@@ -6,7 +6,7 @@
 > **Instructor:** Ken Oliver Caparros  
 > **Document:** Decision Policy  
 > **Status:** v1.0 — first-principles revision; the policy is the object of study  
-> **Last updated:** 2026-09-24
+> **Last updated:** 2026-10-03
 
 ---
 
@@ -111,7 +111,7 @@ The policy consumes the following per transaction:
 | False-positive cost | `false_positive_cost` | `configs/costs.yaml` | Yes |
 | Review cost | `review_cost` | `configs/costs.yaml` | Yes |
 | Residual fraud loss after review | `residual_fraud_loss` | `configs/costs.yaml` | Yes |
-| Review capacity | `capacity` | Ops config | **Deferred — not used** |
+| Review capacity | `capacity` | `configs/policy.yaml` | Yes (implemented 2026-10-03; see §8) |
 
 All cost inputs come from `configs/costs.yaml`. They are **frozen** for the
 duration of the experiment and are never tuned on validation or test data.
@@ -122,9 +122,10 @@ protocol (§7) defines the gate: ECE < 0.05 on the validation window, or a
 documented calibration step must bring it below. An uncalibrated `p`
 produces wrong expected costs, and therefore wrong decisions.
 
-Capacity is defined here for completeness but is **not exercised in the
-current build**. There is no `configs/policy.yaml`; capacity is deferred to
-future work (see §8).
+Capacity is implemented as of 2026-10-03 (see §8). It reads from
+`configs/policy.yaml` and is exercised by the H1 Phase B diagnostic in
+V2. When `capacity_per_window` is `null`, capacity is unconstrained and
+behavior matches V1 exactly.
 
 ---
 
@@ -386,12 +387,12 @@ work.
 
 ---
 
-## 8. Capacity Override (Deferred)
+## 8. Capacity Override (Implemented)
 
 Real systems have finite review capacity. If the review queue is full, the
 policy must adapt.
 
-### 8.1 Specification (Not Implemented)
+### 8.1 Specification (Implemented)
 
 If the number of transactions in the review band exceeds `capacity` per time
 window:
@@ -409,9 +410,13 @@ route the rest by the approve-vs-block decision only
 
 ### 8.3 Status
 
-Capacity simulation is **out of scope** for the current build. There is no
-`configs/policy.yaml` and no `capacity_enabled` flag in the current code.
-This section is preserved as a specification for future work.
+Capacity simulation is **implemented** as of 2026-10-03 (Phase B, V2).
+The implementation lives in `src/policy/decide_capacity.py`
+(`apply_capacity`), reads `capacity_per_window` from
+`configs/policy.yaml`, and is exercised by the H1 Phase B diagnostic.
+The stable-tie-break behavior required by the protocol
+(`docs/v2/protocols/decision_policy_capacity.md` §3) reproduces the
+Phase A capacity result byte-for-byte on the frozen test window.
 
 Budget-constrained **ranking** metrics (top 1% / 5% / 10%) are reported in
 the backtest per `docs/evaluation_protocol.md` §11.2. Those are ranking
@@ -548,7 +553,7 @@ claimed.
 | Wrong cost matrix | Costs do not reflect reality | Policy picks wrong action | All four parameters tested; sensitivity sweep complete |
 | Constant fraud loss | Amount ignored | Large transactions under-protected | Addressed — amount scaling adopted |
 | Degenerate thresholds | `fraud_loss <= residual_fraud_loss`, or `p_review >= p_block`, or thresholds outside [0,1] | Review band empty or misleading | Covered by unit tests; not triggered by current cost matrix |
-| Capacity ignored | Review queue overflows | Latency and backlog | Out of current scope; documented as future work |
+| Capacity ignored | Review queue overflows | Latency and backlog | Addressed — see §8 |
 | Threshold tuning on test | Retro-fitting to results | Leakage, invalid comparison | Forbidden by the evaluation protocol; not done |
 | Feedback loop | Policy changes labels | Observed labels biased | Out of current scope; BAF is a static dataset |
 | Segment disparity | Costs differ by segment | Policy unfair or ineffective | Out of current scope |
@@ -563,7 +568,8 @@ solved.
 
 - It is not a learned policy (no bandits, no RL).
 - It is not a ranking policy (top-N by score is a separate ranking problem).
-- It is not a capacity-aware scheduler (§8 is deferred).
+- It is not a capacity-aware scheduler in the V1 build (§8 was
+  implemented in the V2 extension; V1's default remains unconstrained).
 - It is not a causal policy (no counterfactual treatment effect).
 - It is not a fairness-aware policy (no group constraints).
 - It is not a threshold-tuning exercise (thresholds are derived from costs).
@@ -626,17 +632,22 @@ The first four keys are the constant-loss cost matrix. `amount_scaled` and
 `fraud_loss_rate` were added after the constant-loss build was validated and
 the amount-scaled sensitivity returned a success stop. See §7.
 
-### 14.2 `configs/policy.yaml` — Not Implemented
+### 14.2 `configs/policy.yaml` — As Implemented (2026-10-03)
 
-The full architecture envisions a `configs/policy.yaml` for threshold
-overrides and capacity settings. The current build does not implement it.
-There is no `use_derived_thresholds`, `p_review`, `p_block`,
-`capacity_enabled`, or `review_capacity_per_day` in the code.
+The V2 Phase B build added `configs/policy.yaml` with a single key:
 
-Thresholds are **always derived** from the cost matrix — there is no
-override mechanism. Capacity is deferred. This section is preserved as a
-specification for future work. Do not create `configs/policy.yaml` until
-there is a measured failure that requires it.
+```yaml
+capacity_per_window: null
+```
+
+`null` means unconstrained (V1 behavior). An integer caps the number of
+transactions routed to `review` per window; overflow is routed by the
+approve-vs-block argmin. Implementation: `src/policy/decide_capacity.py`
+(`apply_capacity`). Protocol: `docs/v2/protocols/decision_policy_capacity.md`.
+
+There is still no `use_derived_thresholds`, `p_review`, `p_block`,
+`capacity_enabled`, or `review_capacity_per_day` key. Thresholds remain
+derived from the cost matrix. No override mechanism exists.
 
 ---
 
@@ -662,13 +673,12 @@ there is a measured failure that requires it.
 
 ### 15.2 Deferred (Documented, Not Omitted)
 
-- [ ] Policy config in `configs/policy.yaml` — deferred until a measured
-      failure requires it
+- [x] Policy config in `configs/policy.yaml` — implemented 2026-10-03 (V2 Phase B, §8)
 - [ ] Full action log schema including `cost_config_hash` — deferred until
       multiple cost matrices exist
 - [ ] Policy evaluated under additional delay regimes (2-month, 3-month) —
       out of scope for this submission
-- [ ] Capacity-aware decisioning — deferred
+- [x] Capacity-aware decisioning — implemented 2026-10-03 (V2 Phase B, §8)
 - [ ] Amount-scaled `false_positive_cost` — named in §7.3, deferred
 
 **Result:** every applicable box checked. Deferred items are documented as
@@ -682,6 +692,7 @@ deferred, not omitted.
 |---|---|---|
 | 2026-09-22 | v0.4 — reframed as supplementary analysis | Align with course submission structure |
 | 2026-09-24 | v1.0 — first-principles revision; policy promoted to object of study; "supplementary" label removed; two-layer references removed; calibration gate aligned with `evaluation_protocol.md` v1.0; amount scaling presented as evidence not supplementary result; DoD consolidated into Policy (Implemented) and Deferred; guiding rule rewritten | Derive from `problem_framing.md` v1.0, per the professor's confirmed autonomy |
+| 2026-10-03 | §8 status updated from "deferred" to "implemented"; §4, §11, §12, §14.2, §15.2 aligned; §16 changelog row added | V2 Phase B (H1) implemented the capacity override; document updated to match as-built state |
 
 ---
 
