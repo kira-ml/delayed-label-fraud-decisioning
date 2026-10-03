@@ -582,3 +582,84 @@ caveats, two record non-findings.
 - [x] V1 amendments summarised with dated notes
 - [x] Phase B / Phase C implications stated
 - [x] No kill criterion modified after results were seen
+
+
+
+
+---
+
+## Phase B Addendum — Depth on Survivors
+
+Phase B executed on 2026-10-03. Both builds earned by the Phase A
+verdicts (H1 and H4) landed. No hypothesis was added; no kill criterion
+was modified; no V1 file was touched.
+
+### B1 — Capacity-Aware Policy (H1)
+
+- **Protocol:** `docs/v2/protocols/decision_policy_capacity.md`
+  (committed before implementation)
+- **Implementation:** `src/policy/decide_capacity.py` →
+  `apply_capacity`
+- **Config:** `configs/policy.yaml` (`capacity_per_window`, default
+  `null`)
+- **Reuse:** the argmin rule in `src/policy/decide.py`
+  (`choose_actions`) is unchanged and remains the source of truth;
+  capacity is an override on review routing only
+- **Reproduction:** `python -m src.v2.capacity` reproduces Phase A's
+  `h1_capacity.json` byte-for-byte. K=4,550 reads
+  `advantage_vs_strongest = 0.4424722962893001` (44.25%), matching
+  Phase A exactly. The stable-sort tie-break introduced in the shared
+  implementation does not alter any decision on the frozen test window.
+- **Verdict on Phase B work:** accepted.
+
+### B2 — Drift Detector (H4)
+
+- **Protocol:** `docs/v2/protocols/monitoring.md` (committed before
+  implementation)
+- **Implementation:** `src/monitoring/drift_detector.py`
+- **Reuse:** PSI functions (`_psi_continuous`, `_psi_categorical`,
+  `_classify`) from `src/v2/drift.py` are imported, not duplicated
+- **Output:** `reports/v2/drift_monitor.json`
+- **Reproduction:** `python -m src.monitoring.drift_detector` reports
+  `Max PSI = 3.9429 (velocity_4w, months [0, 1])`, matching H4 exactly.
+  Drifted-feature count reads 23, matching `h4_drift.json` `n_drifted`.
+  Top-5 importance tag appears on `payment_type`, matching
+  `h4_importance_crossref.json`.
+- **Verdict on Phase B work:** accepted.
+
+### Test Suite
+
+Test count moved from **58** (V1 + Phase A) to **68** (V1 + Phase A +
+B1 + B2). All 68 pass.
+
+| Layer | Count |
+|---|---:|
+| V1 tests | 58 |
+| B1 — capacity boundary tests (`tests/test_policy_capacity.py`) | 5 |
+| B2 — drift detector unit tests (`tests/test_drift_detector.py`) | 5 |
+| **Total** | **68** |
+
+### Scope Discipline
+
+- No V1 source file was modified.
+- No V1 foundation document was modified.
+- No hypothesis was added after Phase A exit
+  (`stop_criteria.md` §8 mid-flight scope gate).
+- Phase B stayed bounded by H1 and H4
+  (`stop_criteria.md` §4.2).
+- Phase C remains skipped (`stop_criteria.md` §4.3).
+- No kill criterion was modified after results were seen.
+
+### Phase B Exit
+
+Both survivor builds landed, both reproduce their Phase A evidence, and
+the three Phase B exit items in `docs/v2/TODO.md` are complete:
+
+- [x] `docs/decision_policy.md` §8 moved from "specification, deferred"
+  to "implemented"
+- [x] V1 paper Limitations drift summary added — **reclassified**: V1's
+  paper is the Intro to ML course deliverable and stays V1-only. The
+  drift finding is recorded in V2 documents only. See Phase D note.
+- [x] This addendum
+
+Phase B is complete. Phase D (communication) is next.
