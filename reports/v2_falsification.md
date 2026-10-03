@@ -53,7 +53,7 @@ Non-findings are reported at the same length and rigor as findings
 | H3 | LR still wins under rolling monthly retraining | **confirmed** (fragile) | gap 4.25% / 4.17% (V1: 1.07%) | `h3_rolling_retrain.json` |
 | H4 | Feature drift measurable month-over-month | **survived** | max PSI 3.94; 23/28 drift | `h4_drift.json`, `h4_importance_crossref.json` |
 | H5 | Block rate differs >5pp across protected groups | **killed** | max disparity 2.26pp < 5pp | `h5_fairness.json` |
-| H6 | Direct cost estimate not materially confounded | **killed** (immaterial) | block stratum ECE 0.0600; bias ~2.1% | `h6_stratified_calibration.json` |
+| H6 | Direct cost estimate not materially confounded | **killed** (immaterial) | block stratum ECE 0.0600; bias below materiality | `h6_stratified_calibration.json` |
 
 **V1 headline status:** not overturned. Strengthened by H1 and H2,
 confirmed-with-fragility by H3, challenged-but-not-broken by H4, and
@@ -302,18 +302,23 @@ Per-stratum:
 
 Max stratum ECE: **0.0600** (`block`).
 Ratio max-stratum / aggregate: **24.02×**.
+Block stratum as share of test window: **0.32%** (725 / 227,491).
 
-Block stratum as share of test window: **0.32%**. As share of total
-policy cost: **~2.86%**. Bounded bias on V1's 57.91% advantage:
-**~2.1%**.
+The materiality check — required by `falsification_plan.md` §3 H6's
+"If killed" clause — is documented in `findings.md` §3.7 and §5.3. It
+bounds the plausible bias on V1's headline advantage below the 5%
+threshold that gates causal machinery. The check is not stored in
+`h6_stratified_calibration.json`; it is recorded in the findings
+reference.
 
 ### Result
 
 The block stratum shows ECE = 0.0600, above the 0.05 kill criterion.
 The stratum is 725 rows (0.32% of the test window). The materiality
 check — required by `falsification_plan.md` §3 H6's "If killed" clause
-— bounds the plausible bias on V1's headline advantage to ~2.1%, below
-the 5% materiality threshold that would authorize causal machinery.
+— is documented in `findings.md` §3.7 and §5.3. It bounds the
+plausible bias on V1's headline advantage below the 5% materiality
+threshold that would authorize causal machinery.
 
 ### Verdict
 
@@ -336,9 +341,9 @@ criterion) is recorded in `docs/v2/cut_list.md` at Phase D.
 
 ### Amends V1?
 
-**Yes — Limitations section.** A non-finding note records the block-
-stratum ECE of 0.0600, the stratum size, and the ~2.1% bounded bias on
-the headline.
+**Yes — Limitations section.** A non-finding note records the block-stratum ECE of 0.0600, the
+stratum size, and the bounded-bias conclusion from the materiality
+check in `findings.md` §5.3.
 
 ---
 
@@ -541,9 +546,9 @@ threshold. The kill criterion was applied as written.
   note (fragility margin on classifier selection), not a code build.
 - **H5 and H6 are not in Phase B scope.** Both were killed.
 - **Phase C is skipped.** H6 was killed, but the materiality check
-  bounds the bias on V1's headline to ~2.1%, below the 5% threshold
-  that gates causal machinery. No IPW, doubly robust, or randomized
-  logging work is authorized.
+  documented in `findings.md` §5.3 bounds the bias on V1's headline
+  below the 5% threshold that gates causal machinery. No IPW, doubly
+  robust, or randomized logging work is authorized.
 - **Phase D (communication).** V1's paper receives one V2 subsection;
   `docs/v2/cut_list.md` is written; README is updated; blog post /
   LinkedIn series is published.
