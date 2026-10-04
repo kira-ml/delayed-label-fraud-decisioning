@@ -37,7 +37,7 @@ MIN_GROUP_SIZE = 500
 
 # Pre-registered binning for customer_age from falsification_plan.md §3 H5.
 AGE_BINS = [0, 25, 35, 45, 55, 65, np.inf]
-AGE_LABELS = ["[0-25)", "[25-35)", "[35-45)", "[45-55)", "[55-65)", "[65+"]
+AGE_LABELS = ["[0-25)", "[25-35)", "[35-45)", "[45-55)", "[55-65)", "[65+)"]
 
 # Groupings to test.
 GROUPINGS = [

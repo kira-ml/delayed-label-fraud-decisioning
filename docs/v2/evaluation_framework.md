@@ -160,7 +160,7 @@ and reused across hypotheses where applicable.
 | Review-band savings distribution | Distribution of `min(c_approve, c_block) - c_review` within the band | Diagnostic |
 
 **Capacity levels tested:** `K ∈ {1%, 2%, 5%, 10%, 20%} × 227,491`.
-That is `{2,275, 4,550, 11,375, 22,749, 45,498}` reviews.
+That is `{2,275, 4,550, 11,375, 22,750, 45,499}` reviews.
 
 **Ranking rule within the band:** descending by the argmin gap
 `min(c_approve, c_block) - c_review`, where `c_approve`, `c_review`, and

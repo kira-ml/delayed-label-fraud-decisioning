@@ -4,7 +4,7 @@
 > **Branch:** `v2`  
 > **Purpose:** Portfolio / resume — operational extension of the V1 final-project system  
 > **Document:** V2 Stop Criteria  
-> **Status:** v2.0.1 — Phase A complete; Phase B entered; Phase C skipped; see §4 and §9  
+> **Status:** v2.0.2 — Phase A complete; Phase B complete 2026-10-03; Phase C skipped; Phase D in progress; see §4 and §9 
 > **Last updated:** 2026-10-03
 
 ---
@@ -151,6 +151,19 @@ and **H4 (drift)**. Phase B consists of exactly two builds:
 **H3 is not in Phase B scope.** H3 was `confirmed` (a paper note, not a
 code build). **H5 and H6 are not in Phase B scope.** Both were killed.
 
+**Phase B status as of 2026-10-03: COMPLETE.** Both builds landed and
+were verified against their Phase A evidence:
+
+- **B1 (capacity-aware policy):** `src/policy/decide_capacity.py` and
+  `configs/policy.yaml` implemented. Reproduces Phase A's
+  `h1_capacity.json` byte-for-byte.
+- **B2 (drift detector):** `src/monitoring/drift_detector.py`
+  implemented. Reproduces H4's max PSI (3.9429) and unique-drift count
+  (9) exactly.
+
+Test suite: 58 V1 tests → 68 (V1 + B1 + B2). All pass. Phase B exit
+criteria in §4.2 satisfied. Phase D entered.
+
 ### 4.3 Phase C — Causal Evaluation (Conditional)
 
 | Gate | Criterion |
@@ -174,12 +187,12 @@ or randomized logging work is authorized. Phase C does not run.
 | Gate | Criterion |
 |---|---|
 | **Entry** | Phase B exit satisfied (Phase C not required for Phase D entry) |
-| **Exit** | V1's paper has one V2 subsection; `docs/v2/cut_list.md` is written; README updated; blog post or LinkedIn series published; architecture diagram (if any component was built) exists |
+| **Exit** | `docs/v2/cut_list.md` is written; README updated; blog post or LinkedIn series published; architecture diagram (if any component was built) exists |
 
-**Exit criterion in detail:** Phase D is time-boxed (§6). If the paper
-subsection, cut list, and README update are complete, Phase D exits even
-if the blog post is not yet published. The blog post is the only
-optional Phase D deliverable.
+**Exit criterion in detail:** Phase D is time-boxed (§6). If the cut list
+and README update are complete, Phase D exits even if the blog post is
+not yet published. The blog post is the only optional Phase D
+deliverable. V1's paper is not part of Phase D.
 
 ### 4.5 Phase Gate Summary
 
@@ -223,10 +236,10 @@ All of:
 - Phase A exit criteria are met
 
 **Outcome:** V2 is a falsification report only. Phase B and Phase D
-collapse into: update V1's paper limitations section, publish
-`reports/v2_falsification.md`, write a short blog post on the negative
-result. This is a legitimate and portfolio-worthy outcome. It is **not**
-a V2 failure.
+collapse into: publish `reports/v2_falsification.md`, write a short blog
+post on the negative result. V1's paper is not updated — it is the course
+deliverable, separate from V2. This is a legitimate and portfolio-worthy
+outcome. It is **not** a V2 failure.
 
 ### 5.3 Partial Stop (Time-Boxed)
 
@@ -262,7 +275,8 @@ verdict, V1's headline is not contradicted by any V2 result (it is
 strengthened by H1 and H2, confirmed-with-fragility by H3, and
 challenged-but-not-broken by H4), and the falsification plan executed on
 existing artifacts as designed. V2 is on the Complete Stop (§5.1)
-trajectory, pending Phase B execution and Phase D communication.
+trajectory: Phase A and Phase B have executed, Phase C is formally
+skipped, and Phase D is in progress.
 
 ---
 
@@ -278,7 +292,7 @@ enforcement of via negativa.
 | Phase B — per hypothesis | 3 working weeks | Drop Phase B for that survivor; record as future work |
 | Phase B — total | 9 working weeks | Phase B exits with whatever survived; do not extend |
 | Phase C | 4 working weeks | Drop Phase C; V1 headline is not causally validated; record as future work |
-| Phase D | 1 working week | Paper subsection and cut list take priority; blog post becomes optional |
+| Phase D | 1 working week | Cut list and README update take priority; blog post becomes optional |
 
 **Rule:** time-boxes are measured in **working days** and **working weeks**,
 not calendar time.
@@ -369,14 +383,13 @@ It is a scope violation.
 
 **Downstream (not blockers for this doc):**
 
-- [ ] `docs/v2/documentation_map.md` — V1→V2 doc status table
+- [x] `docs/v2/documentation_map.md` — V1→V2 doc status table
 - [ ] `docs/v2/README.md` — reading order for the folder
 - [ ] `docs/v2/cut_list.md` — written at Phase D
 - [x] Run Phase A tests (2026-10-03; six verdicts recorded)
-- [ ] Write `reports/v2_falsification.md` — the sole remaining Phase A
-      exit item
-- [ ] Phase B builds: capacity-aware policy, drift detector
-- [ ] Phase D deliverables: V1 paper subsection, cut list, README update
+- [x] Write `reports/v2_falsification.md` — Phase A exit item
+- [x] Phase B builds: capacity-aware policy, drift detector
+- [ ] Phase D deliverables: cut list, README update, LinkedIn post
 
 ---
 
@@ -412,3 +425,4 @@ It is a scope violation.
 |---|---|---|
 | 2026-10-02 | v2.0-draft — initial stop criteria; phase gates for A/B/C/D; project-level stop conditions; time-boxes; abandon criteria; mid-flight scope gate; per-hypothesis kill criteria referenced from `falsification_plan.md` §3 | Meta-level companion to `falsification_plan.md` and `evaluation_framework.md`; adds the phase, project, and scope stop rules that do not exist elsewhere |
 | 2026-10-03 | v2.0.1 — Phase A completion recorded in §4.1, §5.5, §6, §7, §9; Phase B scope recorded in §4.2 (H1 + H4); Phase C skip recorded in §4.3 (materiality check below threshold); §3 verdict column added; §10 DoD updated | Record Phase A execution results and the Phase B/C decisions they imply |
+| 2026-10-03 | v2.0.2 — Phase B completion recorded (§4.2, §5.5, §9); Phase D criteria updated to remove V1 paper subsection (§4.4); falsification-only stop outcome updated to drop V1 paper update (§5.2) | Align stop criteria with the decision that V1's paper is not reopened for V2 |

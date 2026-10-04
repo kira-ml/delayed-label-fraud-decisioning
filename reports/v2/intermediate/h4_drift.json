@@ -1666,5 +1666,18 @@
     }
   ],
   "n_drifted": 23,
+  "unique_drifted_features": [
+    "bank_branch_count_8w",
+    "credit_risk_score",
+    "current_address_months_count",
+    "name_email_similarity",
+    "payment_type",
+    "velocity_24h",
+    "velocity_4w",
+    "velocity_6h",
+    "zip_count_4w"
+  ],
+  "n_unique_drifted_features": 9,
+  "n_features_total": 28,
   "verdict": "survived"
 }

@@ -56,7 +56,7 @@ threshold that authorizes causal machinery.
 | H1 | Policy advantage stays >5% at plausible review capacity | **survived** | 44.25% advantage at K=4,550 (2% capacity) |
 | H2 | Policy advantage stays >5% at 2-month delay | **survived** | 58.08% advantage, CI [56.35%, 59.72%] |
 | H3 | LR still wins under rolling monthly retraining | **confirmed** (fragile) | LR both steps; gap 4.25% / 4.17% (V1: 1.07%) |
-| H4 | Feature drift measurable month-over-month | **survived** | max PSI 3.94; 23/28 features drift |
+| H4 | Feature drift measurable month-over-month | **survived** | max PSI 3.94; 9/28 features drift |
 | H5 | Block rate differs >5pp across protected groups | **killed** | max block-rate disparity 2.26pp < 5pp |
 | H6 | Direct cost estimate not materially confounded | **killed** (immaterial) | block stratum ECE 0.0600; bias ~2.1% |
 
@@ -195,9 +195,11 @@ Max PSI overall: **3.9429** (`velocity_4w`, months 0→1).
 
 **Feature drift classification:**
 
-- 23 of 28 features have PSI ≥ 0.1 in at least one adjacent month pair
-- Drift classification: 3 significant (`velocity_4w`, `velocity_24h`,
-  `credit_risk_score`, `zip_count_4w` — 4 total), remainder moderate
+- 9 of 28 features have max PSI ≥ 0.1 in at least one adjacent month pair
+  (23 feature-month-pair combinations in total)
+- Drift classification: 4 features reach significant (PSI ≥ 0.25) in at
+  least one pair (`velocity_4w`, `velocity_24h`, `credit_risk_score`,
+  `zip_count_4w`); the remaining drifted features are moderate only
 
 **Drift vs. feature importance (LR coefficients):**
 
@@ -460,16 +462,19 @@ materiality threshold. The direct estimate is not materially confounded.
 
 ---
 
-## 8. What V2 Changed in V1's Claims
+## 8. What V2 Would Change in V1's Claims (Not Applied)
 
-Per `falsification_plan.md` §7, V1 amendments are dated and recorded.
+V1's paper is the course deliverable and was not reopened for V2. The
+table below records what V2 would amend in V1's claims if V1's paper
+were reopened. None of these changes are applied to the submitted V1
+paper.
 
 | H | Amendment | V1 paper location | Type |
 |---|---|---|---|
 | H1 | Bounds stated: advantage survives 2% review capacity (44.25%), 5% (53.11%), unconstrained (57.91%) | Limitations | Strengthening note |
 | H2 | Bounds stated: advantage survives 2-month delay (58.08%) | Limitations | Strengthening note |
 | H3 | Fragility note: LGBM-vs-LR gap is 4.25%/4.17% under rolling vs. 1.07% under static; selection stands but margin is thinner | Classifier selection subsection | Caveat |
-| H4 | Drift note: 23 of 28 features drift; concentrated on low-importance features; one top-5 feature (`payment_type`) shows moderate drift | Limitations | Caveat |
+| H4 | Drift note: 9 of 28 features drift; concentrated on low-importance features; one top-5 feature (`payment_type`) shows moderate drift | Limitations | Caveat |
 | H5 | Non-finding note: block-rate disparity below 5pp across tested groupings; review-rate disparity is larger but not pre-registered | Limitations | Non-finding |
 | H6 | Non-finding note: block-stratum ECE 0.0600; bias bounded below materiality threshold | Limitations | Non-finding |
 
@@ -501,10 +506,10 @@ logging work is authorized.
 
 ### 9.3 Phase D (Communication)
 
-V1's paper receives one V2 subsection summarizing the six verdicts and
-the headline-status table in §4 above. `docs/v2/cut_list.md` records what
-V2 does not do and why. The two pre-registration limitations (§5.2, §5.3)
-are candidates for future-work notes.
+V2 findings live in V2 documents only. V1's paper is not reopened.
+`docs/v2/cut_list.md` records what V2 does not do and why. The two
+pre-registration limitations (§5.2, §5.3) are candidates for future-work
+notes in a future publication, not in V1's paper.
 
 ---
 
@@ -521,11 +526,11 @@ are candidates for future-work notes.
 
 **Downstream (not blockers for this doc):**
 
-- [ ] `reports/v2_falsification.md` — formal per-hypothesis audit trail
-- [ ] `docs/v2/documentation_map.md` — V1→V2 doc status
+- [x] `reports/v2_falsification.md` — formal per-hypothesis audit trail
+- [x] `docs/v2/documentation_map.md` — V1→V2 doc status
 - [ ] `docs/v2/README.md` — reading order for the folder
 - [ ] `docs/v2/cut_list.md` — written at Phase D
-- [ ] Phase B builds: capacity-aware policy, drift detector
+- [x] Phase B builds: capacity-aware policy, drift detector
 
 ---
 

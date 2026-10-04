@@ -177,7 +177,7 @@ model for the conversion-time distribution. We adopt the delay-aware
 evaluation structure but do not model the delay distribution: BAF exposes
 month-level granularity only, so we fix a one-month regime and hold the
 final month out as censored. A two-month regime is tested in
-Section~\ref{sec:h2}.
+Section~\ref{sec:robust}.
 
 \subsection{Fraud Detection Datasets}
 
@@ -332,7 +332,7 @@ backtest. No shuffling occurs at any stage.
 \toprule
 Split & Months & Rows & Fraud rate \\
 \midrule
-Train      & 0--2 & 397{,}039 & $\approx 1.10\%$ \\
+Train      & 0--2 & 397{,}039 & $0.9813\%$ \\
 Validation & 3--4 & 278{,}627 & $1.0207\%$ \\
 Test       & 5--6 & 227{,}491 & $1.2576\%$ \\
 Censored   & 7    & 96{,}843  & --- \\
@@ -346,7 +346,7 @@ An assertion in the pipeline verifies $\text{train} + \text{validation} +
 \text{test} = \text{observed}$, guarding against off-by-one month
 boundaries. The test window is used exactly once, after model and policy
 are frozen. The test-window fraud rate ($1.2576\%$) is slightly higher than
-the training rate ($\approx 1.10\%$). This drift is documented, not
+the training rate ($0.9813\%$). This drift is documented, not
 corrected; correcting it would amount to tuning on the test window.
 
 \subsection{Censored Labels}
@@ -672,8 +672,9 @@ months on the raw feature table. Binning for continuous features uses
 deciles of the reference month. No new training occurs.
 
 \textbf{Result.} Max PSI is $3.9429$ on \texttt{velocity\_4w} between months
-0 and 1, far above the $0.1$ kill threshold. 23 of 28 features cross
-$\text{PSI} \geq 0.1$ in at least one adjacent pair. Cross-referencing
+0 and 1, far above the $0.1$ kill threshold. 9 of 28 features cross
+$\text{PSI} \geq 0.1$ in at least one adjacent pair (23 feature-month-pair
+combinations in total). Cross-referencing
 drift against the classifier's LR importances shows drift is concentrated
 on low-importance features: the drifted features together carry $18.84\%$
 of importance, only one of the top-5 importance features

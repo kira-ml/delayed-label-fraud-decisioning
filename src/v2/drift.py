@@ -187,11 +187,18 @@ def main() -> None:
             for f, p, psi in all_psi_values
             if psi >= PSI_DRIFT_THRESHOLD
         ]
+        unique_drifted = sorted(
+            {f for f, p, psi in all_psi_values
+             if psi >= PSI_DRIFT_THRESHOLD}
+        )
         results["max_psi"] = max_psi
         results["max_psi_feature"] = max_feat
         results["max_psi_pair"] = list(max_pair)
         results["drifted_features"] = drifted
         results["n_drifted"] = len(drifted)
+        results["unique_drifted_features"] = unique_drifted
+        results["n_unique_drifted_features"] = len(unique_drifted)
+        results["n_features_total"] = len(features)
         results["verdict"] = (
             "survived" if max_psi >= PSI_DRIFT_THRESHOLD else "killed"
         )
@@ -201,14 +208,21 @@ def main() -> None:
         results["max_psi_pair"] = None
         results["drifted_features"] = []
         results["n_drifted"] = 0
+        results["unique_drifted_features"] = []
+        results["n_unique_drifted_features"] = 0
+        results["n_features_total"] = len(features)
         results["verdict"] = "blocked"
 
     print()
     print(f"[drift] Max PSI = {results['max_psi']:.4f} "
           f"({results['max_psi_feature']}, "
           f"months {results['max_psi_pair']})")
-    print(f"[drift] Features with PSI >= {PSI_DRIFT_THRESHOLD}: "
-          f"{results['n_drifted']}")
+    print(f"[drift] (feature, pair) combos with PSI >= "
+          f"{PSI_DRIFT_THRESHOLD}: {results['n_drifted']}")
+    print(f"[drift] Unique features with max PSI >= "
+          f"{PSI_DRIFT_THRESHOLD}: "
+          f"{results['n_unique_drifted_features']} of "
+          f"{results['n_features_total']}")
     print(f"[drift] Verdict: {results['verdict']}")
 
     OUT_PATH.write_text(

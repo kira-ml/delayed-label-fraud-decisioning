@@ -51,7 +51,7 @@ Non-findings are reported at the same length and rigor as findings
 | H1 | Policy advantage stays >5% at plausible review capacity | **survived** | 44.25% at K=4,550 | `h1_capacity.json` |
 | H2 | Policy advantage stays >5% at 2-month delay | **survived** | 58.08%, CI [56.35%, 59.72%] | `h2_delay_2m.json` |
 | H3 | LR still wins under rolling monthly retraining | **confirmed** (fragile) | gap 4.25% / 4.17% (V1: 1.07%) | `h3_rolling_retrain.json` |
-| H4 | Feature drift measurable month-over-month | **survived** | max PSI 3.94; 23/28 drift | `h4_drift.json`, `h4_importance_crossref.json` |
+| H4 | Feature drift measurable month-over-month | **survived** | max PSI 3.94; 9/28 features drift | `h4_drift.json`, `h4_importance_crossref.json` |
 | H5 | Block rate differs >5pp across protected groups | **killed** | max disparity 2.26pp < 5pp | `h5_fairness.json` |
 | H6 | Direct cost estimate not materially confounded | **killed** (immaterial) | block stratum ECE 0.0600; bias below materiality | `h6_stratified_calibration.json` |
 
@@ -81,7 +81,8 @@ drift detector (H4). **Phase C:** skipped per `stop_criteria.md` §4.3.
 | Max PSI overall | **3.9429** |
 | Feature at max PSI | `velocity_4w` |
 | Month pair at max PSI | 0→1 |
-| Features with PSI ≥ 0.1 in ≥1 adjacent pair | **23 of 28** |
+| Unique features with max PSI ≥ 0.1 | **9 of 28** |
+| (feature, month-pair) combinations with PSI ≥ 0.1 | **23** |
 | Drift classification of max-PSI feature | significant (≥ 0.25) |
 | KS statistic (`velocity_4w`, 0→1) | 0.825 |
 | Importance share of drifted features | 18.84% |
@@ -103,8 +104,9 @@ Per-pair max PSI:
 
 Feature drift is measurable month-over-month and large. The maximum
 PSI is 3.9429 on `velocity_4w` between months 0 and 1, far above the
-0.1 kill threshold. 23 of 28 features cross PSI ≥ 0.1 in at least one
-adjacent pair. The cross-reference against the V1 classifier's LR
+0.1 kill threshold. 9 of 28 features have max PSI ≥ 0.1 in at least one
+adjacent pair (23 feature-month-pair combinations in total). The
+cross-reference against the V1 classifier's LR
 importances shows drift is concentrated on low-importance features:
 the drifted features together carry 18.84% of importance, only 1 of
 the top-5 importance features (`payment_type`, PSI 0.1730) drifted, and
@@ -129,9 +131,10 @@ is written before `src/monitoring/drift_detector.py` (per
 
 ### Amends V1?
 
-**Yes — Limitations section.** A drift note is added recording 23/28
-features drifted, concentrated on low-importance features, one top-5
-feature (`payment_type`) with moderate drift.
+**Yes — Limitations section.** A drift note is added recording 9 of 28
+features with max PSI ≥ 0.1 (23 feature-month-pair combinations),
+concentrated on low-importance features, one top-5 feature
+(`payment_type`) with moderate drift.
 
 ---
 
@@ -549,27 +552,31 @@ threshold. The kill criterion was applied as written.
   documented in `findings.md` §5.3 bounds the bias on V1's headline
   below the 5% threshold that gates causal machinery. No IPW, doubly
   robust, or randomized logging work is authorized.
-- **Phase D (communication).** V1's paper receives one V2 subsection;
+- **Phase D (communication).** V1's paper stays V1-only (course
+  deliverable, not reopened). V2 findings live in V2 documents only.
   `docs/v2/cut_list.md` is written; README is updated; blog post /
   LinkedIn series is published.
 
 ---
 
-## Appendix C — V1 Amendment Summary
+## Appendix C — V1 Amendment Plan (Not Applied)
 
-Per `falsification_plan.md` §7, V1 amendments are dated and recorded.
+V1's paper is the Intro to ML course deliverable and was not reopened
+for V2. The table below records the V2 findings that would amend V1's
+paper if it were reopened. None of these changes are reflected in the
+submitted V1 paper.
 
 | H | Amendment | V1 location | Type |
 |---|---|---|---|
 | H1 | Bounds stated: 44.25% (2% capacity), 53.11% (5%), 57.91% (unconstrained) | Limitations | Strengthening note |
 | H2 | Bound stated: 58.08% at 2-month delay | Limitations | Strengthening note |
 | H3 | Fragility note: gap 4.25% / 4.17% under rolling vs. 1.07% static | Classifier-selection subsection | Caveat |
-| H4 | Drift note: 23/28 drift, concentrated on low-importance; one top-5 (`payment_type`) moderate | Limitations | Caveat |
+| H4 | Drift note: 9/28 features drift, concentrated on low-importance; one top-5 (`payment_type`) moderate | Limitations | Caveat |
 | H5 | Non-finding note: block-rate disparity < 5pp; review-rate larger but not pre-registered | Limitations | Non-finding |
 | H6 | Non-finding note: block-stratum ECE 0.0600; bias bounded below materiality | Limitations | Non-finding |
 
-No amendment overturns V1's headline. Two strengthen it, two record
-caveats, two record non-findings.
+No finding overturns V1's headline. Two strengthen it, two record
+caveats, two record non-findings. None are applied to V1's paper.
 
 ---
 
@@ -622,7 +629,9 @@ was modified; no V1 file was touched.
 - **Output:** `reports/v2/drift_monitor.json`
 - **Reproduction:** `python -m src.monitoring.drift_detector` reports
   `Max PSI = 3.9429 (velocity_4w, months [0, 1])`, matching H4 exactly.
-  Drifted-feature count reads 23, matching `h4_drift.json` `n_drifted`.
+  Drifted-(feature, pair) count reads 23, matching `h4_drift.json`
+  `n_drifted`; unique drifted features read 9, matching
+  `h4_drift.json` `n_unique_drifted_features`.
   Top-5 importance tag appears on `payment_type`, matching
   `h4_importance_crossref.json`.
 - **Verdict on Phase B work:** accepted.

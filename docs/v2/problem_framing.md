@@ -222,7 +222,7 @@ results were seen. No `Blocked` verdicts.
 | H1 | survived | advantage 44.25% at K=4,550 (2% capacity) |
 | H2 | survived | advantage 58.08% at 2-month delay; CI [56.35%, 59.72%] |
 | H3 | confirmed (fragile margin) | LR both steps; gap 4.25% / 4.17% (V1: 1.07%) |
-| H4 | survived | max PSI 3.94 (`velocity_4w`, months 0→1); 23/28 features drift |
+| H4 | survived | max PSI 3.94 (`velocity_4w`, months 0→1); 9/28 features drift |
 | H5 | killed | max block-rate disparity 2.26pp (`customer_age`) < 5pp |
 | H6 | killed (bias immaterial) | block stratum ECE 0.0600 (n=725); bias on V1 headline ~2.1% |
 

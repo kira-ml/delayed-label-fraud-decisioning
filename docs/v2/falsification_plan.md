@@ -327,7 +327,7 @@ static split is not invalidated by drift at month granularity.
 **Effort.**  
 Half a day.
 
-**Status.** `survived` — max PSI 3.94 (`velocity_4w`, months 0→1); 23 of
+**Status.** `survived` — max PSI 3.94 (`velocity_4w`, months 0→1); 9 of
 28 features drift; kill criterion not met. Drift is concentrated on
 low-importance features. See §12 for details.
 
@@ -556,6 +556,11 @@ The V1 headline is amended if:
 H4 and H5 do not amend the headline directly. They amend the limitations
 section.
 
+**Post-Phase-A note (2026-10-03):** V1's paper was reclassified as the
+course deliverable and was not reopened for V2. The amendment rules
+above describe the design; they were not executed against V1's
+submitted paper. V2 findings are recorded in V2 documents only.
+
 ---
 
 ## 8. Relationship to V2 Problem Framing
@@ -594,11 +599,11 @@ report is written.
 
 - [x] `docs/v2/evaluation_framework.md` — metric definitions (2026-10-02)
 - [x] `docs/v2/stop_criteria.md` — phase gates and project stop (2026-10-02)
-- [ ] `docs/v2/documentation_map.md` — V1→V2 doc status table
+- [x] `docs/v2/documentation_map.md` — V1→V2 doc status table
 - [ ] `docs/v2/README.md` — reading order for the folder
 - [ ] `docs/v2/cut_list.md` — written at Phase D
-- [ ] `reports/v2_falsification.md` — Phase A assembled report
-- [ ] Conditional protocol docs — written only after survivors are known
+- [x] `reports/v2_falsification.md` — Phase A assembled report
+- [x] Conditional protocol docs — written for H1 and H4 survivors
 
 ---
 
@@ -682,7 +687,7 @@ criteria modified after results were seen.
 | H1 | **survived** | advantage 44.25% at K=4,550 (2% capacity); 58.08% at ≥10% capacity |
 | H2 | **survived** | advantage 58.08% at 2-month delay; 95% CI [56.35%, 59.72%] |
 | H3 | **confirmed** (fragile margin) | LR both steps; gap 4.25% / 4.17% (V1: 1.07%) |
-| H4 | **survived** | max PSI 3.94 (`velocity_4w`, months 0→1); 23/28 features drift |
+| H4 | **survived** | max PSI 3.94 (`velocity_4w`, months 0→1); 9/28 features drift |
 | H5 | **killed** | max block-rate disparity 2.26pp (`customer_age`) < 5pp |
 | H6 | **killed** (bias immaterial) | block stratum ECE 0.0600 (n=725); bias on V1 headline ~2.1% |
 

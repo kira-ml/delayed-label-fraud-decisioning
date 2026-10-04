@@ -77,22 +77,25 @@ means V2 work no longer reads it as a live source.
 
 ---
 
-## 6. V1 Amendments Recorded
+## 6. V1 Amendments Planned (Not Applied)
 
-Per `falsification_plan.md` §7, each amendment is dated and preserved
-at the point of the claim. This table is the index.
+V1's paper is the course deliverable and was not reopened for V2. The
+table below records what V2 findings would amend in V1's claims if
+V1's paper were reopened. None of these changes are reflected in the
+submitted V1 paper. V2 findings live in V2 documents only.
 
 | H | V1 document | V1 claim amended | Nature of amendment |
 |---|---|---|---|
 | H1 | Limitations section of V1 paper | Advantage stated as unconditional | Capacity envelope added: 44.25% at 2%, 53.11% at 5%, 57.91% unconstrained |
 | H2 | Limitations section of V1 paper | Delay stated as 1 month only | Delay envelope added: 58.08% at 2-month delay |
 | H3 | Classifier-selection subsection of V1 paper | LR selected over LGBM at 1.07% gap | Fragility note: 4.25% / 4.17% under rolling |
-| H4 | Limitations section of V1 paper | Drift named but not quantified | 23/28 features drift; concentrated on low-importance features |
+| H4 | Limitations section of V1 paper | Drift named but not quantified | 9/28 features drift; concentrated on low-importance features |
 | H5 | Limitations section of V1 paper | Segment disparity out of scope | Non-finding: block-rate disparity < 5pp across tested groupings |
 | H6 | Limitations section of V1 paper | Direct estimate assumed unbiased | Non-finding: block-stratum ECE 0.0600; bias ~2.1% |
 
-**No amendment overturns V1's headline.** The V1 headline is preserved
-with a conditions label wherever it appears in a V1 document.
+**No finding overturns V1's headline.** The V1 headline stands unchanged
+in the submitted paper. V2 conditions are documented here and in the
+V2 report, not in V1.
 
 ---
 
