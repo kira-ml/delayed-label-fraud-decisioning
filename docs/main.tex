@@ -69,24 +69,24 @@ suriosb@students.national-u.edu.ph}
 \begin{abstract}
 Fraud detection systems must decide whether to approve, review, or block a
 transaction in real time, yet fraud labels arrive weeks to months later and
-are frequently censored before the evaluation window closes. We frame this
-as a cost-sensitive decision problem rather than a classification problem
-and evaluate it under a temporal backtest on the Bank Account Fraud (BAF)
-dataset with a simulated one-month label delay. A Logistic Regression
-classifier feeding an argmin-of-expected-cost policy reduces realized cost
-per transaction by 57.91\% relative to the strongest baseline, LightGBM +
-static 0.5 at 0.017798, with a 95\% bootstrap confidence interval of
-[53.95\%, 62.13\%]. The result is robust to a 2$\times$ variation in each
-cost parameter and does not depend on test-set tuning: the cost rate is
-derived from training-window amounts only. We report censored-label counts
-(96,843 of 1,000,000, or 9.68\%) rather than treating unobserved fraud as
-legitimate, and we release the full evaluation protocol alongside the
-pipeline. The paper contributes a reproducible template for evaluating
-fraud decision policies under delayed and partial labels, and demonstrates
-that static thresholds on imbalanced data behave near-identically to
-approve-all even when the underlying model is well-calibrated. Limitations
-include a single delay regime, a synthetic dataset, and an amount proxy
-derived from proposed credit limit.
+are frequently censored before the evaluation window closes. This paper
+frames the problem as a cost-sensitive decision problem rather than a
+classification problem and evaluates it under a temporal backtest on the
+Bank Account Fraud (BAF) dataset with a simulated one-month label delay. A
+Logistic Regression classifier feeding an argmin-of-expected-cost policy
+reduces realized cost per transaction by 57.91\% relative to the strongest
+baseline, LightGBM + static 0.5 at 0.017798, with a 95\% bootstrap
+confidence interval of [53.95\%, 62.13\%]. The result is robust to a
+2$\times$ variation in each cost parameter and does not depend on test-set
+tuning: the cost rate is derived from training-window amounts only.
+Censored-label counts (96,843 of 1,000,000, or 9.68\%) are reported rather
+than treating unobserved fraud as legitimate, and the full evaluation
+protocol is released alongside the pipeline. The paper contributes a
+reproducible template for evaluating fraud decision policies under delayed
+and partial labels, and demonstrates that static thresholds on imbalanced
+data behave near-identically to approve-all even when the underlying model
+is well-calibrated. Limitations include a single delay regime, a synthetic
+dataset, and an amount proxy derived from proposed credit limit.
 \end{abstract}
 
 \begin{IEEEkeywords}
@@ -116,13 +116,13 @@ fraudulent in hindsight but whether to approve, review, or block it
 
 The fraud label itself is the core difficulty. When a customer's card is
 used without authorization, the loss is not confirmed at the moment of the
-transaction --- it is confirmed weeks to months later, when the customer
+transaction---it is confirmed weeks to months later, when the customer
 files a dispute, the merchant responds, and the chargeback is resolved.
 Industry dispute windows commonly run 30 to 120 days~\cite{visa}. On
 real-time payment rails such as InstaPay and PESONet, funds may become
 irrevocable before fraud is confirmed. A machine-learning model trained on
-settled disputes therefore learns from a label that arrives late --- and
-worse, from a label that may never arrive at all, because some fraud goes
+settled disputes therefore learns from a label that arrives late---and
+from a label that may never arrive at all, because some fraud goes
 unreported, some disputes are resolved in the merchant's favor, and some
 victims do not notice~\cite{chapelle2014}.
 
@@ -136,26 +136,26 @@ blocked, and what is the realized cost of that decision? On a dataset
 where fraud is roughly 1\% of transactions, a high AUC can coexist with a
 policy that barely improves on approving everything.
 
-This paper takes a different framing. We treat fraud detection as a
+This paper takes a different framing. Fraud detection is treated as a
 one-step decision problem under delayed, partial, and asymmetric-cost
 feedback. The model produces a fraud probability, but the system under
 evaluation is the \emph{policy} that maps that probability, the transaction
 amount, and a fixed cost matrix into one of three actions. The policy
 chooses the action that minimizes expected cost. This is not a novel
-policy --- expected-cost minimization is standard in cost-sensitive
-learning~\cite{elkan2001} --- but it is rarely evaluated end-to-end on a
+policy---expected-cost minimization is standard in cost-sensitive
+learning~\cite{elkan2001}---but it is rarely evaluated end-to-end on a
 fraud dataset with simulated label delay, censored labels reported rather
 than hidden, and statistical rigor on the primary metric.
 
-We evaluate this framing on the Bank Account Fraud (BAF) dataset, a
+The framing is evaluated on the Bank Account Fraud (BAF) dataset, a
 public 1-million-row synthetic benchmark designed for fraud
 research~\cite{jesus2022}. Because BAF provides only month-level time
-granularity, we simulate a one-month label delay and hold out the final
-month as censored. We compare a cost-sensitive policy against six
-baselines under an identical temporal split and cost matrix, report
-realized cost per transaction as the primary metric, and test the result's
-robustness with a 2$\times$ sensitivity analysis on each cost parameter and
-a bootstrap confidence interval.
+granularity, a one-month label delay is simulated and the final month is
+held out as censored. A cost-sensitive policy is compared against six
+baselines under an identical temporal split and cost matrix. Realized cost
+per transaction is the primary metric. Robustness is tested with a
+2$\times$ sensitivity analysis on each cost parameter and a bootstrap
+confidence interval.
 
 The main findings are as follows. First, the cost-sensitive policy reduces
 realized cost per transaction by \textbf{57.91\%} relative to the strongest
@@ -173,7 +173,7 @@ evaluation protocol for fraud decision policies under delayed and censored
 labels, including pre-registered stop criteria and an explicit prohibition
 on random splits. It contributes a temporal backtest on BAF with six
 canonical baselines, censored-label reporting, cost sensitivity, and
-bootstrap confidence intervals. And it contributes a documented negative
+bootstrap confidence intervals. It also contributes a documented negative
 result at the framing level: static thresholds on highly imbalanced fraud
 data are not decision rules, and reporting them without a cost anchor
 overstates model performance.
@@ -194,8 +194,8 @@ outlines future work.
 
 Fraud decisioning sits at the intersection of three research traditions:
 cost-sensitive learning, learning under delayed or partial feedback, and
-imbalanced fraud detection. Each contributes a piece of the framing we
-adopt, and each leaves a gap we address.
+imbalanced fraud detection. Each contributes a piece of the framing adopted
+here, and each leaves a gap that this paper addresses.
 
 \subsection{Cost-Sensitive Learning}
 
@@ -211,9 +211,9 @@ the cost asymmetry is severe: approving a fraudulent transaction exposes
 the issuer to the full fraud loss, while blocking a legitimate one incurs
 customer friction and churn~\cite{elkan2001,dalpozzolo2015}. A classifier
 trained to optimize accuracy or F1 treats these errors as symmetric and
-therefore selects the wrong operating point. This is the foundation of our
-decision-centric framing: the classifier is an input to a policy, and the
-policy chooses the action that minimizes expected cost.
+therefore selects the wrong operating point. This is the foundation of the
+decision-centric framing adopted here: the classifier is an input to a
+policy, and the policy chooses the action that minimizes expected cost.
 
 \subsection{Learning Under Delayed and Partial Feedback}
 
@@ -221,40 +221,39 @@ Chapelle modeled delayed feedback in display advertising as a survival
 problem, using survival analysis to estimate the conversion rate under an
 unknown delay distribution rather than assuming the label is either present
 or absent~\cite{chapelle2014}. The fraud setting shares the structural
-property --- a decision must be made before the outcome is known --- but
+property---a decision must be made before the outcome is known---but
 differs in that fraud labels are frequently censored rather than merely
 delayed. When the observation window closes before a chargeback resolves,
 the label is missing, not negative~\cite{jesus2022}. Treating censored
 labels as negatives biases the classifier toward under-detection and
-inflates apparent precision. We therefore hold out the final month of the
-dataset as censored, exclude it from training and evaluation, and report
-the censored count alongside every result.
+inflates apparent precision. The final month of the dataset is therefore
+held out as censored, excluded from training and evaluation, and the
+censored count is reported alongside every result.
 
 \subsection{Fraud Detection and Calibration}
 
 Dal Pozzolo et al.\ showed that probability calibration degrades under
 severe class imbalance and that uncalibrated scores undermine any
 downstream cost-sensitive threshold~\cite{dalpozzolo2015}. Their result
-matters directly for us: the decision policy we evaluate consumes a
-calibrated fraud probability, and the expected cost of each action is
-linear in that probability. An uncalibrated score produces wrong expected
-costs, and therefore wrong decisions. We treat calibration as a gate ---
-ECE below 0.05 on the validation window --- rather than a diagnostic. A
-classifier that fails the gate is rejected as a policy input regardless of
-its ranking performance.
+matters directly for the present work: the decision policy evaluated here
+consumes a calibrated fraud probability, and the expected cost of each
+action is linear in that probability. An uncalibrated score produces wrong
+expected costs, and therefore wrong decisions. Calibration is therefore
+treated as a gate---ECE below 0.05 on the validation window---rather than a
+diagnostic. A classifier that fails the gate is rejected as a policy input
+regardless of its ranking performance.
 
 \subsection{Benchmark Datasets for Fraud and Imbalanced Learning}
 
 The Bank Account Fraud (BAF) dataset was introduced by Jesus et al.\ as a
 realistic, temporal, imbalanced benchmark for machine learning
-evaluation~\cite{jesus2022}. It includes a month index that supports
-chronological splitting, a mixed-type feature set that reflects real
-account-application data, and documented biases that make it suitable for
-stress-testing evaluation protocols rather than only ranking models. We
-use BAF's v1 dataset because its month-level granularity supports a
-defensible delay simulation, its fraud rate of approximately 1.1\% forces
-the cost asymmetry to matter, and its licence (CC~BY~4.0) and citable
-source make our results reproducible.
+evaluation~\cite{jesus2022}. It includes a month index for chronological
+splitting, a mixed-type feature set, and documented biases that make it
+suitable for stress-testing evaluation protocols. This work uses BAF's v1
+dataset because its month-level granularity supports a defensible delay
+simulation, its fraud rate of approximately 1.1\% forces the cost asymmetry
+to matter, and its licence (CC~BY~4.0) and citable source make the results
+reproducible.
 
 \subsection{The Gap This Paper Fills}
 
@@ -265,12 +264,12 @@ ranking metrics without connecting them to an operational cost; studies on
 cost-sensitive learning often assume the label is available at decision
 time; studies on delayed feedback often focus on advertising, where the
 delay distribution is well understood, rather than on fraud, where labels
-are both late and frequently missing. We bridge these threads by evaluating
-an argmin-of-expected-cost policy end-to-end on BAF under a simulated
-one-month label delay, with censored labels counted rather than hidden,
-with a pre-registered evaluation protocol, and with bootstrap confidence
-intervals on the primary metric. The classifier is treated as an input to
-the policy; the policy is the object of study.
+are both late and frequently missing. This paper bridges these threads by
+evaluating an argmin-of-expected-cost policy end-to-end on BAF under a
+simulated one-month label delay, with censored labels counted rather than
+hidden, with a pre-registered evaluation protocol, and with bootstrap
+confidence intervals on the primary metric. The classifier is treated as an
+input to the policy; the policy is the object of study.
 
 %=====================================================================
 \section{Methodology}
@@ -525,7 +524,7 @@ a known temporal drift documented as a limitation.
 Exploratory analysis surfaced three findings that shaped preprocessing and
 evaluation. First, the fraud rate is non-monotonic across months: it begins
 at 1.13\% in month 0, dips to 0.87\% by month 2, then rises steadily to
-1.47\% by month 7 --- a temporal drift pattern consistent with the BAF
+1.47\% by month 7---a temporal drift pattern consistent with the BAF
 dataset documentation~\cite{jesus2022}. Second,
 \texttt{proposed\_credit\_limit} is heavily right-skewed (skew 1.30, mean
 515.85, median 200) with 24.17\% of values above the IQR upper bound,
@@ -558,7 +557,7 @@ Random Forest & $0.006515 \pm 0.000579$ \\
 
 LightGBM achieves the lowest mean cost, with Logistic Regression second and
 Random Forest clearly worse. The gap between LightGBM and Logistic
-Regression is 0.000063 in absolute terms, or 1.07\% relative --- well
+Regression is 0.000063 in absolute terms, or 1.07\% relative---well
 inside the 5\% noise-band guard. The comparison is therefore reported as a
 \textbf{non-finding}, and the selection is broken by simplicity under the
 ordering Logistic Regression $>$ Random Forest $>$ LightGBM. Logistic
@@ -690,15 +689,14 @@ cost against Logistic Regression by 1.07\%, which is well inside the range
 that a two-fold cross-validation on a 1.1\% positive-rate problem can
 produce by chance. The comparison is therefore reported as a non-finding,
 and the selection is broken in favor of the simpler, more interpretable
-classifier. A student paper that reported ``LightGBM beat Logistic
-Regression by 1.07\%'' as if it were substantive would be overclaiming on
-evidence that does not support the claim.
+classifier. Reporting a 1.07\% difference as substantive would overclaim
+on evidence that does not support the claim.
 
 The practical consequence is that a fraud operations team considering a
 deployment on this data would not need to prefer a gradient-boosting model
 over logistic regression on performance grounds alone. The
-interpretability of a linear model --- coefficients are readable, decisions
-are traceable, drift is diagnosable --- carries real operational value that
+interpretability of a linear model---coefficients are readable, decisions
+are traceable, drift is diagnosable---carries real operational value that
 a 1.07\% cost difference does not outweigh.
 
 \subsection{Why the Policy Beats the Static Baselines}
@@ -733,7 +731,7 @@ positive (0.1) is much smaller than the cost of a missed fraud (fraud loss
 $\times$ amount). A rule that optimized precision would route fewer
 transactions to review and would miss more fraud, raising realized cost.
 
-The dominant error type at the classifier's 0.5 cut is false negatives ---
+The dominant error type at the classifier's 0.5 cut is false negatives---
 2,843 of them against only 5 false positives on the test window. The policy
 mitigates this not by retraining the classifier but by using its
 probabilities differently: scores that would be classified as negative at
@@ -759,8 +757,8 @@ where the value is created.
 
 The evaluation in this paper is a controlled temporal backtest on a single
 synthetic dataset under a single delay regime. It establishes the
-methodological claim --- that a cost-sensitive policy can substantially
-reduce realized cost relative to static baselines --- but it does not
+methodological claim---that a cost-sensitive policy can substantially
+reduce realized cost relative to static baselines---but it does not
 establish general fraud-detection performance in production. The
 limitations fall into three groups: data, assumptions, and framing.
 
@@ -771,8 +769,8 @@ not production estimates. The delay regime is a single one-month interval
 determined by BAF's month-level granularity: longer delays, shorter
 delays, and mixed per-transaction delays are not evaluated, and the
 censored fraction is a direct consequence of the fixed regime. The amount
-column is a proxy --- \texttt{proposed\_credit\_limit}, not a true
-transaction amount --- so the amount scaling that drives much of the
+column is a proxy---\texttt{proposed\_credit\_limit}, not a true
+transaction amount---so the amount scaling that drives much of the
 policy advantage is applied to a proxy feature and its absolute magnitude
 should not be taken literally.
 
@@ -781,8 +779,8 @@ rather than a measured quantity; the sensitivity sweep bounds how much
 the result moves under 2$\times$ variation in each parameter, but the
 values themselves are chosen, not estimated from operational data. The
 reported classifier selection is itself an assumption: the comparison
-across three classifiers was a non-finding --- the top two were within
-1.07\% of each other in mean cross-validated cost --- so the choice of
+across three classifiers was a non-finding---the top two were within
+1.07\% of each other in mean cross-validated cost---so the choice of
 Logistic Regression is justified by interpretability and speed, not by
 superior performance. On a larger sample, a different seed, or a
 different temporal fold structure, a different classifier might be
@@ -833,8 +831,8 @@ of a classifier comparison that produced no finding, in place of a spurious
 ranking.
 
 Several directions remain open. The most immediate is the extension to
-additional delay regimes --- 2-month, 3-month, and mixed per-transaction
-delays --- which requires a dataset with finer timestamp granularity than
+additional delay regimes---2-month, 3-month, and mixed per-transaction
+delays---which requires a dataset with finer timestamp granularity than
 BAF provides. A second direction is capacity-aware decisioning, which would
 replace the unconstrained argmin with a policy that respects a finite
 review budget and reports the value lost to that constraint. A third is
@@ -855,8 +853,8 @@ this submission.
 
 \section{Data Dictionary}
 
-The full feature-by-feature schema --- names, types, units, allowed values,
-and source-time availability --- is provided in
+The full feature-by-feature schema---names, types, units, allowed values,
+and source-time availability---is provided in
 \texttt{documentation/data\_dictionary.md}. The 28 model features are 23
 numeric and 5 categorical. The exclusion list is
 \texttt{transaction\_id}, \texttt{fraud\_bool}, \texttt{month},
