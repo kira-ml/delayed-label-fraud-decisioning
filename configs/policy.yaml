@@ -1,0 +1,13 @@
+# Capacity-aware policy configuration.
+# See docs/v2/protocols/decision_policy_capacity.md §4.
+#
+# capacity_per_window: maximum number of transactions routed to `review`
+#   in one window.
+#   null       = unconstrained (V1 behavior; no capacity applied)
+#   227491     = 100% of V1 test window
+#   4550       = 2% of V1 test window (H1 kill-zone minimum)
+#
+# This value is not tuned on the test window. Changing it is a new
+# experiment with its own reported result.
+
+capacity_per_window: null

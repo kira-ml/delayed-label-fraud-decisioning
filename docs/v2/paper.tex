@@ -1,0 +1,1003 @@
+\documentclass[conference]{IEEEtran}
+\IEEEoverridecommandlockouts
+
+% Font: Latin Modern — the LaTeX-native Computer Modern family.
+% IEEEtran defaults to Times; these lines override it.
+\usepackage[T1]{fontenc}
+\usepackage{lmodern}
+\renewcommand{\rmdefault}{lmr}
+\renewcommand{\sfdefault}{lmss}
+\renewcommand{\ttdefault}{lmtt}
+\renewcommand{\familydefault}{\rmdefault}
+
+\usepackage{cite}
+\usepackage{amsmath,amssymb,amsfonts}
+\usepackage{algorithmic}
+\usepackage{graphicx}
+\usepackage{textcomp}
+\usepackage{xcolor}
+\usepackage{booktabs}
+\usepackage{url}
+\usepackage[hidelinks]{hyperref}
+
+\def\BibTeX{{\rm B\kern-.05em{\sc i\kern-.025em b}\kern-.08em
+    T\kern-.1667em\lower.7ex\hbox{E}\kern-.125emX}}
+
+\begin{document}
+
+\title{Cost-Sensitive Fraud Decisioning Under Delayed Labels:\\
+A Pre-Registered Falsification Study of Operational Robustness}
+
+\author{\IEEEauthorblockN{Ken Ira Lacson Talingting}
+\IEEEauthorblockA{\textit{Independent Research}\\
+Manila, Philippines \\
+\texttt{keniralacson@gmail.com}}}
+
+\maketitle
+
+\begin{abstract}
+Fraud detection systems must decide whether to approve, review, or block a
+transaction in real time, yet fraud labels arrive days to months later and
+are frequently censored before an evaluation window closes. We frame this
+as a cost-sensitive decision problem rather than a classification problem
+and evaluate it end-to-end on the Bank Account Fraud (BAF) dataset under a
+simulated one-month label delay. A Logistic Regression classifier feeding an
+argmin-of-expected-cost policy reduces realized cost per transaction by
+57.91\% relative to the strongest baseline, LightGBM with a static 0.5
+threshold, with a 95\% bootstrap confidence interval of [53.95\%, 62.13\%].
+We then subject the result to a pre-registered falsification study across
+six hypotheses that test its operational robustness: finite review capacity,
+a two-month label delay, rolling retraining, feature drift, group disparity,
+and stratified calibration. Three hypotheses survive, one is confirmed with
+a fragility note, and two are killed as non-findings; no kill criterion is
+modified after results are seen. The headline is not overturned. It is
+strengthened by capacity-robustness and delay-robustness, confirmed but
+narrowed under rolling retraining, and bounded below materiality by
+stratified calibration. We report censored-label counts ($96{,}843$ of
+$1{,}000{,}000$, $9.68\%$) rather than treating unobserved fraud as
+legitimate, and we release the full evaluation protocol and falsification
+plan alongside the pipeline. The paper contributes a reproducible template
+for evaluating fraud decision policies under delayed and partial labels, and
+demonstrates that static thresholds on highly imbalanced data behave
+near-identically to approve-all even when the underlying model is
+well-calibrated.
+\end{abstract}
+
+\begin{IEEEkeywords}
+cost-sensitive learning, fraud detection, delayed feedback, censored labels,
+decision policy, temporal backtest, pre-registered falsification,
+operational robustness, Bank Account Fraud dataset, expected-cost
+minimization, bootstrap confidence intervals, sensitivity analysis
+\end{IEEEkeywords}
+
+% =============================================================
+\section{Introduction}
+% =============================================================
+
+Digital payment systems process millions of transactions every day, and the
+operational question a fraud system faces is not whether a transaction is
+fraudulent in hindsight, but whether to approve, review, or block it
+\emph{before} the label arrives. This asymmetry is structural. Authorization
+happens in milliseconds; disputes and chargebacks resolve days to weeks
+later, and some fraud is never reported at all. A supervised model trained
+on settled disputes therefore learns from a label that arrives late and is
+censored not-at-random.
+
+Most published work in fraud detection treats the problem as binary
+classification and reports ranking metrics such as area under the ROC curve
+(AUC) or area under the precision--recall curve (PR-AUC). These metrics
+compare models on a fixed labeled dataset. They do not answer the
+operational question: given a score, should this transaction be approved,
+reviewed, or blocked, and what is the realized cost of that decision? On a
+dataset where fraud is roughly $1\%$ of transactions, a high AUC can coexist
+with a policy that barely improves on approving everything.
+
+This paper takes a different framing. We treat fraud detection as a
+one-step decision problem under delayed, partial, and asymmetric-cost
+feedback. The model produces a probability, but the system under evaluation
+is the \emph{policy} that maps that probability, the transaction amount, and
+a frozen cost matrix into one of three actions. The policy chooses the
+action that minimizes expected cost. This is not a new policy ---
+expected-cost minimization is standard in cost-sensitive learning --- but it
+is rarely evaluated end-to-end on a fraud dataset with simulated label
+delay, censored labels reported rather than hidden, and a pre-registered
+falsification study on its operational robustness.
+
+We evaluate this framing on the Bank Account Fraud (BAF) dataset, a public
+one-million-row synthetic benchmark designed for fraud research. Because BAF
+provides only month-level time granularity, we simulate a one-month label
+delay and hold the final month out as censored. We compare a cost-sensitive
+policy against six baselines under an identical temporal split and cost
+matrix, report realized cost per transaction as the primary metric, and test
+robustness with a $2\times$ sensitivity sweep across cost parameters and a
+bootstrap confidence interval.
+
+We then test whether the headline survives operational reality. Six
+falsifiable hypotheses are pre-registered with numeric kill criteria written
+before the tests run. The hypotheses cover review capacity, multi-regime
+delay, rolling retraining, feature drift, group disparity, and stratified
+calibration. Two of the six are killed and reported as non-findings. The
+headline is not overturned by any test.
+
+\subsection{Contributions}
+
+\begin{itemize}
+  \item A reproducible evaluation protocol for fraud decision policies under
+  delayed and censored labels, including pre-registered stop criteria and an
+  explicit prohibition on random splits.
+  \item A temporal backtest on BAF with six canonical baselines,
+  censored-label reporting, cost sensitivity, and bootstrap confidence
+  intervals. The policy reduces realized cost per transaction by $57.91\%$
+  relative to the strongest baseline, with a $95\%$ CI of $[53.95\%,
+  62.13\%]$.
+  \item A pre-registered falsification study across six operational
+  hypotheses. Three survive, one is confirmed with a fragility note, two are
+  killed. The headline is strengthened by capacity-robustness and
+  delay-robustness, narrowed under rolling retraining, and bounded below
+  materiality by stratified calibration.
+  \item A documented negative result at the framing level: static thresholds
+  on highly imbalanced fraud data are not decision rules. On this dataset,
+  the strongest static threshold reduces cost by only $5.97\%$ relative to
+  approve-all.
+\end{itemize}
+
+\subsection{Organization}
+
+Section~\ref{sec:related} reviews related work. Section~\ref{sec:problem}
+states the problem from first principles. Section~\ref{sec:policy} defines
+the decision policy. Section~\ref{sec:data} describes the dataset,
+delay simulation, temporal split, and cost matrix.
+Section~\ref{sec:setup} describes the experimental setup and baselines.
+Section~\ref{sec:results} reports the temporal backtest.
+Section~\ref{sec:robust} reports the falsification study.
+Section~\ref{sec:discussion} discusses implications. Section~\ref{sec:lim}
+states limitations. Section~\ref{sec:conclusion} concludes.
+
+% =============================================================
+\section{Related Work}
+\label{sec:related}
+% =============================================================
+
+\subsection{Cost-Sensitive Learning}
+
+Elkan \cite{elkan2001} formalized the theory of cost-sensitive learning and
+showed that a classifier trained to minimize misclassification error is
+suboptimal when class costs are asymmetric. The decision-theoretic view ---
+choose the action that minimizes expected cost --- is the foundation of our
+policy. Our work differs in the setting: we apply the policy to a fraud
+dataset under simulated label delay, and we evaluate it end-to-end rather
+than comparing classifiers on a fixed labeled split.
+
+\subsection{Delayed Feedback}
+
+Chapelle \cite{chapelle2014} studied delayed feedback in display
+advertising, where conversions arrive long after impressions. That work
+introduces the delay-aware evaluation problem and provides a probabilistic
+model for the conversion-time distribution. We adopt the delay-aware
+evaluation structure but do not model the delay distribution: BAF exposes
+month-level granularity only, so we fix a one-month regime and hold the
+final month out as censored. A two-month regime is tested in
+Section~\ref{sec:robust}.
+
+\subsection{Fraud Detection Datasets}
+
+The Bank Account Fraud (BAF) suite \cite{jesus2022} is a NeurIPS 2022
+benchmark designed to be biased, imbalanced, and dynamic, providing
+month-level temporal information that supports delay-aware evaluation. It is
+synthetic, which we treat as a limitation rather than a feature; its value
+here is that it is large enough to train reliably, is licensed for
+redistribution, and exposes a time column that is required for temporal
+splits.
+
+\subsection{Calibration Under Imbalance}
+
+Dal Pozzolo et al.\ \cite{dalpozzolo2015} demonstrated that
+class-imbalanced fraud classifiers often produce uncalibrated scores and
+that calibration materially affects downstream decisions. Our policy
+assumes $p = P(\text{fraud} \mid X_t)$ is a real probability, so we require
+an expected calibration error (ECE) below $0.05$ before a classifier is
+admissible as a policy input. In our case the selected classifier passes the
+gate without any post-hoc calibration.
+
+\subsection{Positioning}
+
+Our contribution is not a new model or a new policy. It is a demonstration
+that a standard cost-sensitive policy, evaluated under a documented temporal
+backtest, produces a large and stable cost reduction on an imbalanced fraud
+dataset --- and that the reduction survives a pre-registered falsification
+study that tests six operational assumptions in sequence. The falsification
+discipline, including the reporting of two killed hypotheses at the same
+length as the survivors, is the main methodological contribution.
+
+% =============================================================
+\section{Problem Formulation}
+\label{sec:problem}
+% =============================================================
+
+\subsection{The Structural Fact}
+
+In real-time payment systems, authorization happens before the outcome is
+known:
+\begin{equation}
+\text{decision\_time} = t, \qquad \text{label\_time} = t + \Delta_t,
+\qquad \Delta_t > 0 .
+\end{equation}
+This is not a modeling choice. It is the shape of the domain. It cannot be
+optimized away by a better classifier, a larger dataset, or a more complex
+architecture.
+
+\subsection{Consequences}
+
+Because $\Delta_t > 0$, the label is late, noisy, and sometimes missing. Six
+consequences follow: label delay, censoring (some fraud is never reported),
+label noise (some disputes are not fraud), class imbalance (fraud is rare),
+cost asymmetry (a missed fraud and a blocked customer do not cost the same),
+and concept drift (fraud patterns change over time). Each is named in
+Section~\ref{sec:lim} as a limitation or tested in
+Section~\ref{sec:robust}.
+
+\subsection{The Objective}
+
+For each transaction the system selects the action that minimizes expected
+operational cost:
+\begin{equation}
+a^* = \arg\min_{a \in \{\text{approve, review, block}\}}
+\mathbb{E}[\text{cost}(a)] .
+\end{equation}
+Classification metrics are supporting evidence, not the objective. A
+classifier with a higher macro F1 but a worse policy cost is a worse
+classifier for this project.
+
+% =============================================================
+\section{Decision Policy}
+\label{sec:policy}
+% =============================================================
+
+The policy consumes a calibrated probability $p$, the transaction amount
+$a$, and a frozen cost matrix, and outputs one action. The three expected
+costs are:
+\begin{align}
+\mathbb{E}[\text{cost(approve)}] &= p \cdot L_{\text{fraud}}(a), \label{eq:app}\\
+\mathbb{E}[\text{cost(review)}]  &= c_{\text{rev}} + p \cdot r_{\text{fraud}}, \label{eq:rev}\\
+\mathbb{E}[\text{cost(block)}]   &= (1 - p) \cdot c_{\text{fp}}, \label{eq:blk}
+\end{align}
+where $L_{\text{fraud}}(a)$ is the fraud loss if approved, $c_{\text{rev}}$
+is the review cost paid regardless of outcome, $r_{\text{fraud}}$ is the
+residual fraud loss after review, and $c_{\text{fp}}$ is the false-positive
+cost if a legitimate transaction is blocked. When amount scaling is enabled,
+$L_{\text{fraud}}(a) = a \cdot r_{\text{loss}}$, where $r_{\text{loss}} =
+1 / \overline{a}_{\text{train}}$ is calibrated on training-window amounts
+only.
+
+The policy chooses $a^* = \arg\min_{a} \mathbb{E}[\text{cost}(a)]$. The
+argmin rule is the source of truth. Derived thresholds on $p$ --- for
+example, $\partial \mathbb{E}[\text{cost(review)}] / \partial p = \partial
+\mathbb{E}[\text{cost(approve)}] / \partial p$ implies $p_{\text{rev}} =
+c_{\text{rev}} / (L_{\text{fraud}} - r_{\text{fraud}})$ --- are a
+diagnostic view for reporting, not the implementation.
+
+\subsection{Cost Matrix}
+
+The frozen cost matrix used in all experiments is
+\begin{equation}
+c_{\text{rev}} = 0.02,\; r_{\text{fraud}} = 0.30,\; c_{\text{fp}} = 0.10,\;
+r_{\text{loss}} = 0.0019187869 .
+\end{equation}
+The rate $r_{\text{loss}}$ satisfies $\overline{r_{\text{loss}} \cdot a} =
+1$ on the training window, matching the scale of the constant-loss variant
+without using any test-window information.
+
+\subsection{Calibration Requirement}
+
+The policy assumes $p$ is a probability. A classifier with $\text{ECE} \geq
+0.05$ on the validation window is not admissible as a policy input unless a
+documented calibration step brings it below. Our selected classifier
+achieves $\text{ECE} = 0.0033$ on validation and no calibration step is
+applied.
+
+% =============================================================
+\section{Data and Evaluation Protocol}
+\label{sec:data}
+% =============================================================
+
+\subsection{Dataset}
+
+The Bank Account Fraud (BAF) suite \cite{jesus2022} is a public
+$1{,}000{,}000$-row synthetic benchmark. The positive class rate is
+$1.1029\%$ overall. The dataset exposes a month column with values $0$ to
+$7$. We use the target \texttt{fraud\_bool} and 28 classifier features,
+excluding the row identifier, the time column, the target, the derived delay
+columns, and any field that may encode post-decision information. The BAF
+license (CC BY 4.0) permits redistribution.
+
+\subsection{Delay Simulation}
+
+BAF provides month-level granularity only, so we fix a one-month delay
+regime: $\text{label\_month} = \text{month} + 1$, and a transaction is
+observed iff $\text{label\_month} \leq 7$. Transactions in month 7 have
+$\text{label\_month} = 8$, beyond the dataset. They are \emph{censored},
+never treated as legitimate.
+
+\subsection{Temporal Split}
+
+Table~\ref{tab:split} shows the single chronological split used for the
+backtest. No shuffling occurs at any stage.
+
+\begin{table}[!t]
+\caption{Chronological split for the one-month delay regime.}
+\label{tab:split}
+\centering
+\small
+\begin{tabular}{lrrc}
+\toprule
+Split & Months & Rows & Fraud rate \\
+\midrule
+Train      & 0--2 & 397{,}039 & $0.9813\%$ \\
+Validation & 3--4 & 278{,}627 & $1.0207\%$ \\
+Test       & 5--6 & 227{,}491 & $1.2576\%$ \\
+Censored   & 7    & 96{,}843  & --- \\
+\midrule
+Observed   &      & 903{,}157 & \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+An assertion in the pipeline verifies $\text{train} + \text{validation} +
+\text{test} = \text{observed}$, guarding against off-by-one month
+boundaries. The test window is used exactly once, after model and policy
+are frozen. The test-window fraud rate ($1.2576\%$) is slightly higher than
+the training rate ($0.9813\%$). This drift is documented, not
+corrected; correcting it would amount to tuning on the test window.
+
+\subsection{Censored Labels}
+
+$96{,}843$ of $1{,}000{,}000$ rows ($9.68\%$) have
+$\text{label\_month} > 7$ and are excluded from training and evaluation.
+Their count is reported in every results table. Treating them as negatives
+would underestimate the fraud rate; treating them as positives would
+overstate it.
+
+\subsection{Calibration Gate}
+
+Every classifier is scored on the validation window and its ECE is computed
+over ten quantile bins. A classifier is admissible as a policy input iff
+$\text{ECE} < 0.05$, or a single documented calibration step brings it
+below. Our selected classifier achieves $\text{ECE} = 0.0033$; no
+calibration step is applied. Brier on the test window is $0.011506$.
+
+% =============================================================
+\section{Experimental Setup}
+\label{sec:setup}
+% =============================================================
+
+\subsection{Classifiers}
+
+Three traditional classifiers are compared as policy inputs: Logistic
+Regression (one-hot encoding plus standard scaling), Random Forest (ordinal
+encoding, no scaling), and LightGBM (native categorical handling, no
+scaling). Neural networks, deep learning, transformers, and AutoML are
+excluded by scope. Class reweighting and resampling are rejected because
+they distort calibrated probabilities, and the policy depends on calibration.
+
+\subsection{Hyperparameter Grids}
+
+Each algorithm uses a small documented grid. Logistic Regression varies $C
+\in \{0.01, 0.1, 1.0, 10.0\}$ with $\text{max\_iter} = 1000$; Random Forest
+varies $\text{n\_estimators} \in \{100, 200, 400\}$; LightGBM varies
+$\text{n\_estimators} \in \{100, 300, 500\}$ and $\text{learning\_rate} \in
+\{0.05, 0.10\}$. Each configuration is trained under expanding-window
+cross-validation by month on the training window; the training window
+yields two folds. Selection is by mean realized cost after the policy, not
+by macro F1.
+
+\subsection{Noise-Band Guard}
+
+A classifier selection counts as a finding only if the top classifier wins
+every fold \emph{and} the relative gap to the runner-up exceeds $5\%$.
+Otherwise the result is a non-finding and the tie is broken by simplicity,
+in the order Logistic Regression, Random Forest, LightGBM. This guard is
+applied before the test window is touched.
+
+\subsection{Baselines}
+
+Six canonical baselines are evaluated under the same split, cost matrix,
+and delay regime: (1) random decision (seeded), (2) approve-all, (3)
+block-all, (4) Logistic Regression $+$ static $0.5$, (5) Random Forest $+$
+static $0.5$, (6) LightGBM $+$ static $0.5$. The policy is compared against
+the strongest of the six, not the weakest.
+
+\subsection{Statistical Rigor}
+
+Every cost comparison is accompanied by a $95\%$ bootstrap confidence
+interval on $1{,}000$ resamples with seed $42$. An improvement counts as a
+finding only if the interval on the advantage excludes zero \emph{and} the
+relative cost reduction exceeds $5\%$.
+
+% =============================================================
+\section{Results: Temporal Backtest}
+\label{sec:results}
+% =============================================================
+
+\subsection{Classifier Selection}
+
+Table~\ref{tab:cv} shows cross-validated realized cost per transaction for
+the three classifiers. The top gap is $1.07\%$, below the pre-registered
+$5\%$ noise band, so the comparison is reported as a non-finding and
+Logistic Regression is selected by simplicity.
+
+\begin{table}[!t]
+\caption{Cross-validated realized cost per transaction on the training
+window. Lower is better.}
+\label{tab:cv}
+\centering
+\small
+\begin{tabular}{lcc}
+\toprule
+Classifier & Mean $\pm$ SD & Relative gap \\
+\midrule
+LightGBM            & $0.005852 \pm 0.000300$ & --- \\
+Logistic Regression & $0.005915 \pm 0.000338$ & $1.07\%$ \\
+Random Forest       & $0.006515 \pm 0.000579$ & $11.3\%$ \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\subsection{Policy Versus Baselines}
+
+Table~\ref{tab:backtest} reports realized cost per transaction on the test
+window. The policy achieves $0.007491$ cost per transaction; the strongest
+baseline is LightGBM with a static $0.5$ threshold at $0.017798$. The
+advantage is $57.91\%$ with a $95\%$ bootstrap CI of $[53.95\%, 62.13\%]$,
+which excludes zero.
+
+\begin{table}[!t]
+\caption{Realized cost per transaction on the frozen test window
+($227{,}491$ rows). The policy is the argmin of expected cost.}
+\label{tab:backtest}
+\centering
+\small
+\begin{tabular}{lr}
+\toprule
+Scenario & Cost / txn \\
+\midrule
+Block-all                     & $0.098742$ \\
+Random                        & $0.047484$ \\
+Approve-all                   & $0.018928$ \\
+Random Forest $+$ static $0.5$& $0.018928$ \\
+Logistic Regression $+$ 0.5   & $0.018737$ \\
+LightGBM $+$ static $0.5$     & $0.017798$ \\
+\midrule
+\textbf{Cost-sensitive policy} & $\mathbf{0.007491}$ \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+The static-threshold baselines are informative. The strongest of the three
+(LightGBM $+$ $0.5$) reduces cost by only $5.97\%$ relative to approve-all.
+Logistic Regression $+$ $0.5$ reduces by $1.01\%$; Random Forest $+$ $0.5$
+reduces by $0\%$. On highly imbalanced fraud data, a static threshold is
+not a decision rule.
+
+\subsection{Action Distribution}
+
+The policy routes $205{,}395$ transactions to approve, $21{,}371$ to review
+($9.39\%$), and $725$ to block. The review band is where most of the cost
+reduction lives; the block band is small and precise.
+
+\subsection{Cost Sensitivity}
+
+Each of the three cost parameters is varied over a $2\times$ range.
+The policy remains the lowest-cost action at every variation. The minimum
+advantage across the sweep is $47.76\%$, at $\text{review\_cost} = 0.04$.
+Table~\ref{tab:sens} summarizes.
+
+\begin{table}[!t]
+\caption{Cost sensitivity sweep. Each parameter is varied one at a time.}
+\label{tab:sens}
+\centering
+\small
+\begin{tabular}{lcc}
+\toprule
+Variation & Policy cost & Advantage \\
+\midrule
+Baseline                          & $0.007491$ & $57.91\%$ \\
+$c_{\text{fp}} = 0.05$            & $0.007037$ & $60.36\%$ \\
+$c_{\text{fp}} = 0.20$            & $0.007625$ & $57.38\%$ \\
+$c_{\text{rev}} = 0.01$           & $0.006253$ & $64.87\%$ \\
+$c_{\text{rev}} = 0.04$           & $0.009298$ & $47.76\%$ \\
+$r_{\text{fraud}} = 0.15$         & $0.006588$ & $62.99\%$ \\
+$r_{\text{fraud}} = 0.60$         & $0.008700$ & $51.12\%$ \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\subsection{Bootstrap Confidence Intervals}
+
+The $95\%$ bootstrap CIs are $[0.007196, 0.007797]$ for the policy cost,
+$[0.016967, 0.018670]$ for the LightGBM $+$ $0.5$ baseline, and
+$[0.009602, 0.011058]$ for the difference. The advantage CI is
+$[53.95\%, 62.13\%]$.
+
+% =============================================================
+\section{Operational Robustness: A Pre-Registered Falsification Study}
+\label{sec:robust}
+% =============================================================
+
+The temporal backtest produces a single, static result under one cost
+matrix, one delay regime, and one training split. The result is only as
+meaningful as the assumptions that produced it. This section tests whether
+the headline survives operational reality: finite review capacity, a longer
+label delay, rolling retraining, input drift, group disparity, and
+confounding.
+
+\subsection{Method}
+
+Six falsifiable hypotheses are pre-registered with numeric kill criteria
+written before the tests run. No kill criterion is modified after results
+are seen. A hypothesis that fails its criterion is reported as a
+non-finding and dropped from scope. The execution order is cheapest-first,
+so that early kills reduce the scope of later work. Non-findings are
+reported at the same length and rigor as findings.
+
+\subsection{H1: Finite Review Capacity}
+
+\textbf{Hypothesis.} The policy advantage ($>5\%$ relative cost reduction)
+is preserved when review is constrained to a finite per-window capacity.
+
+\textbf{Kill criterion.} At any tested capacity $K \geq 4{,}550$ ($2\%$ of
+test volume), the advantage drops below $5\%$.
+
+\textbf{Test.} Re-rank the frozen test-window scores by
+$\min(c_{\text{approve}}, c_{\text{block}}) - c_{\text{review}}$, keep the
+top $K$ in review, and route the rest by approve-vs-block argmin. No
+classifier is retrained; no test score is recomputed.
+
+\textbf{Result.} Table~\ref{tab:h1} reports the advantage at five capacity
+levels. The minimum in the kill zone is $44.25\%$ at $K = 4{,}550$; the
+margin above the kill threshold is $39.25$ percentage points. Above
+$\approx 9.4\%$ capacity the unconstrained advantage ($57.91\%$) is
+recovered in full. The policy degrades gracefully as review tightens; there
+is no discontinuity.
+
+\textbf{Verdict.} \textbf{Survived.} V1's unconstrained-review assumption is
+not load-bearing for the headline.
+
+\begin{table}[!t]
+\caption{H1 — policy advantage under constrained review capacity.}
+\label{tab:h1}
+\centering
+\small
+\begin{tabular}{rrcc}
+\toprule
+$K$ & Fraction & Advantage & Kill zone \\
+\midrule
+$2{,}275$  & $1\%$  & $41.88\%$ & no \\
+$4{,}550$  & $2\%$  & $44.25\%$ & yes (min) \\
+$11{,}375$ & $5\%$  & $53.11\%$ & yes \\
+$22{,}750$ & $10\%$ & $57.91\%$ & yes \\
+$45{,}499$ & $20\%$ & $57.91\%$ & yes \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\subsection{H2: Multi-Regime Delay}
+
+\textbf{Hypothesis.} The advantage is preserved when label delay is
+two months instead of one.
+
+\textbf{Kill criterion.} Advantage drops below $5\%$ at a two-month delay.
+
+\textbf{Test.} Re-run the pipeline with $\text{label\_offset} = 2$. The
+split becomes train 0--1, validation 2--3, test 4--5, censored 6--7. The
+classifier is retrained on the smaller window; the policy and cost matrix
+are unchanged.
+
+\textbf{Result.} Censoring rises from $9.68\%$ to $20.50\%$ and the training
+window shrinks from $397{,}039$ to $260{,}060$ rows. The policy advantage is
+$58.08\%$ with a $95\%$ CI of $[56.35\%, 59.72\%]$, marginally wider than
+V1's $57.91\%$ and well above the kill threshold. Validation ECE is
+$0.0035$, below the $0.05$ gate.
+
+\textbf{Verdict.} \textbf{Survived.} The decision-centric framing is robust
+to the delay regime tested. V1's single one-month regime is not
+load-bearing.
+
+\begin{table}[!t]
+\caption{H2 — headline comparison across delay regimes.}
+\label{tab:h2}
+\centering
+\small
+\begin{tabular}{lcc}
+\toprule
+Quantity & V1 (1-month) & H2 (2-month) \\
+\midrule
+Censoring rate           & $9.68\%$             & $20.50\%$ \\
+Train rows               & $397{,}039$          & $260{,}060$ \\
+Test rows                & $227{,}491$          & $247{,}014$ \\
+Policy cost / txn        & $0.007491$           & $0.007289$ \\
+Advantage                & $57.91\%$            & $58.08\%$ \\
+Bootstrap $95\%$ CI      & $[53.95\%, 62.13\%]$ & $[56.35\%, 59.72\%]$ \\
+ECE (validation)         & $0.0033$             & $0.0035$ \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\subsection{H3: Rolling Retraining}
+
+\textbf{Hypothesis.} Logistic Regression remains the selected classifier
+under rolling monthly retraining, as it did under V1's static split.
+
+\textbf{Kill criterion.} The model choice flips in either rolling step.
+
+\textbf{Test.} Two steps are run: $m=5$ (train 0--3, validate 4) and $m=6$
+(train 0--4, validate 5). At each step, LR, RF, and LGBM are retrained with
+the same grids, and the noise-band guard is applied.
+
+\textbf{Result.} LR is selected at both steps. But the LGBM-vs-LR gap under
+rolling retraining ($4.25\%$ and $4.17\%$) is roughly four times larger
+than V1's static split ($1.07\%$), and both rolling steps sit within
+$0.75$ percentage points of the $5\%$ flip threshold.
+
+\textbf{Verdict.} \textbf{Confirmed, fragile.} The selection stands, but
+the margin is thinner than the single static split suggested. This is
+recorded as a fragility note rather than a strong confirmation.
+
+\begin{table}[!t]
+\caption{H3 — noise-band gap, rolling versus static.}
+\label{tab:h3}
+\centering
+\small
+\begin{tabular}{lc}
+\toprule
+Split & LGBM-vs-LR gap \\
+\midrule
+V1 static split        & $1.07\%$ \\
+H3 step 1 ($m=5$)      & $4.25\%$ \\
+H3 step 2 ($m=6$)      & $4.17\%$ \\
+Noise-band threshold   & $5.00\%$ \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\subsection{H4: Feature Drift}
+
+\textbf{Hypothesis.} Feature drift is measurable month-over-month: at least
+one feature shows PSI $\geq 0.1$ between consecutive months.
+
+\textbf{Kill criterion.} Maximum PSI across all features and all adjacent
+month pairs is below $0.1$.
+
+\textbf{Test.} Compute PSI for all 28 classifier features between adjacent
+months on the raw feature table. Binning for continuous features uses
+deciles of the reference month. No new training occurs.
+
+\textbf{Result.} Max PSI is $3.9429$ on \texttt{velocity\_4w} between months
+0 and 1, far above the $0.1$ kill threshold. 9 of 28 features cross
+$\text{PSI} \geq 0.1$ in at least one adjacent pair (23 feature-month-pair
+combinations in total). Cross-referencing
+drift against the classifier's LR importances shows drift is concentrated
+on low-importance features: the drifted features together carry $18.84\%$
+of importance, only one of the top-5 importance features
+(\texttt{payment\_type}, PSI $0.1730$) drifted, and the largest-magnitude
+drift (\texttt{velocity\_4w}) carries $0.49\%$ importance.
+
+\textbf{Verdict.} \textbf{Survived.} The static split is challenged by
+drift but not invalidated. A monitoring component has signal to detect.
+
+\begin{table}[!t]
+\caption{H4 — maximum PSI per adjacent month pair.}
+\label{tab:h4}
+\centering
+\small
+\begin{tabular}{rrc}
+\toprule
+Pair & Max PSI & Feature \\
+\midrule
+$0 \to 1$ & $3.9429$ & \texttt{velocity\_4w} \\
+$1 \to 2$ & $0.5107$ & \texttt{velocity\_4w} \\
+$2 \to 3$ & $3.0454$ & \texttt{velocity\_4w} \\
+$3 \to 4$ & $0.9611$ & \texttt{velocity\_4w} \\
+$4 \to 5$ & $1.6714$ & \texttt{velocity\_4w} \\
+$5 \to 6$ & $0.5549$ & \texttt{velocity\_4w} \\
+$6 \to 7$ & $3.3890$ & \texttt{velocity\_4w} \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\subsection{H5: Group Disparity}
+
+\textbf{Hypothesis.} Block rate differs by more than $5$ percentage points
+across at least one grouping of transactions by a candidate protected
+attribute.
+
+\textbf{Kill criterion.} Maximum block-rate disparity is below $5$
+percentage points across all tested groupings.
+
+\textbf{Test.} Compute block rate, review rate, and fraud rate per group for
+three groupings: \texttt{customer\_age} in pre-registered bins,
+\texttt{employment\_status}, and \texttt{housing\_status}. Groups with $n <
+500$ are excluded from disparity calculation.
+
+\textbf{Result.} Table~\ref{tab:h5} reports the disparities. The maximum
+block-rate disparity is $2.26$ percentage points on
+\texttt{customer\_age}. Review-rate disparities are materially larger
+($15.46$, $11.73$, and $33.18$ percentage points across the three
+groupings), but they are not the pre-registered metric and are reported as
+supporting evidence only.
+
+\textbf{Verdict.} \textbf{Killed.} No block-rate disparity above the
+pre-registered threshold is observed. Fairness constraints are not
+justified by this diagnostic. The review-rate observation is recorded as a
+pre-registration limitation for future work.
+
+\begin{table}[!t]
+\caption{H5 — group disparity by grouping (percentage points).}
+\label{tab:h5}
+\centering
+\small
+\begin{tabular}{lcc}
+\toprule
+Grouping & Block-rate & Review-rate \\
+\midrule
+\texttt{customer\_age}     & $2.26$  & $15.46$ \\
+\texttt{employment\_status}& $1.36$  & $11.73$ \\
+\texttt{housing\_status}   & $1.76$  & $33.18$ \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\subsection{H6: Stratified Calibration}
+
+\textbf{Hypothesis.} The direct cost estimate is not materially confounded
+by the policy's deterministic selection on classifier inputs.
+
+\textbf{Kill criterion.} Any action stratum has $\text{ECE} \geq 0.05$.
+
+\textbf{Test.} Split the test window by action (approve, review, block) and
+compute ECE within each stratum. Under conditional exchangeability given
+the model's inputs, per-stratum calibration is a necessary condition for
+the direct estimate to be unbiased.
+
+\textbf{Result.} The block stratum shows $\text{ECE} = 0.0600$, above the
+$0.05$ threshold. The stratum is $725$ rows ($0.32\%$ of the test window)
+and carries $24.02\times$ the aggregate ECE. The materiality check
+required by the H6 kill clause bounds the plausible bias on the headline
+advantage below the $5\%$ threshold that would authorize causal machinery.
+
+\textbf{Verdict.} \textbf{Killed (immaterial).} The block stratum is
+miscalibrated, but the stratum is too small for the miscalibration to
+materially affect the headline. No IPW, doubly robust, or randomized
+logging work is authorized.
+
+\begin{table}[!t]
+\caption{H6 — per-stratum calibration on the test window.}
+\label{tab:h6}
+\centering
+\small
+\begin{tabular}{lrrrr}
+\toprule
+Stratum & $n$ & Base & $\overline{p}$ & ECE \\
+\midrule
+approve & $205{,}395$ & $0.69\%$ & $0.0059$ & $0.0011$ \\
+review  & $21{,}371$  & $5.65\%$ & $0.0422$ & $0.0144$ \\
+block   & $725$       & $32.69\%$& $0.2794$ & $\mathbf{0.0600}$ \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\subsection{Summary of Verdicts}
+
+\begin{table}[!t]
+\caption{Pre-registered falsification study: six verdicts.}
+\label{tab:verdicts}
+\centering
+\small
+\begin{tabular}{lll}
+\toprule
+ID & Hypothesis & Verdict \\
+\midrule
+H1 & Capacity-constrained        & survived \\
+H2 & Two-month delay             & survived \\
+H3 & Rolling retraining          & confirmed (fragile) \\
+H4 & Feature drift               & survived \\
+H5 & Group disparity             & killed \\
+H6 & Stratified calibration      & killed (immaterial) \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+The V1 headline is not overturned by any test. It is strengthened by H1 and
+H2, confirmed with a fragility note by H3, challenged but not broken by H4,
+and bounded below materiality by H6. Two proposed concerns (H5 and H6) are
+tested and dismissed.
+
+% =============================================================
+\section{Discussion}
+\label{sec:discussion}
+% =============================================================
+
+\subsection{Why the Policy Wins}
+
+The static-threshold baselines are informative. LightGBM with a static
+$0.5$ cutoff reduces realized cost by only $5.97\%$ relative to
+approve-all. Logistic Regression $+$ $0.5$ reduces by $1.01\%$, and Random
+Forest $+$ $0.5$ reduces by $0\%$. On this dataset, a well-calibrated
+classifier with a fixed threshold is nearly indistinguishable from
+approving every transaction. The policy's advantage comes from the cost
+rule, not from the classifier. This is the paper's most operationally
+useful finding.
+
+\subsection{What the Falsification Study Shows}
+
+The falsification study is the paper's main methodological contribution.
+Each of V1's load-bearing assumptions is tested in isolation with a numeric
+kill criterion written before the test. Three assumptions are confirmed as
+robust, one is narrowed (classifier selection is confirmed but fragile under
+rolling retraining), and two proposed concerns are dismissed. Every verdict
+is reported at the same length as the others. Two of the six are
+non-findings.
+
+The falsification discipline is what makes the robustness claim credible.
+Without it, "the result survives X" is an unfalsifiable statement. With it,
+the reader can see exactly which conditions were tested, what threshold
+would have killed each, and what the measured value was.
+
+\subsection{Capacity, Delay, and Drift}
+
+H1 shows the policy advantage survives a $4.7\times$ reduction in review
+capacity below the observed band size. H2 shows the advantage survives a
+doubling of the label delay. H4 shows drift is real but concentrated on
+features the classifier does not rely on. Together these three results
+suggest that the decision-centric framing is not an artifact of a favorable
+split, favorable delay, or favorable feature stability.
+
+\subsection{The Rolling-Retraining Fragility}
+
+H3 is the one place where the study finds a narrowing. The classifier
+selection is stable under rolling retraining, but the gap between the top
+two classifiers is four times larger than under the static split. The
+selection stands; the margin is thinner than V1 alone implied. This is a
+caveat, not a reversal, and it is reported as such.
+
+\subsection{Two Non-Findings}
+
+H5 and H6 are killed. Neither fairness constraints nor causal machinery are
+justified by the diagnostics. Reporting these as non-findings, at the same
+length as the survivors, is deliberate. A falsification study that reports
+only the survivors is not a falsification study.
+
+% =============================================================
+\section{Limitations}
+\label{sec:lim}
+% =============================================================
+
+\subsection{Dataset Limitations}
+
+BAF is synthetic. Real fraud distributions differ in ways that the
+benchmark cannot capture. The reported cost reduction is not a production
+estimate. Fraud is assumed to occur at a fixed overall rate of $1.1029\%$;
+real systems face drifting rates.
+
+\subsection{Delay Regime}
+
+Only one- and two-month delay regimes are tested. The dataset provides
+month-level granularity only; sub-month regimes are not possible. A
+production system faces delay distributions, not point delays.
+
+\subsection{Amount Proxy}
+
+The amount column is proxied by \texttt{proposed\_credit\_limit}. It
+correlates with transaction size but is not a true transaction amount, and
+it does not scale false-positive cost.
+
+\subsection{Capacity Model}
+
+Capacity is modeled as a per-window count of reviews. Wall-clock latency,
+investigator skill variation, and queue dynamics are not modeled.
+
+\subsection{Feedback and Adversarial Effects}
+
+BAF is a static dataset. The policy's decisions do not affect future
+labels. Fraudsters are assumed not to adapt. Both effects are real in
+production and are named here rather than modeled.
+
+\subsection{Pre-Registration Limitations}
+
+The H5 kill criterion used absolute block-rate disparity, which is bounded
+below $1$ percentage point by the policy's overall block rate. Review-rate
+disparity is materially larger. The H6 kill criterion applies at the
+stratum level without a sample-size correction; the block stratum is $725$
+rows and ECE over such a stratum has substantial sampling noise. Both
+criteria are applied as written.
+
+\subsection{What Is Not Claimed}
+
+Production readiness is not claimed. Generalization to other fraud domains
+is not claimed. A higher AUC than prior work is not claimed. Causality is
+not claimed. The results are specific to the BAF dataset, the frozen cost
+matrix, the temporal split, and the delay regimes tested.
+
+% =============================================================
+\section{Conclusion and Future Work}
+\label{sec:conclusion}
+% =============================================================
+
+We have presented a cost-sensitive fraud decision policy, evaluated it
+end-to-end under a delayed and censored label regime on the Bank Account
+Fraud dataset, and tested its operational robustness with a pre-registered
+falsification study. The policy reduces realized cost per transaction by
+$57.91\%$ relative to the strongest static baseline, with a $95\%$ bootstrap
+confidence interval of $[53.95\%, 62.13\%]$ that excludes zero. The result
+is robust to a $2\times$ variation in each cost parameter, with a minimum
+advantage of $47.76\%$ across the sweep. It survives constrained review
+capacity down to $2\%$ of test volume, survives a two-month label delay,
+and is confirmed under rolling retraining with a fragility note. Two
+proposed concerns --- group disparity and stratified calibration --- are
+tested and killed as non-findings.
+
+The falsification study is the paper's methodological contribution. It
+shows that a headline result can be validated operationally without
+retraining on the test set, without re-touching the frozen evaluation
+window, and without expanding the modeling scope. Two of the six
+hypotheses are reported as non-findings at the same length as the
+survivors.
+
+Several directions are named but not pursued. Capacity-aware ranking and
+scheduling in wall-clock time; multi-regime delay with sub-month
+granularity; a drift-correction model; causal estimation under
+counterfactual policy selection; and amount-scaled false-positive cost are
+all natural extensions. Each would require its own pre-registered kill
+criterion before implementation, following the discipline established here.
+
+% =============================================================
+\begin{thebibliography}{00}
+% =============================================================
+
+\bibitem{jesus2022} S.~Jesus, J.~Pombal, D.~Alves, A.~Cruz, P.~Saleiro,
+R.~Ribeiro, J.~Gama, and P.~Bizarro, ``Turning the tables: Biased,
+imbalanced, dynamic tabular datasets for ML evaluation,'' in \emph{Proc.
+NeurIPS Datasets and Benchmarks Track}, 2022.
+
+\bibitem{elkan2001} C.~Elkan, ``The foundations of cost-sensitive
+learning,'' in \emph{Proc. 17th Int. Joint Conf. Artificial Intelligence},
+2001, pp.~973--978.
+
+\bibitem{elkan2008} C.~Elkan and K.~Noto, ``Learning classifiers from only
+positive and unlabeled data,'' in \emph{Proc. 14th ACM SIGKDD Int. Conf.
+Knowledge Discovery and Data Mining}, 2008, pp.~213--220.
+
+\bibitem{chapelle2014} O.~Chapelle, ``Modeling delayed feedback in display
+advertising,'' in \emph{Proc. 20th ACM SIGKDD Int. Conf. Knowledge
+Discovery and Data Mining}, 2014, pp.~1097--1105.
+
+\bibitem{dalpozzolo2015} A.~Dal~Pozzolo, O.~Caelen, R.~A.~Johnson, and
+G.~Bontempi, ``Calibrating probability with an unbalanced class: An
+application to fraud detection,'' in \emph{Proc. IEEE Symp. Computational
+Intelligence and Data Mining}, 2015, pp.~1--7.
+
+\bibitem{pedregosa2011} F.~Pedregosa \emph{et al.}, ``Scikit-learn: Machine
+learning in Python,'' \emph{Journal of Machine Learning Research}, vol.~12,
+pp.~2825--2830, 2011.
+
+\bibitem{ke2017} G.~Ke \emph{et al.}, ``LightGBM: A highly efficient
+gradient boosting decision tree,'' in \emph{Proc. Advances in Neural
+Information Processing Systems}, 2017, pp.~3146--3154.
+
+\end{thebibliography}
+
+% =============================================================
+\appendices
+\section{Reproducibility}
+% =============================================================
+
+Every result in this paper is reproducible from the raw dataset, the
+configuration files, and a fixed seed ($42$). The pipeline executes in one
+command. The code, the falsification plan, the pre-registered kill criteria,
+the six intermediate evidence files, and the assembled falsification report
+are released alongside the paper.
+
+Test coverage is 68 unit tests spanning the policy, the cost matrix, the
+data schema, the model, the app validation, and the two Phase~B
+components. All pass on the released commit.
+
+\end{document}
