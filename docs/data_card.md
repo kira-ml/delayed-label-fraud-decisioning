@@ -62,7 +62,7 @@ design.
 | Source | Jesus et al., "Turning the Tables: Biased, Imbalanced, Dynamic Tabular Datasets for ML Evaluation," NeurIPS 2022 |
 | Source URL | https://arxiv.org/abs/2211.13358 |
 | Dataset URL | https://www.kaggle.com/datasets/sgpjesus/bank-account-fraud-dataset-neurips-2022 |
-| License | CC BY 4.0 |
+| License | CC BY-NC-SA 4.0 (non-commercial research use) |
 | Format | CSV |
 | Rows | 1,000,000 |
 | Raw columns | 32 (including target) |
@@ -80,7 +80,7 @@ design.
 - It is **imbalanced** (~1.1%), which is realistic for fraud and forces the
   cost asymmetry to matter.
 - It is **tabular with mixed types**, matching the domain.
-- It has a **legitimate license** (CC BY 4.0) and a **citable source**.
+- It has a **legitimate license** (CC BY-NC-SA 4.0) and a **citable source**.
 - It is **small enough** to iterate on and **large enough** to train
   reliably.
 

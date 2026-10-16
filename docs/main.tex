@@ -114,10 +114,10 @@ transactions every day. According to the Bangko Sentral ng Pilipinas
 from 20.1\% in 2020 to 52.8\% in 2023, surpassing the central bank's
 50\% target~\cite{bsp2023roadmap}. The value of transactions processed through Philippine payment systems
 has grown substantially over the same period~\cite{bspspei}. This
-growth has brought fraud into closer view: the BSP's Consumer Assistance
-Mechanism processed over 10,000 consumer complaints in 2023, with
-unauthorized online transfers and fraudulent withdrawals representing a
-substantial share~\cite{bspcam}. For banks, issuers, merchants, and their
+growth has brought fraud into closer view: consumer complaints handled by
+the BSP's Consumer Assistance Mechanism have grown alongside digital
+adoption, with unauthorized online transfers and fraudulent withdrawals
+among the recurring concerns~\cite{bspcam}. For banks, issuers, merchants, and their
 customers, the operational question is not whether a transaction is
 fraudulent in hindsight but whether to approve, review, or block it
 \emph{before} the label arrives.
@@ -240,9 +240,10 @@ censored count is reported alongside every result.
 
 \subsection{Fraud Detection and Calibration}
 
-Dal Pozzolo et al.\ showed that probability calibration degrades under
-severe class imbalance and that uncalibrated scores undermine any
-downstream cost-sensitive threshold~\cite{dalpozzolo2015}. Their result
+Dal Pozzolo et al.\ showed that undersampling, a common remedy for severe
+class imbalance, distorts predicted probabilities, so that a Bayes
+minimum-risk threshold applied to the distorted scores selects the wrong
+operating point unless the probabilities are corrected~\cite{dalpozzolo2015}. Their result
 matters directly for the present work: the decision policy evaluated here
 consumes a calibrated fraud probability, and the expected cost of each
 action is linear in that probability. An uncalibrated score produces wrong
@@ -260,7 +261,8 @@ splitting, a mixed-type feature set, and documented biases that make it
 suitable for stress-testing evaluation protocols. This work uses BAF's v1
 dataset because its month-level granularity supports a defensible delay
 simulation, its fraud rate of approximately 1.1\% forces the cost asymmetry
-to matter, and its licence (CC~BY~4.0) and citable source make the results
+to matter, and its public licence (CC~BY-NC-SA~4.0, permitting
+non-commercial research use) and citable source make the results
 reproducible.
 
 \subsection{The Gap This Paper Fills}
@@ -445,7 +447,7 @@ has 32 raw columns including the binary target \texttt{fraud\_bool}, a
 month index ranging from 0 to 7, and a mix of numeric, categorical, and
 binary features representing an account-application transaction. The
 overall fraud rate is 1.1029\%. The dataset is distributed under
-CC~BY~4.0.
+CC~BY-NC-SA~4.0.
 
 \subsection{Delay Simulation}
 
@@ -504,10 +506,9 @@ Each cost parameter (\texttt{false\_positive\_cost}, \texttt{review\_cost},
 range, and the backtest is recomputed at each setting. The model is not
 retrained; only the cost matrix changes. The minimum advantage across the
 sweep is reported as the robustness bound. The fourth cost parameter,
-\texttt{fraud\_loss}, is tested via the constant-vs-amount-scaled
-comparison in Section~III-B rather than a 2$\times$ range, because its role
-is structural: it determines whether amount scaling is active, not a
-numeric magnitude.
+\texttt{fraud\_loss}, is not swept: under amount scaling it is replaced by
+the per-row term $\ell(a)$ of Section~III-B, so its role is structural
+rather than a numeric magnitude.
 
 %=====================================================================
 \section{Results}
@@ -710,9 +711,9 @@ a 1.07\% cost difference does not outweigh.
 \subsection{Why the Policy Beats the Static Baselines}
 
 The 57.91\% cost reduction comes from the decision rule, not from the
-classifier. All three classifiers were well-calibrated on validation (ECE
-well below 0.05), yet all three static-0.5 baselines performed nearly
-identically to approve-all. The argmin-of-expected-cost policy makes the
+classifier. The selected classifier was well-calibrated on validation (ECE
+0.0033, well below 0.05), yet all three static-0.5 baselines performed
+nearly identically to approve-all. The argmin-of-expected-cost policy makes the
 tradeoff between fraud loss, review cost, and false-positive friction
 explicit at every transaction. The mechanism is amount scaling: when the
 fraud-loss term is per-row, the expected cost of approving a high-amount
@@ -750,10 +751,10 @@ preserved; only the thresholding behavior changes.
 \subsection{Connection to the Decision-Centric Framing}
 
 The results support the decision-centric framing on three levels. First,
-the classifier comparison is a non-finding: the three traditional
-classifiers produce statistically indistinguishable policies, so classifier
-choice does not determine performance. Second, the static-threshold
-baselines perform near approve-all even though the classifiers are
+the classifier comparison is a non-finding: the two best classifiers
+produce policies within the pre-registered 5\% noise band, so the choice
+between them does not determine performance. Second, the static-threshold
+baselines perform near approve-all even though the selected classifier is
 well-calibrated, demonstrating that calibration alone does not produce good
 decisions. Third, the argmin policy, using the same classifier
 probabilities, reduces cost by 57.91\%, showing that the decision rule is
@@ -883,22 +884,14 @@ The application loads the same classifier and preprocessing pipeline
 reported in this paper, and displays the predicted fraud probability along
 with the routed action and the cost reasoning behind it.
 
-\section{Contribution Record}
-
-See \texttt{documentation/contribution\_record.md}.
-
-\section{Ownership and Authorship Declaration}
-
-See \texttt{documentation/ownership\_declaration.md}.
-
 %=====================================================================
 % REFERENCES — IEEE numbered, ordered by first in-text appearance
 %=====================================================================
 \begin{thebibliography}{99}
 
 \bibitem{bsp2023roadmap}
-Bangko Sentral ng Pilipinas, \emph{Digital Payments Transformation
-Roadmap 2020--2023}, Manila, Philippines, 2023.
+Bangko Sentral ng Pilipinas, \emph{Status of Digital Payments in the
+Philippines}, Manila, Philippines, 2020 and 2023 editions.
 
 \bibitem{bspspei}
 Bangko Sentral ng Pilipinas, \emph{Selected Philippine Economic
@@ -933,9 +926,9 @@ Discovery and Data Mining}, 2008, pp. 213--220.
 
 \bibitem{dalpozzolo2015}
 A. Dal Pozzolo, O. Caelen, R. A. Johnson, and G. Bontempi, ``Calibrating
-probability with an unbalanced class: An application to fraud detection,''
-in \emph{Proc. IEEE Symp. Computational Intelligence and Data Mining},
-2015, pp. 1--7.
+probability with undersampling for unbalanced classification,'' in
+\emph{Proc. IEEE Symp. Computational Intelligence and Data Mining (CIDM)},
+Cape Town, South Africa, 2015.
 
 \bibitem{pedregosa2011}
 F. Pedregosa \emph{et al.}, ``Scikit-learn: Machine learning in Python,''
