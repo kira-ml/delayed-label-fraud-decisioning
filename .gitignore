@@ -253,3 +253,8 @@ scratch/
 *.orig
 *.rej
 *.tmp
+# Tooling output (graphify code graph, impeccable review captures)
+graphify-out/
+.impeccable/review/
+# Office lock files (e.g. ~$presentation.pptx while the deck is open)
+~$*

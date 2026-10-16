@@ -1,0 +1,559 @@
+{
+  "schemaVersion": 2,
+  "generatedAt": "2026-10-16T13:02:37+00:00",
+  "title": "Design System: Fraud Decision Desk",
+  "extensions": {
+    "colorMeta": {
+      "cover": {
+        "role": "primary",
+        "displayName": "Passbook Cover Navy",
+        "canonical": "#13294B",
+        "oklch": "oklch(28.3% 0.069 259)",
+        "tonalRamp": [
+          "oklch(15% 0.056 259)",
+          "oklch(26% 0.065 259)",
+          "oklch(38% 0.069 259)",
+          "oklch(49% 0.069 259)",
+          "oklch(61% 0.069 259)",
+          "oklch(72% 0.069 259)",
+          "oklch(84% 0.065 259)",
+          "oklch(95% 0.056 259)"
+        ]
+      },
+      "cover_deep": {
+        "role": "primary",
+        "displayName": "Cover Shadow Navy",
+        "canonical": "#0C1C36",
+        "oklch": "oklch(22.8% 0.055 260)",
+        "tonalRamp": [
+          "oklch(15% 0.049 260)",
+          "oklch(26% 0.055 260)",
+          "oklch(38% 0.055 260)",
+          "oklch(49% 0.055 260)",
+          "oklch(61% 0.055 260)",
+          "oklch(72% 0.055 260)",
+          "oklch(84% 0.055 260)",
+          "oklch(95% 0.049 260)"
+        ]
+      },
+      "cover_ink": {
+        "role": "primary",
+        "displayName": "Cover Lettering",
+        "canonical": "#EEF2F8",
+        "oklch": "oklch(96.0% 0.009 258)",
+        "tonalRamp": [
+          "oklch(15% 0.009 258)",
+          "oklch(26% 0.009 258)",
+          "oklch(38% 0.009 258)",
+          "oklch(49% 0.009 258)",
+          "oklch(61% 0.009 258)",
+          "oklch(72% 0.009 258)",
+          "oklch(84% 0.009 258)",
+          "oklch(95% 0.009 258)"
+        ]
+      },
+      "cover_muted": {
+        "role": "primary",
+        "displayName": "Cover Subline",
+        "canonical": "#AFC0DA",
+        "oklch": "oklch(80.3% 0.041 259)",
+        "tonalRamp": [
+          "oklch(15% 0.041 259)",
+          "oklch(26% 0.041 259)",
+          "oklch(38% 0.041 259)",
+          "oklch(49% 0.041 259)",
+          "oklch(61% 0.041 259)",
+          "oklch(72% 0.041 259)",
+          "oklch(84% 0.041 259)",
+          "oklch(95% 0.041 259)"
+        ]
+      },
+      "paper": {
+        "role": "neutral",
+        "displayName": "Security-Tint Paper",
+        "canonical": "#F3F5EF",
+        "oklch": "oklch(96.7% 0.008 122)",
+        "tonalRamp": [
+          "oklch(15% 0.008 122)",
+          "oklch(26% 0.008 122)",
+          "oklch(38% 0.008 122)",
+          "oklch(49% 0.008 122)",
+          "oklch(61% 0.008 122)",
+          "oklch(72% 0.008 122)",
+          "oklch(84% 0.008 122)",
+          "oklch(95% 0.008 122)"
+        ]
+      },
+      "sheet": {
+        "role": "neutral",
+        "displayName": "Ruled Sheet White",
+        "canonical": "#FFFFFF",
+        "oklch": "oklch(100.0% 0.000 90)",
+        "tonalRamp": [
+          "oklch(15% 0.000 90)",
+          "oklch(26% 0.000 90)",
+          "oklch(38% 0.000 90)",
+          "oklch(49% 0.000 90)",
+          "oklch(61% 0.000 90)",
+          "oklch(72% 0.000 90)",
+          "oklch(84% 0.000 90)",
+          "oklch(95% 0.000 90)"
+        ]
+      },
+      "rule": {
+        "role": "neutral",
+        "displayName": "Hairline Rule",
+        "canonical": "#D6DBD0",
+        "oklch": "oklch(88.4% 0.016 127)",
+        "tonalRamp": [
+          "oklch(15% 0.016 127)",
+          "oklch(26% 0.016 127)",
+          "oklch(38% 0.016 127)",
+          "oklch(49% 0.016 127)",
+          "oklch(61% 0.016 127)",
+          "oklch(72% 0.016 127)",
+          "oklch(84% 0.016 127)",
+          "oklch(95% 0.016 127)"
+        ]
+      },
+      "rule_strong": {
+        "role": "neutral",
+        "displayName": "Strong Rule",
+        "canonical": "#B9C0B3",
+        "oklch": "oklch(79.9% 0.020 130)",
+        "tonalRamp": [
+          "oklch(15% 0.020 130)",
+          "oklch(26% 0.020 130)",
+          "oklch(38% 0.020 130)",
+          "oklch(49% 0.020 130)",
+          "oklch(61% 0.020 130)",
+          "oklch(72% 0.020 130)",
+          "oklch(84% 0.020 130)",
+          "oklch(95% 0.020 130)"
+        ]
+      },
+      "ink": {
+        "role": "neutral",
+        "displayName": "Ledger Ink",
+        "canonical": "#1B2430",
+        "oklch": "oklch(25.7% 0.026 256)",
+        "tonalRamp": [
+          "oklch(15% 0.026 256)",
+          "oklch(26% 0.026 256)",
+          "oklch(38% 0.026 256)",
+          "oklch(49% 0.026 256)",
+          "oklch(61% 0.026 256)",
+          "oklch(72% 0.026 256)",
+          "oklch(84% 0.026 256)",
+          "oklch(95% 0.026 256)"
+        ]
+      },
+      "ink_muted": {
+        "role": "neutral",
+        "displayName": "Muted Ink",
+        "canonical": "#3E4752",
+        "oklch": "oklch(39.4% 0.022 254)",
+        "tonalRamp": [
+          "oklch(15% 0.022 254)",
+          "oklch(26% 0.022 254)",
+          "oklch(38% 0.022 254)",
+          "oklch(49% 0.022 254)",
+          "oklch(61% 0.022 254)",
+          "oklch(72% 0.022 254)",
+          "oklch(84% 0.022 254)",
+          "oklch(95% 0.022 254)"
+        ]
+      },
+      "action": {
+        "role": "secondary",
+        "displayName": "Pressable Blue",
+        "canonical": "#1F55D6",
+        "oklch": "oklch(50.0% 0.206 263)",
+        "tonalRamp": [
+          "oklch(15% 0.127 263)",
+          "oklch(26% 0.155 263)",
+          "oklch(38% 0.184 263)",
+          "oklch(49% 0.206 263)",
+          "oklch(61% 0.206 263)",
+          "oklch(72% 0.184 263)",
+          "oklch(84% 0.155 263)",
+          "oklch(95% 0.127 263)"
+        ]
+      },
+      "action_hover": {
+        "role": "secondary",
+        "displayName": "Pressed Blue",
+        "canonical": "#1746B4",
+        "oklch": "oklch(43.9% 0.182 263)",
+        "tonalRamp": [
+          "oklch(15% 0.115 263)",
+          "oklch(26% 0.139 263)",
+          "oklch(38% 0.164 263)",
+          "oklch(49% 0.182 263)",
+          "oklch(61% 0.182 263)",
+          "oklch(72% 0.164 263)",
+          "oklch(84% 0.139 263)",
+          "oklch(95% 0.115 263)"
+        ]
+      },
+      "neutral_bar": {
+        "role": "neutral",
+        "displayName": "Neutral Bar",
+        "canonical": "#B8C0C9",
+        "oklch": "oklch(80.4% 0.015 251)",
+        "tonalRamp": [
+          "oklch(15% 0.015 251)",
+          "oklch(26% 0.015 251)",
+          "oklch(38% 0.015 251)",
+          "oklch(49% 0.015 251)",
+          "oklch(61% 0.015 251)",
+          "oklch(72% 0.015 251)",
+          "oklch(84% 0.015 251)",
+          "oklch(95% 0.015 251)"
+        ]
+      },
+      "approve": {
+        "role": "tertiary",
+        "displayName": "Approve Green",
+        "canonical": "#1E7A46",
+        "oklch": "oklch(51.4% 0.117 154)",
+        "tonalRamp": [
+          "oklch(15% 0.081 154)",
+          "oklch(26% 0.097 154)",
+          "oklch(38% 0.113 154)",
+          "oklch(49% 0.117 154)",
+          "oklch(61% 0.117 154)",
+          "oklch(72% 0.113 154)",
+          "oklch(84% 0.097 154)",
+          "oklch(95% 0.081 154)"
+        ]
+      },
+      "approve_tint": {
+        "role": "tertiary",
+        "displayName": "Approve Tint",
+        "canonical": "#E6F2EA",
+        "oklch": "oklch(95.0% 0.017 157)",
+        "tonalRamp": [
+          "oklch(15% 0.017 157)",
+          "oklch(26% 0.017 157)",
+          "oklch(38% 0.017 157)",
+          "oklch(49% 0.017 157)",
+          "oklch(61% 0.017 157)",
+          "oklch(72% 0.017 157)",
+          "oklch(84% 0.017 157)",
+          "oklch(95% 0.017 157)"
+        ]
+      },
+      "review": {
+        "role": "tertiary",
+        "displayName": "Review Ochre",
+        "canonical": "#A8660F",
+        "oklch": "oklch(57.1% 0.123 65)",
+        "tonalRamp": [
+          "oklch(15% 0.084 65)",
+          "oklch(26% 0.101 65)",
+          "oklch(38% 0.118 65)",
+          "oklch(49% 0.123 65)",
+          "oklch(61% 0.123 65)",
+          "oklch(72% 0.118 65)",
+          "oklch(84% 0.101 65)",
+          "oklch(95% 0.084 65)"
+        ]
+      },
+      "review_tint": {
+        "role": "tertiary",
+        "displayName": "Review Tint",
+        "canonical": "#F8EEDC",
+        "oklch": "oklch(95.2% 0.026 82)",
+        "tonalRamp": [
+          "oklch(15% 0.026 82)",
+          "oklch(26% 0.026 82)",
+          "oklch(38% 0.026 82)",
+          "oklch(49% 0.026 82)",
+          "oklch(61% 0.026 82)",
+          "oklch(72% 0.026 82)",
+          "oklch(84% 0.026 82)",
+          "oklch(95% 0.026 82)"
+        ]
+      },
+      "block": {
+        "role": "tertiary",
+        "displayName": "Block Red",
+        "canonical": "#B42318",
+        "oklch": "oklch(50.0% 0.182 30)",
+        "tonalRamp": [
+          "oklch(15% 0.115 30)",
+          "oklch(26% 0.140 30)",
+          "oklch(38% 0.165 30)",
+          "oklch(49% 0.182 30)",
+          "oklch(61% 0.182 30)",
+          "oklch(72% 0.165 30)",
+          "oklch(84% 0.140 30)",
+          "oklch(95% 0.115 30)"
+        ]
+      },
+      "block_tint": {
+        "role": "tertiary",
+        "displayName": "Block Tint",
+        "canonical": "#FBE9E7",
+        "oklch": "oklch(94.8% 0.020 25)",
+        "tonalRamp": [
+          "oklch(15% 0.020 25)",
+          "oklch(26% 0.020 25)",
+          "oklch(38% 0.020 25)",
+          "oklch(49% 0.020 25)",
+          "oklch(61% 0.020 25)",
+          "oklch(72% 0.020 25)",
+          "oklch(84% 0.020 25)",
+          "oklch(95% 0.020 25)"
+        ]
+      }
+    },
+    "typographyMeta": {
+      "display": {
+        "displayName": "Display",
+        "purpose": "The single results headline; its figure in cover navy with tabular numerals."
+      },
+      "headline": {
+        "displayName": "Headline",
+        "purpose": "Desk title on the cover band."
+      },
+      "title": {
+        "displayName": "Title",
+        "purpose": "Tab-level section headings."
+      },
+      "title-sm": {
+        "displayName": "Title small",
+        "purpose": "Sub-section headings on sheets and pages."
+      },
+      "verdict-line": {
+        "displayName": "Verdict line",
+        "purpose": "Plain-language action beside the stamp."
+      },
+      "body": {
+        "displayName": "Body",
+        "purpose": "Paragraphs, lists and captions (captions at 0.98rem)."
+      },
+      "body-why": {
+        "displayName": "Reason sentence",
+        "purpose": "The one-sentence why under the stamp, capped at 62ch."
+      },
+      "label-step": {
+        "displayName": "Step label",
+        "purpose": "Uppercase numbered input steps standing in for collapsed widget labels."
+      },
+      "label-column": {
+        "displayName": "Column head",
+        "purpose": "Uppercase muted ledger headers."
+      },
+      "figure": {
+        "displayName": "Teller figure",
+        "purpose": "Every amount, percentage, cost, count and tick, tabular."
+      },
+      "figure-date": {
+        "displayName": "Stamp date",
+        "purpose": "Date printed inside the stamp."
+      },
+      "stamp": {
+        "displayName": "Stamp lettering",
+        "purpose": "The verdict word only."
+      },
+      "stamp-tag": {
+        "displayName": "Stamp tag",
+        "purpose": "Band legend chips and the CHEAPEST tag."
+      }
+    },
+    "shadows": [
+      {
+        "name": "cover-lift",
+        "value": "0 6px 18px rgba(12, 28, 54, 0.18)",
+        "purpose": "Header band only; the passbook cover resting above the paper."
+      },
+      {
+        "name": "marker-halo",
+        "value": "0 0 0 2px #FFFFFF",
+        "purpose": "Separation ring around the risk-scale marker; not elevation."
+      }
+    ],
+    "motion": [
+      {
+        "name": "stamp-press",
+        "value": "420ms cubic-bezier(.2,.9,.25,1) both; scale 1.35 -> 0.97 (at 70%) -> 1, opacity 0 -> 1, blur 2px -> 0, held at rotate(-5deg)",
+        "purpose": "Stamp press-in. Replays only when the decision changes (stamp markup depends only on action and date); removed under prefers-reduced-motion: reduce."
+      }
+    ],
+    "breakpoints": [
+      {
+        "name": "compact",
+        "value": "760px",
+        "purpose": "Columns stack; band, stamp and headline sizes step down; 3.4rem top padding."
+      },
+      {
+        "name": "narrow",
+        "value": "420px",
+        "purpose": "Sample-picker segments tighten so all three fit one row."
+      }
+    ],
+    "streamlitTheme": {
+      "base": "light",
+      "primaryColor": "#1F55D6",
+      "backgroundColor": "#F3F5EF",
+      "secondaryBackgroundColor": "#E9EDE4",
+      "textColor": "#1B2430",
+      "source": ".streamlit/config.toml"
+    },
+    "fonts": {
+      "source": "app/static/fonts, inlined as base64 @font-face by font_face_css()",
+      "files": [
+        "PublicSans-var.woff2 (100 900)",
+        "JetBrainsMono-var.woff2 (100 800)",
+        "BarlowCondensed-700.woff2 (700)"
+      ]
+    }
+  },
+  "components": [
+    {
+      "name": "Action Button",
+      "kind": "button",
+      "refersTo": "button-action",
+      "description": "The one pressable blue: primary actions such as 'Use the 500-application sample'.",
+      "html": "<button class=\"ds-btn-action\">Use the 500-application sample</button>",
+      "css": ".ds-btn-action { font-family: 'Public Sans', 'Segoe UI', system-ui, sans-serif; font-weight: 600; font-size: 1rem; background: #1F55D6; border: 1px solid #1F55D6; color: #FFFFFF; border-radius: 8px; padding: 0.5rem 1rem; cursor: pointer; } .ds-btn-action:hover { background: #1746B4; border-color: #1746B4; } .ds-btn-action:focus-visible { outline: 2px solid #1F55D6; outline-offset: 2px; }"
+    },
+    {
+      "name": "Default Button",
+      "kind": "button",
+      "refersTo": "button-default",
+      "description": "Secondary actions such as the CSV download; outlined, not filled.",
+      "html": "<button class=\"ds-btn-default\">Download all decisions (CSV)</button>",
+      "css": ".ds-btn-default { font-family: 'Public Sans', 'Segoe UI', system-ui, sans-serif; font-weight: 600; font-size: 1rem; background: #FFFFFF; border: 1px solid #B9C0B3; color: #1B2430; border-radius: 8px; padding: 0.5rem 1rem; cursor: pointer; } .ds-btn-default:hover { border-color: #1F55D6; color: #1F55D6; } .ds-btn-default:focus-visible { outline: 2px solid #1F55D6; outline-offset: 2px; }"
+    },
+    {
+      "name": "Header Band",
+      "kind": "nav",
+      "refersTo": "header-band",
+      "description": "Passbook cover: navy band with guilloche field, title, promise and the three-stamp legend.",
+      "html": "<div class=\"ds-band\"><div><h1>Fraud Decision Desk</h1><p>Approve, review or block each application now, before the fraud report arrives.</p></div><div class=\"ds-band-legend\"><span style=\"color:#1E7A46\">APPROVED</span><span style=\"color:#A8660F\">FOR REVIEW</span><span style=\"color:#B42318\">BLOCKED</span></div></div>",
+      "css": ".ds-band { background: linear-gradient(90deg, #13294B 0%, #13294B 52%, rgba(19,41,75,0) 82%), #13294B url(\"data:image/svg+xml;utf8,%3Csvg%20xmlns%3D%27http%3A//www.w3.org/2000/svg%27%20width%3D%271200%27%20height%3D%27140%27%20viewBox%3D%270%200%201200%20140%27%3E%3Cpolyline%20points%3D%270%2C70.0%2012%2C75.1%2024%2C79.9%2036%2C83.8%2048%2C86.5%2060%2C87.9%2072%2C87.7%2084%2C86.1%2096%2C83.2%20108%2C79.1%20120%2C74.3%20132%2C69.1%20144%2C64.0%20156%2C59.4%20168%2C55.7%20180%2C53.2%20192%2C52.0%20204%2C52.4%20216%2C54.3%20228%2C57.4%20240%2C61.6%20252%2C66.5%20264%2C71.7%20276%2C76.8%20288%2C81.3%20300%2C84.8%20312%2C87.1%20324%2C88.0%20336%2C87.4%20348%2C85.3%20360%2C81.9%20372%2C77.6%20384%2C72.6%20396%2C67.4%20408%2C62.4%20420%2C58.1%20432%2C54.7%20444%2C52.6%20456%2C52.0%20468%2C52.9%20480%2C55.2%20492%2C58.7%20504%2C63.2%20516%2C68.3%20528%2C73.5%20540%2C78.4%20552%2C82.6%20564%2C85.7%20576%2C87.6%20588%2C88.0%20600%2C86.8%20612%2C84.3%20624%2C80.6%20636%2C76.0%20648%2C70.9%20660%2C65.7%20672%2C60.9%20684%2C56.8%20696%2C53.9%20708%2C52.3%20720%2C52.1%20732%2C53.5%20744%2C56.2%20756%2C60.1%20768%2C64.9%20780%2C70.0%20792%2C75.1%20804%2C79.9%20816%2C83.8%20828%2C86.5%20840%2C87.9%20852%2C87.7%20864%2C86.1%20876%2C83.2%20888%2C79.1%20900%2C74.3%20912%2C69.1%20924%2C64.0%20936%2C59.4%20948%2C55.7%20960%2C53.2%20972%2C52.0%20984%2C52.4%20996%2C54.3%201008%2C57.4%201020%2C61.6%201032%2C66.5%201044%2C71.7%201056%2C76.8%201068%2C81.3%201080%2C84.8%201092%2C87.1%201104%2C88.0%201116%2C87.4%201128%2C85.3%201140%2C81.9%201152%2C77.6%201164%2C72.6%201176%2C67.4%201188%2C62.4%201200%2C58.1%27%20fill%3D%27none%27%20stroke%3D%27white%27%20stroke-opacity%3D%270.11%27%20stroke-width%3D%271.2%27/%3E%3Cpolyline%20points%3D%270%2C81.0%2012%2C85.4%2024%2C88.7%2036%2C90.6%2048%2C90.9%2060%2C89.7%2072%2C87.0%2084%2C83.0%2096%2C78.0%20108%2C72.4%20120%2C66.7%20132%2C61.1%20144%2C56.3%20156%2C52.5%20168%2C50.0%20180%2C49.0%20192%2C49.6%20204%2C51.7%20216%2C55.2%20228%2C59.8%20240%2C65.2%20252%2C71.0%20264%2C76.6%20276%2C81.8%20288%2C86.1%20300%2C89.1%20312%2C90.8%20324%2C90.8%20336%2C89.3%20348%2C86.4%20360%2C82.2%20372%2C77.1%20384%2C71.5%20396%2C65.7%20408%2C60.3%20420%2C55.6%20432%2C52.0%20444%2C49.7%20456%2C49.0%20468%2C49.9%20480%2C52.2%20492%2C55.9%20504%2C60.7%20516%2C66.2%20528%2C71.9%20540%2C77.5%20552%2C82.6%20564%2C86.7%20576%2C89.5%20588%2C90.9%20600%2C90.7%20612%2C88.9%20624%2C85.8%20636%2C81.4%20648%2C76.2%20660%2C70.5%20672%2C64.8%20684%2C59.4%20696%2C54.9%20708%2C51.5%20720%2C49.5%20732%2C49.0%20744%2C50.1%20756%2C52.8%20768%2C56.7%20780%2C61.6%20792%2C67.1%20804%2C72.9%20816%2C78.4%20828%2C83.3%20840%2C87.2%20852%2C89.8%20864%2C91.0%20876%2C90.5%20888%2C88.5%20900%2C85.1%20912%2C80.6%20924%2C75.2%20936%2C69.5%20948%2C63.8%20960%2C58.6%20972%2C54.2%20984%2C51.1%20996%2C49.3%201008%2C49.1%201020%2C50.5%201032%2C53.3%201044%2C57.4%201056%2C62.5%201068%2C68.1%201080%2C73.8%201092%2C79.3%201104%2C84.1%201116%2C87.8%201128%2C90.1%201140%2C91.0%201152%2C90.3%201164%2C88.0%201176%2C84.4%201188%2C79.7%201200%2C74.3%27%20fill%3D%27none%27%20stroke%3D%27white%27%20stroke-opacity%3D%270.11%27%20stroke-width%3D%271.2%27/%3E%3Cpolyline%20points%3D%270%2C91.4%2012%2C93.5%2024%2C94.0%2036%2C92.8%2048%2C90.1%2060%2C86.1%2072%2C80.9%2084%2C75.0%2096%2C68.7%20108%2C62.6%20120%2C56.9%20132%2C52.2%20144%2C48.6%20156%2C46.5%20168%2C46.0%20180%2C47.2%20192%2C49.9%20204%2C53.9%20216%2C59.1%20228%2C65.0%20240%2C71.3%20252%2C77.4%20264%2C83.1%20276%2C87.8%20288%2C91.4%20300%2C93.5%20312%2C94.0%20324%2C92.8%20336%2C90.1%20348%2C86.1%20360%2C80.9%20372%2C75.0%20384%2C68.7%20396%2C62.6%20408%2C56.9%20420%2C52.2%20432%2C48.6%20444%2C46.5%20456%2C46.0%20468%2C47.2%20480%2C49.9%20492%2C53.9%20504%2C59.1%20516%2C65.0%20528%2C71.3%20540%2C77.4%20552%2C83.1%20564%2C87.8%20576%2C91.4%20588%2C93.5%20600%2C94.0%20612%2C92.8%20624%2C90.1%20636%2C86.1%20648%2C80.9%20660%2C75.0%20672%2C68.7%20684%2C62.6%20696%2C56.9%20708%2C52.2%20720%2C48.6%20732%2C46.5%20744%2C46.0%20756%2C47.2%20768%2C49.9%20780%2C53.9%20792%2C59.1%20804%2C65.0%20816%2C71.3%20828%2C77.4%20840%2C83.1%20852%2C87.8%20864%2C91.4%20876%2C93.5%20888%2C94.0%20900%2C92.8%20912%2C90.1%20924%2C86.1%20936%2C80.9%20948%2C75.0%20960%2C68.7%20972%2C62.6%20984%2C56.9%20996%2C52.2%201008%2C48.6%201020%2C46.5%201032%2C46.0%201044%2C47.2%201056%2C49.9%201068%2C53.9%201080%2C59.1%201092%2C65.0%201104%2C71.3%201116%2C77.4%201128%2C83.1%201140%2C87.8%201152%2C91.4%201164%2C93.5%201176%2C94.0%201188%2C92.8%201200%2C90.1%27%20fill%3D%27none%27%20stroke%3D%27white%27%20stroke-opacity%3D%270.11%27%20stroke-width%3D%271.2%27/%3E%3Cpolyline%20points%3D%270%2C96.9%2012%2C95.6%2024%2C92.6%2036%2C88.3%2048%2C82.8%2060%2C76.5%2072%2C69.8%2084%2C63.2%2096%2C56.9%20108%2C51.5%20120%2C47.2%20132%2C44.3%20144%2C43.1%20156%2C43.5%20168%2C45.5%20180%2C49.0%20192%2C53.9%20204%2C59.8%20216%2C66.3%20228%2C73.0%20240%2C79.5%20252%2C85.5%20264%2C90.5%20276%2C94.2%20288%2C96.4%20300%2C97.0%20312%2C95.9%20324%2C93.2%20336%2C89.1%20348%2C83.8%20360%2C77.6%20372%2C71.0%20384%2C64.3%20396%2C57.9%20408%2C52.3%20420%2C47.8%20432%2C44.7%20444%2C43.2%20456%2C43.3%20468%2C45.0%20480%2C48.4%20492%2C53.0%20504%2C58.7%20516%2C65.1%20528%2C71.9%20540%2C78.5%20552%2C84.5%20564%2C89.7%20576%2C93.7%20588%2C96.1%20600%2C97.0%20612%2C96.2%20624%2C93.8%20636%2C89.8%20648%2C84.7%20660%2C78.7%20672%2C72.1%20684%2C65.4%20696%2C58.9%20708%2C53.2%20720%2C48.5%20732%2C45.1%20744%2C43.3%20756%2C43.1%20768%2C44.6%20780%2C47.7%20792%2C52.2%20804%2C57.7%20816%2C64.0%20828%2C70.7%20840%2C77.4%20852%2C83.6%20864%2C88.9%20876%2C93.1%20888%2C95.8%20900%2C97.0%20912%2C96.4%20924%2C94.3%20936%2C90.6%20948%2C85.6%20960%2C79.7%20972%2C73.2%20984%2C66.5%20996%2C60.0%201008%2C54.1%201020%2C49.2%201032%2C45.6%201044%2C43.5%201056%2C43.0%201068%2C44.3%201080%2C47.1%201092%2C51.3%201104%2C56.7%201116%2C63.0%201128%2C69.6%201140%2C76.3%201152%2C82.6%201164%2C88.1%201176%2C92.5%201188%2C95.5%201200%2C96.9%27%20fill%3D%27none%27%20stroke%3D%27white%27%20stroke-opacity%3D%270.11%27%20stroke-width%3D%271.2%27/%3E%3Cpolyline%20points%3D%270%2C94.3%2012%2C89.4%2024%2C83.4%2036%2C76.7%2048%2C69.6%2060%2C62.5%2072%2C55.9%2084%2C50.0%2096%2C45.3%20108%2C42.0%20120%2C40.2%20132%2C40.2%20144%2C41.8%20156%2C45.1%20168%2C49.7%20180%2C55.5%20192%2C62.1%20204%2C69.2%20216%2C76.3%20228%2C83.1%20240%2C89.1%20252%2C94.0%20264%2C97.6%20276%2C99.6%20288%2C99.9%20300%2C98.6%20312%2C95.6%20324%2C91.2%20336%2C85.5%20348%2C79.0%20360%2C72.0%20372%2C64.9%20384%2C58.0%20396%2C51.9%20408%2C46.7%20420%2C42.9%20432%2C40.6%20444%2C40.0%20456%2C41.1%20468%2C43.8%20480%2C48.0%20492%2C53.5%20504%2C59.9%20516%2C66.8%20528%2C74.0%20540%2C80.9%20552%2C87.2%20564%2C92.5%20576%2C96.6%20588%2C99.1%20600%2C100.0%20612%2C99.2%20624%2C96.7%20636%2C92.8%20648%2C87.5%20660%2C81.3%20672%2C74.4%20684%2C67.2%20696%2C60.3%20708%2C53.8%20720%2C48.3%20732%2C44.0%20744%2C41.2%20756%2C40.0%20768%2C40.5%20780%2C42.7%20792%2C46.5%20804%2C51.5%20816%2C57.6%20828%2C64.5%20840%2C71.6%20852%2C78.6%20864%2C85.2%20876%2C90.8%20888%2C95.4%20900%2C98.4%20912%2C99.9%20924%2C99.7%20936%2C97.7%20948%2C94.3%20960%2C89.4%20972%2C83.4%20984%2C76.7%20996%2C69.6%201008%2C62.5%201020%2C55.9%201032%2C50.0%201044%2C45.3%201056%2C42.0%201068%2C40.2%201080%2C40.2%201092%2C41.8%201104%2C45.1%201116%2C49.7%201128%2C55.5%201140%2C62.1%201152%2C69.2%201164%2C76.3%201176%2C83.1%201188%2C89.1%201200%2C94.0%27%20fill%3D%27none%27%20stroke%3D%27white%27%20stroke-opacity%3D%270.11%27%20stroke-width%3D%271.2%27/%3E%3Cpolyline%20points%3D%270%2C82.6%2012%2C75.4%2024%2C67.8%2036%2C60.4%2048%2C53.5%2060%2C47.5%2072%2C42.6%2084%2C39.2%2096%2C37.3%20108%2C37.1%20120%2C38.7%20132%2C41.9%20144%2C46.5%20156%2C52.4%20168%2C59.2%20180%2C66.5%20192%2C74.0%20204%2C81.3%20216%2C88.1%20228%2C93.9%20240%2C98.4%20252%2C101.5%20264%2C102.9%20276%2C102.6%20288%2C100.7%20300%2C97.1%20312%2C92.1%20324%2C86.0%20336%2C79.0%20348%2C71.6%20360%2C64.1%20372%2C56.9%20384%2C50.4%20396%2C44.9%20408%2C40.7%20420%2C38.0%20432%2C37.0%20444%2C37.7%20456%2C40.1%20468%2C44.0%20480%2C49.3%20492%2C55.7%20504%2C62.8%20516%2C70.3%20528%2C77.7%20540%2C84.8%20552%2C91.1%20564%2C96.3%20576%2C100.1%20588%2C102.4%20600%2C103.0%20612%2C101.8%20624%2C99.1%20636%2C94.8%20648%2C89.2%20660%2C82.6%20672%2C75.4%20684%2C67.8%20696%2C60.4%20708%2C53.5%20720%2C47.5%20732%2C42.6%20744%2C39.2%20756%2C37.3%20768%2C37.1%20780%2C38.7%20792%2C41.9%20804%2C46.5%20816%2C52.4%20828%2C59.2%20840%2C66.5%20852%2C74.0%20864%2C81.3%20876%2C88.1%20888%2C93.9%20900%2C98.4%20912%2C101.5%20924%2C102.9%20936%2C102.6%20948%2C100.7%20960%2C97.1%20972%2C92.1%20984%2C86.0%20996%2C79.0%201008%2C71.6%201020%2C64.1%201032%2C56.9%201044%2C50.4%201056%2C44.9%201068%2C40.7%201080%2C38.0%201092%2C37.0%201104%2C37.7%201116%2C40.1%201128%2C44.0%201140%2C49.3%201152%2C55.7%201164%2C62.8%201176%2C70.3%201188%2C77.7%201200%2C84.8%27%20fill%3D%27none%27%20stroke%3D%27white%27%20stroke-opacity%3D%270.11%27%20stroke-width%3D%271.2%27/%3E%3Cpolyline%20points%3D%270%2C64.3%2012%2C56.7%2024%2C49.8%2036%2C43.8%2048%2C39.0%2060%2C35.8%2072%2C34.2%2084%2C34.3%2096%2C36.1%20108%2C39.5%20120%2C44.4%20132%2C50.5%20144%2C57.6%20156%2C65.2%20168%2C73.1%20180%2C80.8%20192%2C88.0%20204%2C94.4%20216%2C99.5%20228%2C103.3%20240%2C105.5%20252%2C106.0%20264%2C104.7%20276%2C101.8%20288%2C97.4%20300%2C91.7%20312%2C84.9%20324%2C77.4%20336%2C69.6%20348%2C61.7%20360%2C54.3%20372%2C47.6%20384%2C42.0%20396%2C37.8%20408%2C35.1%20420%2C34.0%20432%2C34.7%20444%2C37.0%20456%2C41.0%20468%2C46.3%20480%2C52.8%20492%2C60.1%20504%2C67.8%20516%2C75.7%20528%2C83.3%20540%2C90.2%20552%2C96.2%20564%2C101.0%20576%2C104.2%20588%2C105.8%20600%2C105.7%20612%2C103.9%20624%2C100.5%20636%2C95.6%20648%2C89.5%20660%2C82.4%20672%2C74.8%20684%2C66.9%20696%2C59.2%20708%2C52.0%20720%2C45.6%20732%2C40.5%20744%2C36.7%20756%2C34.5%20768%2C34.0%20780%2C35.3%20792%2C38.2%20804%2C42.6%20816%2C48.3%20828%2C55.1%20840%2C62.6%20852%2C70.4%20864%2C78.3%20876%2C85.7%20888%2C92.4%20900%2C98.0%20912%2C102.2%20924%2C104.9%20936%2C106.0%20948%2C105.3%20960%2C103.0%20972%2C99.0%20984%2C93.7%20996%2C87.2%201008%2C79.9%201020%2C72.2%201032%2C64.3%201044%2C56.7%201056%2C49.8%201068%2C43.8%201080%2C39.0%201092%2C35.8%201104%2C34.2%201116%2C34.3%201128%2C36.1%201140%2C39.5%201152%2C44.4%201164%2C50.5%201176%2C57.6%201188%2C65.2%201200%2C73.1%27%20fill%3D%27none%27%20stroke%3D%27white%27%20stroke-opacity%3D%270.11%27%20stroke-width%3D%271.2%27/%3E%3Cpolyline%20points%3D%270%2C44.6%2012%2C39.0%2024%2C34.7%2036%2C32.0%2048%2C31.0%2060%2C31.7%2072%2C34.1%2084%2C38.1%2096%2C43.5%20108%2C50.0%20120%2C57.5%20132%2C65.5%20144%2C73.7%20156%2C81.7%20168%2C89.2%20180%2C95.9%20192%2C101.4%20204%2C105.6%20216%2C108.1%20228%2C109.0%20240%2C108.2%20252%2C105.6%20264%2C101.5%20276%2C96.0%20288%2C89.4%20300%2C81.9%20312%2C73.9%20324%2C65.7%20336%2C57.6%20348%2C50.2%20360%2C43.6%20372%2C38.2%20384%2C34.2%20396%2C31.7%20408%2C31.0%20420%2C32.0%20432%2C34.7%20444%2C38.9%20456%2C44.5%20468%2C51.2%20480%2C58.8%20492%2C66.8%20504%2C75.0%20516%2C83.0%20528%2C90.4%20540%2C96.9%20552%2C102.2%20564%2C106.1%20576%2C108.4%20588%2C109.0%20600%2C107.9%20612%2C105.1%20624%2C100.7%20636%2C95.0%20648%2C88.2%20660%2C80.6%20672%2C72.5%20684%2C64.3%20696%2C56.4%20708%2C49.0%20720%2C42.6%20732%2C37.4%20744%2C33.7%20756%2C31.5%20768%2C31.0%20780%2C32.3%20792%2C35.3%20804%2C39.7%20816%2C45.5%20828%2C52.4%20840%2C60.1%20852%2C68.2%20864%2C76.4%20876%2C84.3%20888%2C91.6%20900%2C97.9%20912%2C103.0%20924%2C106.6%20936%2C108.6%20948%2C108.9%20960%2C107.5%20972%2C104.4%20984%2C99.8%20996%2C93.9%201008%2C87.0%201020%2C79.2%201032%2C71.1%201044%2C62.9%201056%2C55.1%201068%2C47.9%201080%2C41.7%201092%2C36.7%201104%2C33.2%201116%2C31.3%201128%2C31.1%201140%2C32.7%201152%2C35.9%201164%2C40.6%201176%2C46.6%201188%2C53.7%201200%2C61.4%27%20fill%3D%27none%27%20stroke%3D%27white%27%20stroke-opacity%3D%270.11%27%20stroke-width%3D%271.2%27/%3E%3Cpolyline%20points%3D%270%2C30.0%2012%2C28.3%2024%2C28.2%2036%2C29.8%2048%2C33.1%2060%2C37.9%2072%2C44.0%2084%2C51.2%2096%2C59.1%20108%2C67.5%20120%2C76.0%20132%2C84.3%20144%2C91.9%20156%2C98.7%20168%2C104.3%20180%2C108.5%20192%2C111.1%20204%2C112.0%20216%2C111.2%20228%2C108.7%20240%2C104.7%20252%2C99.2%20264%2C92.5%20276%2C84.9%20288%2C76.7%20300%2C68.2%20312%2C59.8%20324%2C51.8%20336%2C44.6%20348%2C38.4%20360%2C33.4%20372%2C30.0%20384%2C28.3%20396%2C28.2%20408%2C29.8%20420%2C33.1%20432%2C37.9%20444%2C44.0%20456%2C51.2%20468%2C59.1%20480%2C67.5%20492%2C76.0%20504%2C84.3%20516%2C91.9%20528%2C98.7%20540%2C104.3%20552%2C108.5%20564%2C111.1%20576%2C112.0%20588%2C111.2%20600%2C108.7%20612%2C104.7%20624%2C99.2%20636%2C92.5%20648%2C84.9%20660%2C76.7%20672%2C68.2%20684%2C59.8%20696%2C51.8%20708%2C44.6%20720%2C38.4%20732%2C33.4%20744%2C30.0%20756%2C28.3%20768%2C28.2%20780%2C29.8%20792%2C33.1%20804%2C37.9%20816%2C44.0%20828%2C51.2%20840%2C59.1%20852%2C67.5%20864%2C76.0%20876%2C84.3%20888%2C91.9%20900%2C98.7%20912%2C104.3%20924%2C108.5%20936%2C111.1%20948%2C112.0%20960%2C111.2%20972%2C108.7%20984%2C104.7%20996%2C99.2%201008%2C92.5%201020%2C84.9%201032%2C76.7%201044%2C68.2%201056%2C59.8%201068%2C51.8%201080%2C44.6%201092%2C38.4%201104%2C33.4%201116%2C30.0%201128%2C28.3%201140%2C28.2%201152%2C29.8%201164%2C33.1%201176%2C37.9%201188%2C44.0%201200%2C51.2%27%20fill%3D%27none%27%20stroke%3D%27white%27%20stroke-opacity%3D%270.11%27%20stroke-width%3D%271.2%27/%3E%3C/svg%3E\") center / cover no-repeat; color: #EEF2F8; border-radius: 14px; padding: 1.1rem 1.8rem; box-shadow: 0 6px 18px rgba(12,28,54,0.18); display: flex; justify-content: space-between; align-items: center; gap: 1.2rem; flex-wrap: wrap; font-family: 'Public Sans', 'Segoe UI', system-ui, sans-serif; } .ds-band h1 { font-size: 1.9rem; font-weight: 700; letter-spacing: -0.025em; line-height: 1.1; margin: 0; color: #EEF2F8; } .ds-band p { margin: 0.3rem 0 0; color: #AFC0DA; font-size: 1.05rem; max-width: 70ch; } .ds-band-legend { display: flex; gap: 0.5rem; flex-wrap: wrap; } .ds-band-legend span { font-family: 'Barlow Condensed', 'Arial Narrow', sans-serif; font-weight: 700; letter-spacing: 0.08em; font-size: 0.95rem; padding: 0.2rem 0.6rem; border-radius: 4px; border: 1.5px solid currentColor; background: rgba(255,255,255,0.94); }"
+    },
+    {
+      "name": "Decision Stamp",
+      "kind": "custom",
+      "refersTo": "stamp-review",
+      "description": "Signature: the verdict stamp. Press-in replays only when the decision changes; removed under reduced motion.",
+      "html": "<div class=\"ds-stamp ds-ink-review\" role=\"img\" aria-label=\"Decision: FOR REVIEW\"><span class=\"ds-stamp-word\">FOR REVIEW</span><span class=\"ds-stamp-date\">16 OCT 2026</span></div>",
+      "css": ".ds-stamp { display: inline-flex; flex-direction: column; align-items: center; padding: 0.55rem 1.3rem 0.45rem; border: 4px double currentColor; border-radius: 10px; transform: rotate(-5deg); animation: ds-stamp-press 420ms cubic-bezier(.2,.9,.25,1) both; background: rgba(255,255,255,0.6); } .ds-stamp-word { font-family: 'Barlow Condensed', 'Arial Narrow', sans-serif; font-weight: 700; font-size: 2.6rem; letter-spacing: 0.08em; line-height: 1; } .ds-stamp-date { font-family: 'JetBrains Mono', 'Consolas', ui-monospace, monospace; font-variant-numeric: tabular-nums; font-size: 0.78rem; letter-spacing: 0.12em; margin-top: 0.2rem; opacity: 0.9; } .ds-ink-approve { color: #1E7A46; } .ds-ink-review { color: #A8660F; } .ds-ink-block { color: #B42318; } @keyframes ds-stamp-press { 0% { transform: rotate(-5deg) scale(1.35); opacity: 0; filter: blur(2px); } 70% { transform: rotate(-5deg) scale(0.97); opacity: 1; filter: blur(0); } 100% { transform: rotate(-5deg) scale(1); } } @media (prefers-reduced-motion: reduce) { .ds-stamp { animation: none; } }"
+    },
+    {
+      "name": "Risk-Zone Scale",
+      "kind": "custom",
+      "refersTo": "zone-review",
+      "description": "Tinted approve/review/block zones for one credit limit, an ink marker for this application, worded zone names and mono ticks.",
+      "html": "<div class=\"ds-scale\"><div class=\"ds-pin\" style=\"left:45%\">This application: <b>18.0%</b></div><div class=\"ds-bar\"><div style=\"flex:0 0 calc(20% - 2px);background:#E6F2EA\"></div><div style=\"flex:0 0 calc(45% - 2px);background:#F8EEDC\"></div><div style=\"flex:0 0 calc(35% - 2px);background:#FBE9E7\"></div><div class=\"ds-marker\" style=\"left:calc(45% - 1.5px)\"></div></div><div class=\"ds-names\"><div style=\"flex:0 0 calc(20% - 2px);color:#1E7A46\">Let through</div><div style=\"flex:0 0 calc(45% - 2px);color:#A8660F\">Check</div><div style=\"flex:0 0 calc(35% - 2px);color:#B42318\">Block</div></div><div class=\"ds-ticks\"><span style=\"left:0\">0%</span><span style=\"left:50%\">20%</span><span style=\"left:100%\">40%</span></div></div>",
+      "css": ".ds-scale { position: relative; padding-top: 1.7rem; font-family: 'Public Sans', 'Segoe UI', system-ui, sans-serif; color: #1B2430; } .ds-pin { position: absolute; top: 0; font-size: 0.88rem; white-space: nowrap; transform: translateX(-50%); } .ds-pin b { font-family: 'JetBrains Mono', 'Consolas', ui-monospace, monospace; font-variant-numeric: tabular-nums; } .ds-bar { position: relative; display: flex; height: 32px; gap: 2px; background: #FFFFFF; border-radius: 6px; } .ds-bar > div:first-child { border-radius: 6px 0 0 6px; } .ds-bar > div:nth-child(3) { border-radius: 0 6px 6px 0; } .ds-marker { position: absolute; top: -6px; bottom: -6px; width: 3px; background: #1B2430; border-radius: 2px; box-shadow: 0 0 0 2px #FFFFFF; } .ds-names { display: flex; gap: 2px; margin-top: 0.4rem; } .ds-names div { text-align: center; font-size: 0.88rem; font-weight: 700; white-space: nowrap; } .ds-ticks { position: relative; height: 1.3rem; margin-top: 0.35rem; font-family: 'JetBrains Mono', 'Consolas', ui-monospace, monospace; font-size: 0.95rem; color: #3E4752; } .ds-ticks span { position: absolute; transform: translateX(-50%); } .ds-ticks span:first-child { transform: none; } .ds-ticks span:last-child { transform: translateX(-100%); }"
+    },
+    {
+      "name": "Cost Slip",
+      "kind": "custom",
+      "refersTo": "slip-row-cheapest",
+      "description": "Ruled three-row ledger of expected cost; only the cheapest row takes ink and the CHEAPEST tag.",
+      "html": "<table class=\"ds-slip\"><tr><td class=\"o\">Let it through</td><td class=\"t\"><div style=\"width:65%\"></div></td><td class=\"v\">0.0640</td><td class=\"g\"></td></tr><tr class=\"win\"><td class=\"o\">Send for a manual check</td><td class=\"t\"><div style=\"width:48%;background:#A8660F\"></div></td><td class=\"v\">0.0478</td><td class=\"g\" style=\"color:#A8660F\">CHEAPEST</td></tr><tr><td class=\"o\">Block it</td><td class=\"t\"><div style=\"width:100%\"></div></td><td class=\"v\">0.0820</td><td class=\"g\"></td></tr></table>",
+      "css": ".ds-slip { width: 100%; border-collapse: collapse; font-family: 'Public Sans', 'Segoe UI', system-ui, sans-serif; font-size: 1.02rem; } .ds-slip td { padding: 0.55rem 0.4rem; border-top: 1px solid #D6DBD0; vertical-align: middle; } .ds-slip tr:last-child td { border-bottom: 1px solid #D6DBD0; } .ds-slip .o { font-weight: 600; width: 38%; color: #3E4752; } .ds-slip .v { text-align: right; width: 16%; font-family: 'JetBrains Mono', 'Consolas', ui-monospace, monospace; font-variant-numeric: tabular-nums; color: #3E4752; } .ds-slip .t { width: 34%; } .ds-slip .t div { height: 8px; border-radius: 0 4px 4px 0; background: #B8C0C9; min-width: 2px; } .ds-slip .g { width: 12%; text-align: right; font-family: 'Barlow Condensed', 'Arial Narrow', sans-serif; font-weight: 700; letter-spacing: 0.06em; font-size: 0.95rem; } .ds-slip tr.win .o, .ds-slip tr.win .v { color: #1B2430; }"
+    },
+    {
+      "name": "Ledger Table",
+      "kind": "card",
+      "refersTo": "ledger-row",
+      "description": "Totals and comparisons: hairline rows, uppercase muted heads, mono right-aligned figures, a 2px ink rule over the total.",
+      "html": "<table class=\"ds-ledger\"><tr><th>Scenario</th><th class=\"n\">Cheaper by</th></tr><tr><td>As planned</td><td class=\"n\">57.91%</td></tr><tr class=\"hl\"><td>Manual checks cost twice as much</td><td class=\"n\">47.76%</td></tr><tr class=\"total\"><td>Estimated saving vs approving everyone</td><td class=\"n\">4.12 (57.9%)</td></tr></table>",
+      "css": ".ds-ledger { width: 100%; max-width: 640px; border-collapse: collapse; font-family: 'Public Sans', 'Segoe UI', system-ui, sans-serif; font-size: 1.02rem; color: #1B2430; } .ds-ledger td, .ds-ledger th { padding: 0.55rem 0.4rem; border-top: 1px solid #D6DBD0; text-align: left; } .ds-ledger th { font-size: 0.85rem; text-transform: uppercase; letter-spacing: 0.05em; color: #3E4752; border-top: none; } .ds-ledger td.n { text-align: right; font-family: 'JetBrains Mono', 'Consolas', ui-monospace, monospace; font-variant-numeric: tabular-nums; } .ds-ledger th.n { text-align: right; } .ds-ledger tr:last-child td { border-bottom: 1px solid #D6DBD0; } .ds-ledger tr.total td { border-top: 2px solid #1B2430; font-weight: 700; } .ds-ledger tr.hl td { font-weight: 700; }"
+    },
+    {
+      "name": "Steps Table",
+      "kind": "card",
+      "refersTo": "steps-table",
+      "description": "Four-step explainer on a white sheet: mono navy number, bold navy title, muted description.",
+      "html": "<table class=\"ds-steps\"><tr><td class=\"k\">1</td><td class=\"t\">Read the application</td><td class=\"d\">28 details: age, income, device, and more.</td></tr><tr><td class=\"k\">4</td><td class=\"t\">Stamp the cheapest</td><td class=\"d\">The option with the lowest expected loss wins.</td></tr></table>",
+      "css": ".ds-steps { width: 100%; border-collapse: collapse; background: #FFFFFF; border-radius: 12px; overflow: hidden; font-family: 'Public Sans', 'Segoe UI', system-ui, sans-serif; font-size: 1.02rem; } .ds-steps td { padding: 0.8rem 1rem; border-top: 1px solid #D6DBD0; vertical-align: top; } .ds-steps tr:first-child td { border-top: none; } .ds-steps .k { width: 3rem; font-family: 'JetBrains Mono', 'Consolas', ui-monospace, monospace; font-weight: 600; color: #13294B; font-size: 1.1rem; } .ds-steps .t { width: 30%; font-weight: 700; color: #13294B; } .ds-steps .d { color: #3E4752; }"
+    },
+    {
+      "name": "Ruled Sheet",
+      "kind": "card",
+      "refersTo": "sheet",
+      "description": "The white work surface every panel sits on: hairline rule, 14px corners, no shadow; numbered step label for its input.",
+      "html": "<div class=\"ds-sheet\"><div class=\"ds-step-label\">1 · Pick an application</div><p>A typical application with a low fraud risk.</p></div>",
+      "css": ".ds-sheet { background: #FFFFFF; border: 1px solid #D6DBD0; border-radius: 14px; padding: 1.2rem 1.4rem 1.3rem; font-family: 'Public Sans', 'Segoe UI', system-ui, sans-serif; color: #1B2430; } .ds-sheet p { font-size: 1.02rem; line-height: 1.55; color: #3E4752; margin: 0.35rem 0 0; } .ds-step-label { font-size: 0.82rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.06em; color: #3E4752; }"
+    }
+  ],
+  "narrative": {
+    "northStar": "The Passbook and the Teller Stamp",
+    "overview": "The desk is a bank counter, not a monitoring console. A navy passbook cover runs across the top with a faint guilloche line field, the ground beneath it is pale security-tint paper, and every piece of work happens on a white ruled sheet with hairline rules. When an application is decided, it is stamped: a rotated, double-bordered stamp in one of three inks, with the date printed in teller figures underneath and the reason written in a plain sentence beside it.\n\nThe system is quiet so the stamp can be loud. Everything that is not a decision is navy, ink or grey; colour is spent only on the three verdicts and on the one blue that marks what can be pressed. Figures are printed the way a teller machine prints them, in a tabular monospace, so columns of costs and percentages line up and read as records rather than estimates on a dashboard. Density is moderate and type is large, because the surface is read from the back of a room on a projector.\n\nThe world explicitly refuses the dark ML dashboard: no metric tiles, no probability tables up front, no glowing charts. Technical detail exists, but sits inside expanders on the same white paper.",
+    "keyCharacteristics": [
+      "Navy passbook-cover band with a guilloche line field; pale security-tint paper ground; white ruled sheets.",
+      "Three stamp inks (green, ochre, red) reserved for the approve / review / block decision.",
+      "One action blue, reserved for pressable and draggable things.",
+      "Teller-printed tabular mono for every amount, percentage, cost and date.",
+      "Condensed stamp lettering for verdict words only.",
+      "One result owns the right column; flat paper, hairline rules, a single soft shadow under the cover."
+    ],
+    "rules": [
+      {
+        "name": "The Ink Is the Verdict Rule",
+        "body": "Approve green, review ochre and block red appear only where a decision is being shown. They never decorate, never mark a heading, and never signal success or error for anything else.",
+        "section": "colors"
+      },
+      {
+        "name": "The One Pressable Blue Rule",
+        "body": "Action blue appears only on things the presenter can press, drag, select or focus. A non-interactive element in blue is a lie about what can be clicked.",
+        "section": "colors"
+      },
+      {
+        "name": "The Word Beside the Ink Rule",
+        "body": "Decision meaning is never carried by colour alone. Every ink is paired with a word: the stamp says APPROVED / FOR REVIEW / BLOCKED, the slip says CHEAPEST, the mix bar has a worded legend with counts, the worklist prints the decision word.",
+        "section": "colors"
+      },
+      {
+        "name": "The Grey Loser Rule",
+        "body": "Of any set of compared options, only the winner takes colour (its stamp ink, or cover navy for the desk in the results chart); everything else is the neutral bar.",
+        "section": "colors"
+      },
+      {
+        "name": "The Teller Prints Figures Rule",
+        "body": "Every amount, percentage, cost, count and date is set in JetBrains Mono with tabular numerals. The one exception is the display-size results figure, which stays in Public Sans with tabular numerals so the headline reads as one line.",
+        "section": "typography"
+      },
+      {
+        "name": "The Stamp Lettering Is for Verdicts Rule",
+        "body": "Barlow Condensed is used only for decision words: the stamp, the band legend and the CHEAPEST tag. Never for headings, buttons or labels.",
+        "section": "typography"
+      },
+      {
+        "name": "The One Result Owns the Right Column Rule",
+        "body": "The right sheet carries exactly one decision for one application. Inputs never move into it, and no second result competes with the stamp.",
+        "section": "layout"
+      },
+      {
+        "name": "The Paper Lies Flat Rule",
+        "body": "Sheets, tables, expanders and the stamp carry no drop shadow. A new surface separates with a hairline rule and sheet white, not with lift.",
+        "section": "elevation"
+      }
+    ],
+    "dos": [
+      "Do reserve approve green (#1E7A46), review ochre (#A8660F) and block red (#B42318) for decisions, and pair every use with the decision word.",
+      "Do keep action blue (#1F55D6) on pressable, draggable, selectable or focusable things only, including the 2px focus outline.",
+      "Do set every amount, percentage, cost and date in JetBrains Mono with tabular numerals.",
+      "Do place a new work surface on a white ruled sheet (14px corners, 1px hairline rule) over the security-tint paper.",
+      "Do give compared options the neutral bar (#B8C0C9) and let only the winner take colour.",
+      "Do set ink lettering on sheet white or a near-white chip; the tints are fills, not text grounds (review ochre on its tint is only 3.99:1).",
+      "Do let the stamp press only when the decision changes, and drop the animation under reduced motion."
+    ],
+    "donts": [
+      "Don't build the dark ML dashboard this desk refuses: metric tiles, probability tables up front, dark glowing panels.",
+      "Don't use a stamp ink for headings, success toasts, links or decoration.",
+      "Don't use Barlow Condensed for anything but verdict words.",
+      "Don't add drop shadows to sheets, tables or the stamp; only the cover band is lifted.",
+      "Don't let a decision be told by colour alone, in a chart, a bar or a table cell.",
+      "Don't put a second result in the right column beside the stamp."
+    ]
+  }
+}
