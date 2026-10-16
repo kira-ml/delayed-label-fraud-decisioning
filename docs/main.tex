@@ -33,6 +33,7 @@
 \usepackage{etoolbox}
 \makeatletter
 \patchcmd{\section}{\scshape}{\scshape\bfseries}{}{\typeout{WARNING: section-heading bold patch failed}}
+\patchcmd{\subsection}{\itshape}{\itshape\bfseries}{}{\typeout{WARNING: subsection-heading bold patch failed}}
 \makeatother
 
 % Correct bad hyphenation here
