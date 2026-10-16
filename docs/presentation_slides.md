@@ -1,417 +1,135 @@
-# Presentation Slides — Delayed-Label Fraud Decisioning
+# Presentation Slides — Fraud Decision Desk
 
-> **Purpose:** This file contains the exact content to place on each PowerPoint slide.
-> Copy-paste directly. Do not add paragraphs. Bullets, tables, and diagram
-> descriptions only.
+> On-screen content for each slide. Short phrases only; the speaking script is in
+> `docs/presentation_notes.md` (also embedded as PowerPoint speaker notes in
+> `docs/presentation.pptx`).
 >
-> **Companion file:** `docs/presentation_notes.md` (speaker notes — not on slides).
->
-> **Rule:** Every number here is verified against `docs/main.tex` and the
-> pipeline reports. Do not change any figure without re-running the pipeline.
+> Audience: non-technical panel. Target length: about 9 minutes including the demo.
+> Every number matches `docs/main.tex` and `reports/`.
+
+| # | Slide | Speaker | Time |
+|---|---|---|---|
+| 1 | Title | Ken | 0:20 |
+| 2 | The problem: deciding before you know | Ken | 0:50 |
+| 3 | What we set out to do | Ken | 0:40 |
+| 4 | Our idea: price every option | Lawrence | 1:00 |
+| 5 | How we tested it fairly | Lawrence | 0:50 |
+| 6 | The system: in, through, out | John Kelly | 0:45 |
+| 7 | Live demo | John Kelly | 2:30 |
+| 8 | Result: the desk cut costs by more than half | Smith | 1:00 |
+| 9 | It holds up | Smith | 0:40 |
+| 10 | Conclusion and limits | Smith | 0:40 |
+| 11 | Thank you / Q&A | All | — |
+| 12–13 | Backup: demo screens (only if the app fails) | John Kelly | — |
+| | **Total** | | **≈ 9:15** |
 
 ---
 
-## Slide 1 — Title Slide
+## Slide 1 — Title
 
-**Title:**
-Cost-Sensitive Fraud Decisioning Under Delayed and Censored Labels
+- **Fraud Decision Desk**
+- Cost-Sensitive Fraud Decisioning Under Delayed and Censored Labels
+- Ken Ira Lacson Talingting · Lawrence Abad · John Kelly Nogales · Smith Albert Surio
+- College of Computing and Information Technologies, National University Philippines
+- Introduction to Machine Learning, Final Project · October 17, 2026
 
-**Subtitle:**
-A Temporal Backtest on the Bank Account Fraud Dataset
+## Slide 2 — The problem: deciding before you know
 
-**Content:**
-- Ken Ira Lacson Talingting
-- Lawrence Abad
-- John Kelly Nogales
-- Smith Albert Surio
+- A bank must **approve or refuse an application now**
+- Whether it was fraud is only known **weeks or months later**
+- Some fraud is **never reported** at all
+- The real question: **"What should we do right now?"**
 
-- College of Computing and Information Technologies
-- National University Philippines
-- Introduction to Machine Learning — Final Group Project
-- October 17, 2026
+Visual: timeline. Decision today → (30–120 days) → truth arrives.
 
-**Layout:** Centered title slide. No images needed.
+## Slide 3 — What we set out to do
 
----
+1. Treat fraud as a **decision**, not just a prediction
+2. Pick between **approve, review, block** by comparing costs
+3. Test it **fairly**: on months the system never saw, used once
+4. Report the limits **honestly**
 
-## Slide 2 — Research Problem
+## Slide 4 — Our idea: price every option
 
-**Title:** The Problem: Decisions Before Labels
+- Step 1: estimate the **fraud risk** (e.g. 12.5%)
+- Step 2: price each option
+  - **Let it through** → risk × possible loss
+  - **Manual check** → cost of the check + what a check can't stop
+  - **Block** → chance it's a genuine customer × cost of turning them away
+- Step 3: **stamp the cheapest**
+- Bigger amount → bigger possible loss → **more caution**
 
-**Content (bullets):**
-- Payment transactions must be authorized **before** anyone knows if they are fraudulent
-- Fraud labels arrive weeks to months later (industry dispute windows: 30–120 days)
-- Some fraud is never reported → labels are **censored**, not negative
-- Operational question is not "Is this fraud?" but "**What action do we take now?**"
-- Most published work reports AUC or PR-AUC — these do not answer the operational question
+Visual: the three stamps APPROVED / FOR REVIEW / BLOCKED.
 
-**Visual:** One timeline diagram below the bullets.
+## Slide 5 — How we tested it fairly
 
-```
-Decision (t) ────────────────► Label arrives (t + Δ)
-                                    Δ = 30 to 120 days
-```
+- **1,000,000** applications (Bank Account Fraud dataset, synthetic), 8 months
+- Learn from months 0–2 → tune on 3–4 → **test once on 5–6 (227,491 apps)**
+- Fraud labels arrive **one month late**
+- Month 7 has no answer yet: **96,843 apps (9.68%) set aside, not counted as safe**
 
----
+Visual: 8-month timeline bar: Learn | Tune | Test | Unknown.
 
-## Slide 3 — Research Objectives
+## Slide 6 — The system: in, through, out
 
-**Title:** Research Objectives
-
-**Content (bullets):**
-1. Frame fraud detection as a **decision problem**, not a classification problem
-2. Evaluate a cost-sensitive policy end-to-end under delayed and censored labels
-3. Compare three traditional classifiers **as inputs to the policy**
-4. Report realized cost per transaction with a bootstrap confidence interval
-5. Test robustness with a sensitivity sweep over cost assumptions
-6. Report censored labels honestly rather than treating them as negatives
-
-**Visual:** None. Numbered bullets only.
-
----
-
-## Slide 4 — Methodology: The Decision Policy
-
-**Title:** Methodology — Decision Policy
-
-**Content (bullets):**
-- Three actions available at decision time: `approve`, `review`, `block`
-- For each transaction, the policy computes expected cost of each action
-- The policy chooses the action with the **minimum expected cost**
-
-**Equations to display:**
-```
-E[cost(approve)] = p × fraud_loss(amount)
-E[cost(review)]  = review_cost + p × residual_fraud_loss
-E[cost(block)]   = (1 − p) × false_positive_cost
-```
-
-**Where:**
-- `p` = calibrated fraud probability from the classifier
-- `amount` = transaction amount
-- Cost values are frozen **before** any modeling begins
-
-**Visual:** The three equations in a box. Below them, one arrow pointing to: `action* = argmin of the three`.
-
----
-
-## Slide 5 — Methodology: Cost Matrix & Amount Scaling
-
-**Title:** Methodology — Cost Matrix
-
-**Content — table:**
-
-| Parameter | Value |
-|---|---:|
-| `fraud_loss` | 1.0 |
-| `false_positive_cost` | 0.1 |
-| `review_cost` | 0.02 |
-| `residual_fraud_loss` | 0.3 |
-| `amount_scaled` | true |
-
-**Below the table (bullets):**
-- Amount-scaled fraud loss: `fraud_loss(amount) = amount × fraud_loss_rate`
-- Rate derived from **training-window amounts only**: `1 / 521.1626 = 0.0019187869`
-- **No test-window information** used → no test-set tuning
-- Cost matrix frozen before modeling; changing it is a new experiment
-
-**Visual:** Table + two bullets. Do not add charts.
-
----
-
-## Slide 6 — Methodology: Classifiers & Calibration Gate
-
-**Title:** Methodology — Classifiers and Calibration
-
-**Content (bullets):**
-- Three traditional classifiers compared as **policy inputs**:
-  - Logistic Regression
-  - Random Forest
-  - LightGBM
-- **Calibration gate:** ECE < 0.05 on the validation window, or the classifier is rejected
-- No class weighting applied — it would distort calibrated probabilities
-- Cost asymmetry is handled by the **policy**, not the training objective
-- The classifier is an **input**; the policy is the **object of study**
-
-**Visual:** Three classifier names in a row, each with a small note:
-- Logistic Regression (linear baseline, interpretable)
-- Random Forest (non-linear ensemble)
-- LightGBM (gradient boosting)
-
-Below the row: "Calibration gate: ECE < 0.05"
-
----
-
-## Slide 7 — Methodology: Dataset & Temporal Split
-
-**Title:** Methodology — Dataset and Chronological Split
-
-**Content (bullets):**
-- **Dataset:** Bank Account Fraud (BAF) Suite v1 — 1,000,000 rows, 32 columns, 1.1029% fraud rate
-- **Delay regime:** 1 month (`label_time = month + 1`)
-- **No shuffling, no random split** — chronological only
-- **Test window used exactly once**, after model and policy are frozen
-
-**Split table:**
-
-| Split | Months | Rows | Fraud rate |
-|---|---|---:|---:|
-| Train | 0–2 | 397,039 | 0.9813% |
-| Validation | 3–4 | 278,627 | 1.0207% |
-| Test | 5–6 | 227,491 | 1.2576% |
-| **Censored** | **7** | **96,843** | **9.68% of dataset** |
-
-**Visual:** The table above. Highlight the censored row.
-
----
-
-## Slide 8 — System Development: Architecture
-
-**Title:** System Development — Pipeline Architecture
-
-**Content (bullets):**
-- One pipeline, eight steps, single command to run
-- Inputs: BAF `Base.csv` (1,000,000 rows × 32 columns)
-- Processes: delay simulation, chronological split, classifier comparison, calibration gate, decision policy
-- Outputs: trained classifier, action log, backtest report
-
-**Pipeline flow to display:**
-```
-Base.csv
-   ↓
-load → simulate_delay → split
-   ↓
-train_compare → evaluate_compare → score
-   ↓
-decide (argmin expected cost)
-   ↓
-backtest → report
-```
-
-**Visual:** The pipeline diagram as one clean horizontal or vertical flow. No decorative colors.
-
----
-
-## Slide 9 — System Development: Inputs, Processes, Outputs
-
-**Title:** System Development — What the System Does
-
-**Content — three-column layout:**
-
-| Inputs | Processes | Outputs |
+| In | Through | Out |
 |---|---|---|
-| Transaction features (`X_t`) | Preprocess per classifier | Trained classifier |
-| Transaction amount (`amount_proxy`) | Train and compare 3 classifiers | Preprocessing pipeline |
-| Frozen cost matrix | Apply calibration gate | `p_fraud` per transaction |
-| — | Route each transaction by argmin | Action log (approve/review/block) |
-| — | Compute realized cost | Backtest report (cost, CI, sensitivity) |
-| — | — | Deployed Streamlit app |
+| Application details (28) | Risk model (Logistic Regression) | Fraud risk % |
+| Requested credit limit | Price the 3 options | Stamp: approve / review / block |
+| Fixed cost settings | Pick the cheapest | Reason + worklist + CSV |
 
-**Visual:** The three-column table. This is the "explain how it works" slide required by the professor.
+## Slide 7 — Live demo
 
----
+- Check one application → watch the stamp change with the credit limit
+- Check a batch of 500
+- Study results tab
 
-## Slide 10 — System Development: Live Demonstration
+Visual: app screenshots (backup if the internet fails).
 
-**Title:** System Development — Live Demonstration
+## Slide 8 — Result: the desk cut costs by more than half
 
-**Content (bullets):**
-- **Deployed decision-support application:**
-  - `delayed-label-fraud-decisioning-gefp9s9mbkfdyzhhvescdm.streamlit.app`
-- **What it shows:**
-  - Predicted fraud probability (`p_fraud`)
-  - Routed action: `approve`, `review`, or `block`
-  - Cost reasoning behind the action
-- **How to use:**
-  - Manual input form for a single transaction
-  - CSV upload for batch scoring
-- **Loads the same classifier and preprocessing pipeline** reported in the paper
+- **57.91% lower cost** than the best simple rule
+- 95% confidence: **53.95% to 62.13%**
+- Cost per application: **0.007491** vs **0.017798**
 
-**Visual:** Live browser window, or two pre-prepared screenshots:
-1. One low-amount transaction → `approve`
-2. One high-amount transaction → `review`
+Visual: bar chart, cost per application by strategy (desk highlighted).
 
-**Do NOT just describe the app — open it and demo it.**
+## Slide 9 — It holds up
 
----
+- Halved and doubled every cost guess → still **at least 47.76% cheaper**
+- The three models scored within **1.07%** of each other (bar for a real difference: 5%)
+- So the **decision rule** does the work, not a fancier model
 
-## Slide 11 — Results: Main Finding
+## Slide 10 — Conclusion and limits
 
-**Title:** Results — Policy vs. Baselines
+**What we showed**
+- Weighing costs beats a fixed 50% cut-off: **57.91%** lower cost
+- Bigger amounts get more caution, automatically
+- Unknown outcomes reported, not hidden (**9.68%**)
 
-**Content (bullets):**
-- Policy cost per transaction: **0.007491**
-- Strongest baseline (LightGBM + static 0.5): **0.017798**
-- **Cost reduction: 57.91%**
-- 95% bootstrap CI: **[53.95%, 62.13%]** — excludes zero → the result is a **finding**
+**What we did not show**
+- Synthetic data, not a real bank
+- One label delay tested (one month)
+- Credit limit stands in for the amount at risk
 
-**Results table:**
+## Slide 11 — Thank you
 
-| Baseline | Cost/txn |
-|---|---:|
-| Random decision | 0.047484 |
-| Approve-all | 0.018928 |
-| Block-all | 0.098742 |
-| Logistic Regression + static 0.5 | 0.018737 |
-| Random Forest + static 0.5 | 0.018928 |
-| LightGBM + static 0.5 (**strongest**) | 0.017798 |
-| **Cost-sensitive policy** | **0.007491** |
-
-**Visual:** The table above, with the last row in bold. Add a callout: "**57.91% cost reduction**".
-
----
-
-## Slide 12 — Results: Robustness
-
-**Title:** Results — Sensitivity and Robustness
-
-**Content (bullets):**
-- Each cost parameter varied 2× (one at a time); model **not retrained**
-- Minimum advantage across all variations: **47.76%**
-- Even at the worst case, the policy retains nearly half the baseline cost reduction
-- Cost rate calibrated from training-window amounts only → **no test-set tuning**
-
-**Sensitivity table:**
-
-| Configuration | Policy cost | Advantage |
-|---|---:|---:|
-| Baseline | 0.007491 | 57.91% |
-| `false_positive_cost` = 0.05 | 0.007037 | 60.36% |
-| `false_positive_cost` = 0.20 | 0.007625 | 57.38% |
-| `review_cost` = 0.01 | 0.006253 | 64.87% |
-| `review_cost` = 0.04 | 0.009298 | **47.76%** |
-| `residual_fraud_loss` = 0.15 | 0.006588 | 62.99% |
-| `residual_fraud_loss` = 0.60 | 0.008700 | 51.12% |
-
-**Visual:** The table above. Highlight the minimum-advantage row.
-
----
-
-## Slide 13 — Results: Classifier Comparison (Non-Finding)
-
-**Title:** Results — Classifier Comparison Reported as a Non-Finding
-
-**Content (bullets):**
-- Cross-validated realized cost after the policy:
-
-| Classifier | Mean cost/txn (CV) |
-|---|---:|
-| LightGBM | 0.005852 |
-| Logistic Regression | 0.005915 |
-| Random Forest | 0.006515 |
-
-- Gap between top two (LGBM vs LR): **1.07% relative**
-- Pre-registered threshold for a finding: **5%**
-- 1.07% < 5% → comparison is a **non-finding**
-- Tie broken by **simplicity**: Logistic Regression selected
-- Justification: interpretability and speed, not superior performance
-
-**Visual:** Small table above; a horizontal bar showing "1.07% measured" vs "5% threshold."
-
----
-
-## Slide 14 — Discussion: Why the Policy Works
-
-**Title:** Discussion — Why the Decision Rule Wins
-
-**Content (bullets):**
-- The 57.91% comes from the **decision rule**, not the classifier
-- All three classifiers were well-calibrated (ECE = 0.0033, well below 0.05)
-- All three static-0.5 baselines performed near approve-all
-- Mechanism: **amount scaling**
-  - High-amount transactions route to `review` even when `p` is unchanged
-  - Under constant loss, they would have been approved
-- Same classifier probabilities, different decision rule → different result
-
-**Visual:** One small comparison:
-
-```
-Classifier + static 0.5   →   ≈ approve-all
-Classifier + argmin rule  →   57.91% cost reduction
-```
-
----
-
-## Slide 15 — Limitations & Conclusion
-
-**Title:** Limitations and Conclusion
-
-**Content — Limitations (bullets):**
-- Single delay regime (1 month only)
-- Synthetic dataset; results are not production estimates
-- Amount proxy: `proposed_credit_limit`, not a true transaction amount
-- No review-capacity constraint
-- No feedback-loop modeling
-
-**Content — Conclusion (bullets):**
-- Fraud detection is a **decision problem**, not a classification problem
-- The argmin-of-expected-cost policy reduced cost by **57.91%**
-- 95% CI **[53.95%, 62.13%]** — excludes zero
-- Result is robust: minimum advantage **47.76%**
-- **96,843** censored labels (9.68%) reported, not hidden
-- Classifier comparison was a non-finding — reported honestly
-
-**Visual:** Two-column layout: Limitations on the left, Conclusion on the right. The four preserved numbers (57.91%, [53.95%, 62.13%], 96,843, 9.68%) bolded.
-
----
-
-## Slide 16 — Thank You / Q&A
-
-**Title:** Thank You
-
-**Content:**
 - Questions?
+- App: delayed-label-fraud-decisioning-gefp9s9mbkfdyzhhvescdm.streamlit.app
+- Code: github.com/kira-ml/delayed-label-fraud-decisioning
 
-**Below:**
-- Repository: `github.com/kira-ml/delayed-label-fraud-decisioning`
-- Deployed app: `delayed-label-fraud-decisioning-gefp9s9mbkfdyzhhvescdm.streamlit.app`
+## Slides 12–13 — Backup: demo screens
 
-**Visual:** Both URLs on the slide. Keep it clean.
-
----
-
-## Quick Reference — Do Not Change These Numbers
-
-| Number | Value | Where it appears |
-|---|---:|---|
-| Policy cost/txn | 0.007491 | Slide 11, 12 |
-| Strongest baseline cost/txn | 0.017798 | Slide 11 |
-| Cost reduction | 57.91% | Slides 11, 14, 15 |
-| Bootstrap CI | [53.95%, 62.13%] | Slides 11, 15 |
-| Minimum sensitivity advantage | 47.76% | Slides 12, 15 |
-| Censored rows | 96,843 | Slides 7, 15 |
-| Censored fraction | 9.68% | Slides 7, 15 |
-| ECE | 0.0033 | Slide 14 |
-| CV gap (LGBM vs LR) | 1.07% | Slide 13 |
-| Test rows | 227,491 | Slide 7 |
+- App screenshots: Everyday (APPROVED), Suspicious (BLOCKED), Unusual at 1,000 (FOR REVIEW), batch of 500
+- Use only if the internet or the app fails during the demo
 
 ---
 
-## Do NOT Put on Any Slide
+## Never say on stage
 
-| Forbidden phrase | Reason |
+| Don't say | Say instead |
 |---|---|
-| "High accuracy" | Accuracy is meaningless at 1.26% base rate |
-| "Production-ready" | Synthetic dataset; single delay regime |
-| "Real bank data" | BAF is synthetic |
-| "Handles all delay regimes" | Only 1-month regime tested |
-| "Statistically significant across all variations" | CIs computed only on the main comparison |
-| "The model detects fraud with X% accuracy" | Use cost reduction, not accuracy |
-
----
-
-## Pre-Presentation Checklist
-
-- [ ] Every slide uses bullets or tables — no paragraphs
-- [ ] All 10 numbers in the Quick Reference table are consistent everywhere
-- [ ] No forbidden phrases anywhere
-- [ ] Live demo tested the day before
-- [ ] Two backup screenshots of the app ready
-- [ ] Each presenter has rehearsed their slides
-- [ ] Total run time within the required limit
-- [ ] URLs on Slide 16 open successfully
-- [ ] Every slide's claims match `docs/main.tex` exactly
-
----
-
-*End of slide content.*
+| "High accuracy" | "57.91% lower cost" |
+| "Production-ready" / "real bank data" | "Tested on a synthetic benchmark" |
+| "Works for any delay" | "Tested with a one-month delay" |
+| "Our model is the best" | "The models tied; the decision rule made the difference" |
