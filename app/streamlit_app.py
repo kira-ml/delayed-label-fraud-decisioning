@@ -278,10 +278,17 @@ def load_artifacts():
 
 
 @st.cache_data(show_spinner=False)
+def _read_sample_batch(mtime: float) -> pd.DataFrame:
+    # mtime is part of the cache key, so a replaced file is re-read.
+    return pd.read_csv(SAMPLE_BATCH_PATH)
+
+
 def load_sample_batch() -> pd.DataFrame | None:
+    # Check existence outside the cache so a missing file is never cached:
+    # once it is deployed, the next rerun picks it up.
     if not SAMPLE_BATCH_PATH.exists():
         return None
-    return pd.read_csv(SAMPLE_BATCH_PATH)
+    return _read_sample_batch(SAMPLE_BATCH_PATH.stat().st_mtime)
 
 
 # ============================================================
