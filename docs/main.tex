@@ -29,6 +29,10 @@
 \usepackage{url}
 \usepackage[hidelinks]{hyperref}
 
+% Arabic section numbering (professor's format)
+\renewcommand{\thesection}{\arabic{section}}
+\renewcommand{\thesubsection}{\thesection.\arabic{subsection}}
+
 % Correct bad hyphenation here
 \hyphenation{op-tical net-works semi-conduc-tor}
 
@@ -70,13 +74,14 @@ suriosb@students.national-u.edu.ph}
 Fraud detection systems must decide whether to approve, review, or block a
 transaction in real time, yet fraud labels arrive weeks to months later and
 are frequently censored before the evaluation window closes. This paper
-frames the problem as a cost-sensitive decision problem rather than a
-classification problem and evaluates it under a temporal backtest on the
-Bank Account Fraud (BAF) dataset with a simulated one-month label delay. A
-Logistic Regression classifier feeding an argmin-of-expected-cost policy
-reduces realized cost per transaction by 57.91\% relative to the strongest
-baseline, LightGBM + static 0.5 at 0.017798, with a 95\% bootstrap
-confidence interval of [53.95\%, 62.13\%]. The result is robust to a
+frames the problem as a \textbf{cost-sensitive decision problem} rather than
+a classification problem and evaluates it under a \textbf{temporal backtest}
+on the Bank Account Fraud (BAF) dataset with a simulated one-month label
+delay. A Logistic Regression classifier feeding an
+\textbf{argmin-of-expected-cost policy} reduces realized cost per
+transaction by \textbf{57.91\%} relative to the strongest baseline,
+LightGBM + static 0.5 at \textbf{0.017798}, with a 95\% bootstrap confidence
+interval of \textbf{[53.95\%, 62.13\%]}. The result is robust to a
 2$\times$ variation in each cost parameter and does not depend on test-set
 tuning: the cost rate is derived from training-window amounts only.
 Censored-label counts (96,843 of 1,000,000, or 9.68\%) are reported rather
@@ -164,9 +169,9 @@ of \textbf{[53.95\%, 62.13\%]}. Second, the static threshold performs
 \emph{near-identically to approve-all} (5.97\% reduction), a failure mode
 that AUC-based evaluation would not reveal. Third, the result is robust
 across a 2$\times$ range on each of three cost parameters; the minimum
-advantage across all variations is 47.76\%. Fourth, the cost rate used for
-amount scaling is derived from training-window amounts only, so the
-headline result does not depend on any test-set tuning.
+advantage across all variations is \textbf{47.76\%}. Fourth, the cost rate
+used for amount scaling is derived from training-window amounts only, so
+the headline result does not depend on any test-set tuning.
 
 This paper makes three contributions. It contributes a reproducible
 evaluation protocol for fraud decision policies under delayed and censored
@@ -178,14 +183,14 @@ result at the framing level: static thresholds on highly imbalanced fraud
 data are not decision rules, and reporting them without a cost anchor
 overstates model performance.
 
-The remainder of this paper is organized as follows. Section~II reviews
+The remainder of this paper is organized as follows. Section~2 reviews
 related work in cost-sensitive learning, delayed feedback, and fraud
-detection. Section~III describes the decision policy and cost formulation.
-Section~IV describes the BAF dataset, the delay simulation, and the
-temporal split. Section~V describes the experimental setup and baselines.
-Section~VI presents results, sensitivity analysis, and confidence
-intervals. Section~VII discusses what the results imply for real fraud
-operations. Section~VIII states the limitations. Section~IX concludes and
+detection. Section~3 describes the decision policy and cost formulation.
+Section~4 describes the BAF dataset, the delay simulation, and the
+temporal split. Section~5 describes the experimental setup and baselines.
+Section~6 presents results, sensitivity analysis, and confidence
+intervals. Section~7 discusses what the results imply for real fraud
+operations. Section~8 states the limitations. Section~9 concludes and
 outlines future work.
 
 %=====================================================================
@@ -396,23 +401,23 @@ $\{300, 0.05\}$, and $\{500, 0.05\}$, where each pair is
 (\texttt{n\_estimators}, \texttt{learning\_rate}). The selected
 configuration per classifier is the one with the lowest mean realized cost
 after the policy across folds. The selection is subject to a pre-registered
-noise-band guard: the top classifier must win every fold and the relative
-gap to the runner-up must exceed 5\%. If either condition fails, the
-comparison is reported as a non-finding and the tie is broken in favor of
-the simplest classifier under the ordering Logistic Regression $>$ Random
-Forest $>$ LightGBM.
+\textbf{noise-band guard}: the top classifier must win every fold and the
+relative gap to the runner-up must exceed 5\%. If either condition fails,
+the comparison is reported as a non-finding and the tie is broken in favor
+of the simplest classifier under the ordering Logistic Regression $>$
+Random Forest $>$ LightGBM.
 
 \subsection{Calibration Gate}
 
 The decision policy assumes $p$ is a probability: expected costs are linear
 in $p$, and a score that is not a probability produces wrong expected costs
-and therefore wrong actions~\cite{dalpozzolo2015}. A calibration gate is
-therefore enforced before any classifier can be admitted as a policy input.
-The gate requires an Expected Calibration Error (ECE) below 0.05 on the
-validation window, computed over 10 quantile bins. If a classifier passes
-the gate, no calibration step is applied. If it fails, exactly one
-calibration method is fit on validation and re-measured. Calibration is
-never fit on the test window.
+and therefore wrong actions~\cite{dalpozzolo2015}. A \textbf{calibration
+gate} is therefore enforced before any classifier can be admitted as a
+policy input. The gate requires an Expected Calibration Error (ECE) below
+0.05 on the validation window, computed over 10 quantile bins. If a
+classifier passes the gate, no calibration step is applied. If it fails,
+exactly one calibration method is fit on validation and re-measured.
+Calibration is never fit on the test window.
 
 \subsection{Evaluation Criterion}
 
@@ -497,7 +502,7 @@ range, and the backtest is recomputed at each setting. The model is not
 retrained; only the cost matrix changes. The minimum advantage across the
 sweep is reported as the robustness bound. The fourth cost parameter,
 \texttt{fraud\_loss}, is tested via the constant-vs-amount-scaled
-comparison in Section~III.B rather than a 2$\times$ range, because its role
+comparison in Section~3.2 rather than a 2$\times$ range, because its role
 is structural: it determines whether amount scaling is active, not a
 numeric magnitude.
 
