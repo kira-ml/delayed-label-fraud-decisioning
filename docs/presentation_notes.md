@@ -206,6 +206,69 @@ Prepared answers. Whoever owns the topic answers.
 
 ---
 
+## Appendix: supporting figures (Q&A only)
+
+Slides 15–20 are not part of the timed talk. Jump to one only when a question
+calls for it. Every number on them matches the paper and the saved results.
+
+## Slide 15 — Appendix: how the three models compared · Q&A only
+
+> If asked "why Logistic Regression?": We compared three models with
+> time-ordered cross-validation. LightGBM was cheapest, but only 1.07% cheaper
+> than Logistic Regression, below the 5% bar we set before modelling. Random
+> Forest was clearly worse. So the top two tied, and we chose the simpler, more
+> explainable one.
+
+---
+
+## Slide 16 — Appendix: are the risk scores trustworthy? · Q&A only
+
+> The desk multiplies the risk by costs, so the risk has to behave like a real
+> probability. We split the validation applications into ten equal groups by
+> predicted risk and compared predicted with actual fraud. They track each other
+> in every group. The calibration error is 0.0033, far under our 0.05 limit. The
+> model slightly over-estimates risk in every group, which errs on the side of
+> caution.
+
+---
+
+## Slide 17 — Appendix: what the desk did on the test months · Q&A only
+
+> On the 227,491 test applications, the desk approved 205,395, sent 21,371 for
+> review and blocked 725. Of the 2,861 frauds, it checked or blocked 1,445, about
+> half. Only about 1 in 15 flagged applications was fraud, and that is
+> deliberate: a manual check costs far less than a missed fraud.
+
+---
+
+## Slide 18 — Appendix: what the model pays attention to · Q&A only
+
+> These are the sizes of the model's weights. Housing status, device and
+> employment lead. One caution: a category's weight adds up all of its levels, so
+> features with many levels rank higher partly for that reason. The numeric
+> features are standardized, so their sizes compare fairly with each other.
+
+---
+
+## Slide 19 — Appendix: fraud rate by category (EDA notebook) · Q&A only
+
+> This is from our EDA notebook. Fraud is much more common in some groups:
+> housing status BA has 3.75% fraud against 0.34% for the lowest group, and
+> applications from Windows devices have 2.47%. That is why these categories
+> carry weight in the model.
+
+---
+
+## Slide 20 — Appendix: correlations between features (EDA notebook) · Q&A only
+
+> Also from the EDA notebook. Most features are nearly unrelated to each other.
+> The strongest pairs are credit risk score with proposed credit limit (0.61) and
+> the velocity features with each other. Credit limit and amount proxy are the
+> same column, and both are kept out of the model: the limit is used to price the
+> possible loss instead.
+
+---
+
 ## Rehearsal checklist
 
 - [ ] App open in a browser tab before starting; screenshots on slide 7 as backup

@@ -22,6 +22,7 @@
 | 11 | Conclusion and limits | Smith | 0:40 |
 | 12 | Thank you / Q&A | All | — |
 | 13–14 | Backup: demo screens (only if the app fails) | John Kelly | — |
+| 15–20 | Supporting figures (Q&A only) | Owner of the topic | — |
 | | **Total** | | **≈ 9:55** |
 
 ---
@@ -133,6 +134,19 @@ Visual: bar chart, cost per application by strategy (desk highlighted).
 
 - App screenshots: Everyday (APPROVED), Suspicious (BLOCKED), Unusual at 1,000 (FOR REVIEW), batch of 500
 - Use only if the internet or the app fails during the demo
+
+---
+
+## Slides 15–20 — Supporting figures (Q&A only, not in the timed talk)
+
+| # | Figure | Use when asked | Source |
+|---|---|---|---|
+| 15 | Cross-validated cost of the three models (1.07% gap vs 5% bar) | "Why Logistic Regression?" | `reports/cv_results.json` = paper Table I |
+| 16 | Predicted vs actual fraud in 10 risk groups (ECE 0.0033) | "Are the risk scores trustworthy?" | recomputed on the validation window |
+| 17 | Decisions (205,395 / 21,371 / 725) and where the 2,861 frauds went | "What did it actually do?" | `data/processed/action_log.parquet` = paper §VI-F |
+| 18 | Top 10 model weights, with how to read categorical sums | "What does the model look at?" | `models/feature_importances.json` (same as the app's model card) |
+| 19 | Fraud rate by category | EDA questions | `notebooks/01_eda.ipynb`, Figure 2 |
+| 20 | Correlations between features | EDA questions | `notebooks/01_eda.ipynb`, Figure 4 |
 
 ---
 
