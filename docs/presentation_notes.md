@@ -2,7 +2,7 @@
 
 > **Course:** Introduction to Machine Learning, Final Group Project
 > **Institution:** National University Philippines · **Date:** October 17, 2026
-> **Length:** about 9 minutes including the live demo
+> **Length:** just under 10 minutes including the live demo
 > **Audience:** non-technical. Say "fraud risk", not "probability"; "cheapest option",
 > not "argmin". Technical words are kept for Q&A only.
 >
@@ -14,10 +14,10 @@
 | Speaker | Slides | Part | Time |
 |---|---|---|---|
 | Ken | 1–3 | Problem and objectives | ≈ 1:50 |
-| Lawrence | 4–5 | Methodology | ≈ 1:50 |
-| John Kelly | 6–7 | System and live demo | ≈ 3:15 |
-| Smith | 8–10 | Results and conclusion | ≈ 2:20 |
-| All | 11 | Q&A | — |
+| Lawrence | 4–6 | Methodology and the data | ≈ 2:30 |
+| John Kelly | 7–8 | System and live demo | ≈ 3:15 |
+| Smith | 9–11 | Results and conclusion | ≈ 2:20 |
+| All | 12 | Q&A | — |
 
 ## Four numbers everyone must know
 
@@ -87,10 +87,22 @@
 > We also copied the real delay: fraud answers arrive one month late. That means
 > the final month, 96,843 applications or 9.68%, had no answer yet. We set those
 > aside instead of pretending they were safe.
+
+## Slide 6 — What the data looks like · Lawrence · 0:40
+
+> Before building anything, we looked at the data. Two things stood out.
+>
+> **On the left:** fraud is rare. About 1 in 90 applications. And the rate
+> changes over time, from 0.87% in month 2 up to 1.47% in month 7. That is why
+> we tested on later months instead of mixing everything together.
+>
+> **On the right:** most people ask for a small credit limit. The typical request
+> is 200. But some ask for 1,500 or even 2,100, roughly ten times more money at
+> risk. That is why our desk looks at the amount, not just the risk.
 >
 > John Kelly will now show you the system.
 
-## Slide 6 — The system · John Kelly · 0:45
+## Slide 7 — The system · John Kelly · 0:45
 
 > Here is the system in one picture.
 >
@@ -105,7 +117,7 @@
 >
 > Let me show you.
 
-## Slide 7 — Live demo · John Kelly · 2:30
+## Slide 8 — Live demo · John Kelly · 2:30
 
 **Before you start:** open the app in a browser tab before the presentation. If
 the internet fails, use the screenshots on this slide and say the same lines.
@@ -136,7 +148,7 @@ the internet fails, use the screenshots on this slide and say the same lines.
 6. **Study results tab** (0:20)
    > And this tab shows what we found when we tested it. Smith will explain.
 
-## Slide 8 — Result: the desk cut costs by more than half · Smith · 1:00
+## Slide 9 — Result: the desk cut costs by more than half · Smith · 1:00
 
 > Here is our main result.
 >
@@ -153,7 +165,7 @@ the internet fails, use the screenshots on this slide and say the same lines.
 > is fraud, so the model almost never says "above 50%". It ends up approving
 > nearly everything.
 
-## Slide 9 — It holds up · Smith · 0:40
+## Slide 10 — It holds up · Smith · 0:40
 
 > We didn't want a result that only works with our exact cost guesses. So we
 > halved and doubled each cost, one at a time. The desk was still **at least
@@ -164,7 +176,7 @@ the internet fails, use the screenshots on this slide and say the same lines.
 > the simplest one. The lesson: the **decision rule** does the work, not a
 > fancier model.
 
-## Slide 10 — Conclusion and limits · Smith · 0:40
+## Slide 11 — Conclusion and limits · Smith · 0:40
 
 > To conclude: weighing the cost of each option beats a fixed cut-off, by
 > 57.91%. Bigger amounts automatically get more caution. And we reported the
@@ -176,7 +188,7 @@ the internet fails, use the screenshots on this slide and say the same lines.
 >
 > Thank you. We're happy to take your questions.
 
-## Slide 11 — Q&A · All
+## Slide 12 — Q&A · All
 
 Prepared answers. Whoever owns the topic answers.
 
@@ -189,6 +201,7 @@ Prepared answers. Whoever owns the topic answers.
 | How do you know the probabilities are trustworthy? | Lawrence | We required the risk scores to match real fraud rates before using them (calibration error 0.0033, our limit was 0.05). |
 | What happened to the last month? | Ken | Its fraud answers would arrive after the data ends, so we set aside 96,843 applications (9.68%) instead of counting them as safe. |
 | Is this ready for a real bank? | Ken | No. It's a controlled test on synthetic data with one delay setting. It shows the approach works; a bank would need to test it on its own data. |
+| Why isn't the credit limit one of the model's inputs? | Lawrence | It is very lopsided (most requests are 200, a quarter are far above the rest), so we use it to price the possible loss instead of as a fraud signal. That keeps the risk estimate and the amount at risk separate. |
 | What does "cost unit" mean? | John Kelly | One unit is the loss from one fraudulent application of average size. |
 
 ---
@@ -197,5 +210,5 @@ Prepared answers. Whoever owns the topic answers.
 
 - [ ] App open in a browser tab before starting; screenshots on slide 7 as backup
 - [ ] Each speaker hands off with one line ("Lawrence will explain how it works")
-- [ ] Time two full runs; cut demo step 6 if over 9:30
+- [ ] Time two full runs; cut demo step 6 if over 10:00
 - [ ] Never say: "high accuracy", "production-ready", "real bank data"

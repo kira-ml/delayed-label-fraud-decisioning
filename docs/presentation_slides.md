@@ -4,7 +4,7 @@
 > `docs/presentation_notes.md` (also embedded as PowerPoint speaker notes in
 > `docs/presentation.pptx`).
 >
-> Audience: non-technical panel. Target length: about 9 minutes including the demo.
+> Audience: non-technical panel. Target length: just under 10 minutes including the demo.
 > Every number matches `docs/main.tex` and `reports/`.
 
 | # | Slide | Speaker | Time |
@@ -14,14 +14,15 @@
 | 3 | What we set out to do | Ken | 0:40 |
 | 4 | Our idea: price every option | Lawrence | 1:00 |
 | 5 | How we tested it fairly | Lawrence | 0:50 |
-| 6 | The system: in, through, out | John Kelly | 0:45 |
-| 7 | Live demo | John Kelly | 2:30 |
-| 8 | Result: the desk cut costs by more than half | Smith | 1:00 |
-| 9 | It holds up | Smith | 0:40 |
-| 10 | Conclusion and limits | Smith | 0:40 |
-| 11 | Thank you / Q&A | All | — |
-| 12–13 | Backup: demo screens (only if the app fails) | John Kelly | — |
-| | **Total** | | **≈ 9:15** |
+| 6 | What the data looks like | Lawrence | 0:40 |
+| 7 | The system: in, through, out | John Kelly | 0:45 |
+| 8 | Live demo | John Kelly | 2:30 |
+| 9 | Result: the desk cut costs by more than half | Smith | 1:00 |
+| 10 | It holds up | Smith | 0:40 |
+| 11 | Conclusion and limits | Smith | 0:40 |
+| 12 | Thank you / Q&A | All | — |
+| 13–14 | Backup: demo screens (only if the app fails) | John Kelly | — |
+| | **Total** | | **≈ 9:55** |
 
 ---
 
@@ -70,7 +71,17 @@ Visual: the three stamps APPROVED / FOR REVIEW / BLOCKED.
 
 Visual: 8-month timeline bar: Learn | Tune | Test | Unknown.
 
-## Slide 6 — The system: in, through, out
+## Slide 6 — What the data looks like
+
+- **Fraud is rare:** about 1 in 90 applications (1.10% of 1,000,000)
+- **It drifts:** 0.87% in month 2 → 1.47% in month 7, so we test on later months
+- **Amounts vary:** most ask for 200; some ask for up to 2,100
+
+Visual (left): column chart, fraud rate by month 0–7, coloured by Learn / Tune / Test / Unknown.
+Visual (right): bar chart, share of applications by requested credit limit (≈200, ≈500, ≈1,000, 1,500, ≈2,000).
+Source: `data/original/Base.csv`; matches `reports/eda_summary.json` and paper §VI-A.
+
+## Slide 7 — The system: in, through, out
 
 | In | Through | Out |
 |---|---|---|
@@ -78,7 +89,7 @@ Visual: 8-month timeline bar: Learn | Tune | Test | Unknown.
 | Requested credit limit | Price the 3 options | Stamp: approve / review / block |
 | Fixed cost settings | Pick the cheapest | Reason + worklist + CSV |
 
-## Slide 7 — Live demo
+## Slide 8 — Live demo
 
 - Check one application → watch the stamp change with the credit limit
 - Check a batch of 500
@@ -86,7 +97,7 @@ Visual: 8-month timeline bar: Learn | Tune | Test | Unknown.
 
 Visual: app screenshots (backup if the internet fails).
 
-## Slide 8 — Result: the desk cut costs by more than half
+## Slide 9 — Result: the desk cut costs by more than half
 
 - **57.91% lower cost** than the best simple rule
 - 95% confidence: **53.95% to 62.13%**
@@ -94,13 +105,13 @@ Visual: app screenshots (backup if the internet fails).
 
 Visual: bar chart, cost per application by strategy (desk highlighted).
 
-## Slide 9 — It holds up
+## Slide 10 — It holds up
 
 - Halved and doubled every cost guess → still **at least 47.76% cheaper**
 - The three models scored within **1.07%** of each other (bar for a real difference: 5%)
 - So the **decision rule** does the work, not a fancier model
 
-## Slide 10 — Conclusion and limits
+## Slide 11 — Conclusion and limits
 
 **What we showed**
 - Weighing costs beats a fixed 50% cut-off: **57.91%** lower cost
@@ -112,13 +123,13 @@ Visual: bar chart, cost per application by strategy (desk highlighted).
 - One label delay tested (one month)
 - Credit limit stands in for the amount at risk
 
-## Slide 11 — Thank you
+## Slide 12 — Thank you
 
 - Questions?
 - App: delayed-label-fraud-decisioning-gefp9s9mbkfdyzhhvescdm.streamlit.app
 - Code: github.com/kira-ml/delayed-label-fraud-decisioning
 
-## Slides 12–13 — Backup: demo screens
+## Slides 13–14 — Backup: demo screens
 
 - App screenshots: Everyday (APPROVED), Suspicious (BLOCKED), Unusual at 1,000 (FOR REVIEW), batch of 500
 - Use only if the internet or the app fails during the demo
