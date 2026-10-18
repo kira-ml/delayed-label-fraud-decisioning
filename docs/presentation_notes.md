@@ -271,7 +271,7 @@ calls for it. Every number on them matches the paper and the saved results.
 
 ## Rehearsal checklist
 
-- [ ] App open in a browser tab before starting; screenshots on slide 7 as backup
+- [ ] App open in a browser tab before starting; backup screenshots on slides 13–14
 - [ ] Each speaker hands off with one line ("Lawrence will explain how it works")
 - [ ] Time two full runs; cut demo step 6 if over 10:00
 - [ ] Never say: "high accuracy", "production-ready", "real bank data"
