@@ -1,0 +1,85 @@
+{
+  "test_rows": 227491,
+  "costs": {
+    "fraud_loss": 1.0,
+    "false_positive_cost": 0.1,
+    "review_cost": 0.02,
+    "residual_fraud_loss": 0.3,
+    "amount_scaled": true,
+    "fraud_loss_rate": 0.0019187869
+  },
+  "baselines": {
+    "Approve-all": 0.018927662768258965,
+    "Block-all": 0.09874236782993617,
+    "LR + 0.5 cut-off": 0.018736793537647647,
+    "LGBM + 0.5 cut-off (V1 strongest)": 0.01779829433060209,
+    "Cost-optimal single threshold (val-tuned)": 0.012512189224883622,
+    "Cost-optimal two-threshold (val-tuned)": 0.009639753278129687,
+    "Amount-blind policy (constant loss)": 0.009839883726151804,
+    "No-review policy (approve/block only)": 0.010859102981502566,
+    "Deployed policy (amount-conditioned, 3 actions)": 0.0074911340788031185,
+    "Test-tuned oracle (diagnostic only)": 0.00912896590604903
+  },
+  "fair_single": {
+    "threshold": 0.06035876705498542,
+    "validation_cost": 0.012331714219176141,
+    "test_cost": 0.012512189224883622
+  },
+  "fair_two": {
+    "t_lo": 0.023925018032375067,
+    "t_hi": 0.2757056296036475,
+    "validation_cost": 0.008381582643356474,
+    "test_cost": 0.009639753278129687
+  },
+  "oracle_two": {
+    "t_lo": 0.013491914651561196,
+    "t_hi": 0.16789482189672023,
+    "test_cost": 0.009128965906102873,
+    "note": "tuned on the test window; diagnostic upper bound only"
+  },
+  "policy_cost": 0.0074911340788031185,
+  "advantage_vs_approve_all": 0.6042229740395898,
+  "advantage_vs_lgbm_05": 0.5791094393847063,
+  "advantage_vs_lgbm_05_ci_95_ratio_bootstrap": [
+    0.560768257178147,
+    0.59613090853002
+  ],
+  "advantage_vs_lgbm_05_ci_95_note": "The pre-registered difference-CI interval is [0.5395, 0.6213] in reports/bootstrap.md; this ratio bootstrap is a diagnostic.",
+  "advantage_vs_fair_two": 0.22289151364498877,
+  "advantage_vs_fair_two_ci_95": [
+    0.19705473216861194,
+    0.24947222158140042
+  ],
+  "advantage_vs_fair_two_ci_95_month_stratified": [
+    0.19547090194097086,
+    0.24809915662946957
+  ],
+  "cost_difference_vs_fair_two_ci_95": [
+    0.0018340844323482027,
+    0.0024753474636762538
+  ],
+  "amount_scaling_gain_vs_amount_blind": 0.2386968904018989,
+  "review_action_gain_vs_no_review": 0.31015166800024435,
+  "waterfall": [
+    {
+      "step": "Approve-all",
+      "cost": 0.018927662768258965
+    },
+    {
+      "step": "+ cost-optimal single threshold",
+      "cost": 0.012512189224883622
+    },
+    {
+      "step": "+ review action (two thresholds)",
+      "cost": 0.009639753278129687
+    },
+    {
+      "step": "+ amount-conditioned loss (deployed)",
+      "cost": 0.0074911340788031185
+    }
+  ],
+  "bootstrap": {
+    "iterations": 2000,
+    "seed": 42
+  }
+}

@@ -1,0 +1,360 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Delayed-Label Fraud Decisioning — Case Study</title>
+<style>
+  @font-face {
+    font-family: "Public Sans";
+    src: url("../../app/static/fonts/PublicSans-var.woff2") format("woff2");
+    font-weight: 100 900;
+    font-display: swap;
+  }
+  @font-face {
+    font-family: "JetBrains Mono";
+    src: url("../../app/static/fonts/JetBrainsMono-var.woff2") format("woff2");
+    font-weight: 100 800;
+    font-display: swap;
+  }
+  @font-face {
+    font-family: "Barlow Condensed";
+    src: url("../../app/static/fonts/BarlowCondensed-700.woff2") format("woff2");
+    font-weight: 700;
+    font-display: swap;
+  }
+
+  :root {
+    --cover: #13294B;
+    --cover-deep: #0C1C36;
+    --cover-ink: #EEF2F8;
+    --cover-muted: #AFC0DA;
+    --paper: #F3F5EF;
+    --sheet: #FFFFFF;
+    --rule: #D6DBD0;
+    --rule-strong: #B9C0B3;
+    --ink: #1B2430;
+    --ink-muted: #3E4752;
+    --action: #1F55D6;
+    --approve: #1E7A46;
+    --review: #A8660F;
+    --block: #B42318;
+    --neutral: #B8C0C9;
+  }
+
+  * { box-sizing: border-box; }
+  html, body { margin: 0; padding: 0; }
+  body {
+    background: #E7E9E2;
+    color: var(--ink);
+    font-family: "Public Sans", "Segoe UI", system-ui, sans-serif;
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+  .mono { font-family: "JetBrains Mono", "Consolas", ui-monospace, monospace; font-variant-numeric: tabular-nums; }
+
+  .toolbar {
+    max-width: 210mm; margin: 10mm auto 6mm; display: flex;
+    justify-content: space-between; align-items: center; gap: 12px;
+    font-size: 12px; color: var(--ink-muted);
+  }
+  .toolbar button {
+    background: var(--action); color: #fff; border: 0; border-radius: 8px;
+    padding: 10px 16px; font: 600 13px "Public Sans", sans-serif; cursor: pointer;
+  }
+  .toolbar button:hover { background: #1746B4; }
+
+  .page {
+    width: 210mm; min-height: 297mm; margin: 0 auto 10mm;
+    background: var(--paper); padding: 13mm 14mm 12mm;
+    position: relative; overflow: hidden;
+    box-shadow: 0 6px 18px rgba(12, 28, 54, 0.16);
+    page-break-after: always;
+  }
+  .page:last-of-type { page-break-after: auto; }
+
+  .band {
+    background: var(--cover); color: var(--cover-ink);
+    border-radius: 14px; padding: 18px 20px 16px; position: relative;
+    overflow: hidden;
+    background-image:
+      repeating-linear-gradient(115deg, rgba(255,255,255,0.055) 0 1px, transparent 1px 11px),
+      linear-gradient(90deg, var(--cover) 0%, var(--cover) 62%, var(--cover-deep) 100%);
+  }
+  .kicker {
+    font: 700 10px "Public Sans", sans-serif; letter-spacing: .14em;
+    text-transform: uppercase; color: var(--cover-muted); margin: 0 0 8px;
+  }
+  h1 { font-size: 30px; line-height: 1.08; letter-spacing: -0.025em; margin: 0 0 6px; }
+  .subline { font-size: 13px; line-height: 1.45; color: var(--cover-muted); max-width: 62ch; margin: 0; }
+
+  .thesis {
+    margin: 16px 0 14px; padding: 12px 16px;
+    background: var(--sheet); border: 1px solid var(--rule); border-radius: 10px;
+    font-size: 15px; line-height: 1.5;
+  }
+  .thesis strong { color: var(--cover); }
+
+  .cols { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+  .card {
+    background: var(--sheet); border: 1px solid var(--rule); border-radius: 10px;
+    padding: 12px 14px;
+  }
+  .card h2 { font-size: 13px; letter-spacing: .04em; text-transform: uppercase; color: var(--ink-muted); margin: 0 0 8px; }
+  .card p, .card li { font-size: 11.5px; line-height: 1.45; color: var(--ink-muted); }
+  .card ul { margin: 0; padding-left: 16px; }
+  .card li { margin: 0 0 4px; }
+
+  .flow { display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; margin-top: 8px; }
+  .flow div {
+    background: var(--paper); border: 1px solid var(--rule); border-radius: 8px;
+    padding: 8px 7px; font-size: 10px; line-height: 1.35; color: var(--ink-muted);
+  }
+  .flow b { display: block; color: var(--cover); font-size: 10.5px; margin-bottom: 2px; }
+
+  .headline-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin: 14px 0 10px; }
+  .big {
+    background: var(--sheet); border: 1px solid var(--rule); border-radius: 10px;
+    padding: 12px 14px 11px;
+  }
+  .big .label { font-size: 10px; letter-spacing: .08em; text-transform: uppercase; color: var(--ink-muted); margin-bottom: 2px; }
+  .big .num { font-size: 40px; line-height: 1; letter-spacing: -0.03em; color: var(--cover); font-weight: 700; }
+  .big .num.muted { color: var(--ink-muted); }
+  .big .ci { font-size: 10px; color: var(--ink-muted); margin-top: 3px; }
+  .big .verdict { font-size: 10.5px; color: var(--ink-muted); margin-top: 5px; line-height: 1.35; }
+
+  .figure { margin-top: 8px; background: var(--sheet); border: 1px solid var(--rule); border-radius: 10px; padding: 8px 8px 6px; }
+  .figure img { width: 100%; display: block; border-radius: 4px; }
+  .figure figcaption { font-size: 9.5px; color: var(--ink-muted); padding: 5px 4px 0; }
+
+  .note {
+    margin-top: 10px; padding: 10px 12px; border-left: 3px solid var(--cover);
+    background: rgba(19, 41, 75, 0.04); font-size: 11px; line-height: 1.5;
+    color: var(--ink-muted);
+  }
+  .note strong { color: var(--ink); }
+
+  .correction {
+    display: grid; grid-template-columns: repeat(3, 1fr); gap: 0;
+    margin-top: 12px; background: var(--sheet);
+    border: 1px solid var(--rule); border-radius: 10px; overflow: hidden;
+  }
+  .correction > div { padding: 10px 12px; border-right: 1px solid var(--rule); }
+  .correction > div:last-child { border-right: 0; }
+  .correction .k { display: block; font-size: 9px; letter-spacing: .08em; text-transform: uppercase; color: var(--ink-muted); }
+  .correction .v { display: block; font-family: "JetBrains Mono", monospace; font-variant-numeric: tabular-nums; font-size: 22px; color: var(--cover); margin: 2px 0; }
+  .correction .d { display: block; font-size: 10px; color: var(--ink-muted); line-height: 1.35; }
+
+  .section-title {
+    font-size: 20px; letter-spacing: -0.02em; color: var(--cover);
+    margin: 0 0 4px;
+  }
+  .section-sub { font-size: 11.5px; color: var(--ink-muted); margin: 0 0 10px; }
+
+  table { width: 100%; border-collapse: collapse; background: var(--sheet); border: 1px solid var(--rule); border-radius: 10px; overflow: hidden; }
+  th { text-align: left; font-size: 9.5px; letter-spacing: .06em; text-transform: uppercase; color: var(--ink-muted); padding: 7px 8px; border-bottom: 1px solid var(--rule); }
+  td { font-size: 10.5px; padding: 6px 8px; border-bottom: 1px solid var(--rule); color: var(--ink); vertical-align: top; }
+  tr:last-child td { border-bottom: 0; }
+  td.num, th.num { text-align: right; font-family: "JetBrains Mono", monospace; font-variant-numeric: tabular-nums; }
+  .pill { display: inline-block; padding: 1px 6px; border-radius: 999px; font-size: 9px; font-weight: 700; letter-spacing: .04em; text-transform: uppercase; }
+  .pill.survived { color: var(--approve); background: #E6F2EA; }
+  .pill.fragile { color: var(--review); background: #F8EEDC; }
+  .pill.killed { color: var(--block); background: #FBE9E7; }
+
+  .two-col { display: grid; grid-template-columns: 1.05fr 0.95fr; gap: 12px; margin-top: 10px; }
+  .stack { display: grid; gap: 10px; }
+
+  .footer {
+    position: absolute; left: 14mm; right: 14mm; bottom: 8mm;
+    display: flex; justify-content: space-between; align-items: baseline;
+    font-size: 8.5px; color: var(--ink-muted);
+    border-top: 1px solid var(--rule); padding-top: 6px;
+  }
+  .footer a { color: var(--action); text-decoration: none; }
+
+  .stamp {
+    display: inline-block; border: 3px double currentColor; border-radius: 8px;
+    padding: 2px 10px; transform: rotate(-4deg);
+    font: 700 16px "Barlow Condensed", "Arial Narrow", sans-serif;
+    letter-spacing: .08em; text-transform: uppercase;
+  }
+  .stamp.red { color: var(--block); }
+  .stamp.green { color: var(--approve); }
+
+  @media print {
+    body { background: none; }
+    .toolbar { display: none; }
+    .page { margin: 0; box-shadow: none; }
+    @page { size: A4; margin: 0; }
+  }
+</style>
+</head>
+<body>
+
+<div class="toolbar">
+  <span>Print to PDF: use <b>Save as PDF</b>, paper <b>A4</b>, margins <b>None</b>, background graphics <b>on</b>.</span>
+  <button onclick="window.print()">Print / Save as PDF</button>
+</div>
+
+<!-- ================= PAGE 1 ================= -->
+<section class="page">
+  <div class="band">
+    <p class="kicker">Case study · Machine learning · 2026</p>
+    <h1>Delayed-Label Fraud Decisioning</h1>
+    <p class="subline">A cost-sensitive triage policy for approve / review / block — built, then falsified against capacity, delay, retraining, drift, and calibration.</p>
+  </div>
+
+  <div class="thesis">
+    <strong>The thesis:</strong> the decision rule matters more than the classifier — and the naive 0.5 baseline overstated the gain by about 2.6×. Against a strong simple baseline, the policy still wins by <strong>22.3%</strong>.
+  </div>
+
+  <div class="cols">
+    <div class="card">
+      <h2>The problem</h2>
+      <ul>
+        <li>Approve, review, or block in milliseconds — but the fraud label arrives a month later.</li>
+        <li>Errors are asymmetric: a missed fraud and a false positive do not cost the same.</li>
+        <li>At a 1.1% base rate, a 0.5 cut-off is almost approve-all.</li>
+      </ul>
+    </div>
+    <div class="card">
+      <h2>The system</h2>
+      <p style="margin:0 0 4px">A calibrated probability feeds an argmin of expected cost. The classifier is an input; the policy is the product.</p>
+      <div class="flow">
+        <div><b>1 · Read</b>28 application features</div>
+        <div><b>2 · Score</b>calibrated P(fraud)</div>
+        <div><b>3 · Price</b>approve / review / block</div>
+        <div><b>4 · Stamp</b>cheapest action wins</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="headline-grid">
+    <div class="big">
+      <div class="label">vs the strongest 0.5 cut-off</div>
+      <div class="num">57.9%</div>
+      <div class="ci mono">95% CI 53.95% – 62.13%</div>
+      <div class="verdict">The number that looks impressive. It is mostly threshold placement, not modeling.</div>
+    </div>
+    <div class="big">
+      <div class="label">vs the best cost-optimal threshold</div>
+      <div class="num">22.3%</div>
+      <div class="ci mono">95% CI 19.71% – 24.95%</div>
+      <div class="verdict">The number that survives scrutiny. Above the 5% effect-size bar; CI excludes zero.</div>
+    </div>
+  </div>
+
+  <figure class="figure">
+    <img src="../../reports/figures/fig_ablation_waterfall.png" alt="Waterfall of realized cost per transaction: approve-all, cost-optimal threshold, review action, amount-conditioned policy.">
+    <figcaption>Realized cost per transaction, test window (227,491 rows). The steps are sequential: threshold placement, then the review action, then amount conditioning.</figcaption>
+  </figure>
+
+  <div class="note">
+    <strong>Why the second number is the one to defend.</strong> The 0.5 baseline is a straw man at a 1.1% base rate. The fair baseline is a cost-optimal threshold tuned on the validation window. The gain decomposes into ~34% from moving to that threshold, ~23% from adding the review action, and ~22% from conditioning the loss on the amount.
+  </div>
+
+  <div class="correction">
+    <div><span class="k">First headline</span><span class="v">57.9%</span><span class="d">vs a 50% cut-off</span></div>
+    <div><span class="k">Corrected</span><span class="v">22.3%</span><span class="d">vs the best cost-optimal threshold</span></div>
+    <div><span class="k">What changed</span><span class="v">baseline</span><span class="d">the 0.5 cut-off was almost approve-all</span></div>
+  </div>
+
+  <div class="footer">
+    <span>Source of truth: <span class="mono">reports/ablation.md</span> · <span class="mono">reports/v2_falsification.md</span></span>
+    <span>Page 1 / 2</span>
+  </div>
+</section>
+
+<!-- ================= PAGE 2 ================= -->
+<section class="page">
+  <h2 class="section-title">The evidence</h2>
+  <p class="section-sub">V2 pre-registered six hypotheses with numeric kill criteria before the tests ran. Three survived, one is fragile, two were killed.</p>
+
+  <table>
+    <thead>
+      <tr><th>Hypothesis</th><th>Verdict</th><th>Key result</th></tr>
+    </thead>
+    <tbody>
+      <tr><td>Review capacity</td><td><span class="pill survived">Survived</span></td><td class="num">44.25% at 2% capacity</td></tr>
+      <tr><td>Longer label delay</td><td><span class="pill survived">Survived</span></td><td class="num">58.08% on a 2-month split</td></tr>
+      <tr><td>Rolling retraining</td><td><span class="pill fragile">Fragile</span></td><td class="num">LR selected; gap 4.25% / 4.17%</td></tr>
+      <tr><td>Feature drift</td><td><span class="pill survived">Survived</span></td><td class="num">max PSI 3.94; 9/28 drift</td></tr>
+      <tr><td>Group disparity</td><td><span class="pill killed">Killed</span></td><td class="num">block-rate gap 2.26pp &lt; 5pp</td></tr>
+      <tr><td>Stratified calibration</td><td><span class="pill killed">Killed</span></td><td class="num">block ECE 0.0600; bias ~2.1%</td></tr>
+    </tbody>
+  </table>
+
+  <div class="two-col">
+    <div class="stack">
+      <div class="card">
+        <h2>What each design choice buys</h2>
+        <table style="border:0">
+          <thead><tr><th>Comparison</th><th class="num">Cost</th><th class="num">Gain</th></tr></thead>
+          <tbody>
+            <tr><td>Amount-blind (constant loss)</td><td class="num">0.009840</td><td class="num">—</td></tr>
+            <tr><td>Amount-conditioned</td><td class="num"><b>0.007491</b></td><td class="num"><b>23.9%</b></td></tr>
+            <tr><td>No-review (approve/block)</td><td class="num">0.010859</td><td class="num">—</td></tr>
+            <tr><td>With review</td><td class="num"><b>0.007491</b></td><td class="num"><b>31.0%</b></td></tr>
+          </tbody>
+        </table>
+        <p style="margin:8px 0 0">Amount conditioning buys <b>23.9%</b>. The review action buys <b>31.0%</b>. The two are the contribution, not the classifier.</p>
+      </div>
+
+      <div class="card">
+        <h2>The artifact</h2>
+        <ul>
+          <li><b>76 tests</b> passing; reproducible pipeline and reports.</li>
+          <li><b>227,491</b> test applications, months the model never saw.</li>
+          <li>Streamlit decision desk: one application or a CSV batch.</li>
+          <li>Every decision shows its expected-cost reasoning.</li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="stack">
+      <div class="card">
+        <h2>What I would do next</h2>
+        <ul>
+          <li>Add a monthly performance curve, not just input drift.</li>
+          <li>Re-run delay with a fixed evaluation window to isolate label maturity.</li>
+          <li>Add tail risk (CVaR) and review-queue economics.</li>
+        </ul>
+      </div>
+
+      <div class="card">
+        <h2>What this does not show</h2>
+        <ul>
+          <li>BAF is synthetic; these are not production estimates.</li>
+          <li>One cost matrix and one chronological split.</li>
+          <li>The 2-month delay result uses a different split.</li>
+          <li>Fairness was tested on block rate only; review-rate disparity is larger.</li>
+        </ul>
+      </div>
+
+      <div class="card" style="border-color: var(--cover);">
+        <h2>Links</h2>
+        <p style="margin:0 0 4px"><b>Repo:</b> github.com/kira-ml/delayed-label-fraud-decisioning</p>
+        <p style="margin:0 0 4px"><b>Demo:</b> delayed-label-fraud-decisioning.streamlit.app</p>
+        <p style="margin:0 0 4px"><b>Study:</b> <span class="mono">docs/v2/</span> · <span class="mono">reports/v2_falsification.md</span></p>
+        <p style="margin:6px 0 0; font-size:10px; color:var(--ink-muted)">Ken Ira Lacson Talingting · BS Machine Learning · National University Philippines</p>
+      </div>
+    </div>
+  </div>
+
+  <div class="card" style="margin-top:10px">
+    <h2>Method in one line</h2>
+    <p style="margin:0">Chronological split (train 0–2, validation 3–4, test 5–6; month 7 censored). Preprocessing fit on train only. Calibration gate ECE &lt; 0.05. Classifier chosen by realized cost under a 5% noise band. Paired bootstrap for uncertainty. Six pre-registered falsification tests.</p>
+  </div>
+
+  <div class="note" style="margin-top:10px">
+    <strong>The one-sentence version.</strong> I'm a third-year ML student. I built a decision system for a delayed-feedback problem — and this is what checking my own result looked like.
+  </div>
+
+  <div class="footer">
+    <span>Prepared 2026 · Numbers regenerate from <span class="mono">python -m src.evaluation.ablation</span></span>
+    <span>Page 2 / 2</span>
+  </div>
+</section>
+
+</body>
+</html>

@@ -1,0 +1,379 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Delayed-Label Fraud Decisioning — Carousel</title>
+<style>
+  @font-face {
+    font-family: "Public Sans";
+    src: url("../../app/static/fonts/PublicSans-var.woff2") format("woff2");
+    font-weight: 100 900; font-display: swap;
+  }
+  @font-face {
+    font-family: "JetBrains Mono";
+    src: url("../../app/static/fonts/JetBrainsMono-var.woff2") format("woff2");
+    font-weight: 100 800; font-display: swap;
+  }
+  @font-face {
+    font-family: "Barlow Condensed";
+    src: url("../../app/static/fonts/BarlowCondensed-700.woff2") format("woff2");
+    font-weight: 700; font-display: swap;
+  }
+
+  :root {
+    --cover: #13294B; --cover-deep: #0C1C36;
+    --cover-ink: #EEF2F8; --cover-muted: #AFC0DA;
+    --paper: #F3F5EF; --sheet: #FFFFFF;
+    --rule: #D6DBD0; --rule-strong: #B9C0B3;
+    --ink: #1B2430; --ink-muted: #3E4752;
+    --action: #1F55D6;
+    --approve: #1E7A46; --review: #A8660F; --block: #B42318;
+    --neutral: #B8C0C9;
+  }
+
+  * { box-sizing: border-box; }
+  html, body { margin: 0; padding: 0; }
+  body {
+    background: #E7E9E2; color: var(--ink);
+    font-family: "Public Sans", "Segoe UI", system-ui, sans-serif;
+    -webkit-print-color-adjust: exact; print-color-adjust: exact;
+  }
+  .mono { font-family: "JetBrains Mono", "Consolas", ui-monospace, monospace; font-variant-numeric: tabular-nums; }
+
+  .toolbar {
+    max-width: 1080px; margin: 18px auto 10px; display: flex;
+    justify-content: space-between; align-items: center; gap: 12px;
+    font-size: 12px; color: var(--ink-muted);
+  }
+  .toolbar button {
+    background: var(--action); color: #fff; border: 0; border-radius: 8px;
+    padding: 10px 16px; font: 600 13px "Public Sans", sans-serif; cursor: pointer;
+  }
+  .toolbar button:hover { background: #1746B4; }
+
+  .slide {
+    width: 1080px; height: 1350px; margin: 0 auto 26px;
+    padding: 84px 86px 74px; position: relative; overflow: hidden;
+    background: var(--paper); page-break-after: always;
+    box-shadow: 0 8px 24px rgba(12, 28, 54, 0.16);
+  }
+  .slide.dark {
+    background: var(--cover); color: var(--cover-ink);
+    background-image:
+      repeating-linear-gradient(115deg, rgba(255,255,255,0.05) 0 1px, transparent 1px 15px),
+      linear-gradient(150deg, var(--cover) 0%, var(--cover) 58%, var(--cover-deep) 100%);
+  }
+  .slide.light { background: var(--paper); }
+  .slide.center { display: flex; flex-direction: column; justify-content: center; }
+
+  .kicker {
+    font: 700 20px "Public Sans", sans-serif; letter-spacing: .16em;
+    text-transform: uppercase; color: var(--ink-muted); margin: 0 0 26px;
+  }
+  .dark .kicker { color: var(--cover-muted); }
+
+  h1 {
+    font-size: 78px; line-height: 1.02; letter-spacing: -0.035em;
+    margin: 0 0 30px; font-weight: 700; max-width: 900px;
+  }
+  h1.small { font-size: 66px; }
+  h1.xs { font-size: 56px; }
+  .dark h1 { color: var(--cover-ink); }
+
+  .sub {
+    font-size: 31px; line-height: 1.38; color: var(--ink-muted);
+    max-width: 850px; margin: 0;
+  }
+  .dark .sub { color: var(--cover-muted); }
+
+  .huge {
+    font-family: "JetBrains Mono", monospace; font-variant-numeric: tabular-nums;
+    font-size: 210px; line-height: .92; letter-spacing: -0.06em;
+    color: var(--cover); margin: 10px 0 12px;
+  }
+  .dark .huge { color: var(--cover-ink); }
+  .huge.small { font-size: 150px; }
+
+  .stamp {
+    display: inline-block; border: 5px double currentColor; border-radius: 14px;
+    padding: 8px 26px; transform: rotate(-5deg);
+    font: 700 54px "Barlow Condensed", "Arial Narrow", sans-serif;
+    letter-spacing: .1em; text-transform: uppercase; line-height: 1;
+  }
+  .stamp.red { color: var(--block); }
+  .stamp.green { color: #7DD3A0; }
+  .stamp.navy { color: var(--cover); }
+
+  .grid3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 18px; margin: 34px 0 30px; }
+  .stat {
+    background: var(--sheet); border: 1px solid var(--rule); border-radius: 16px;
+    padding: 26px 22px;
+  }
+  .stat .n { font-family: "JetBrains Mono", monospace; font-variant-numeric: tabular-nums;
+    font-size: 54px; line-height: 1; color: var(--cover); letter-spacing: -0.04em; }
+  .stat .l { font-size: 21px; color: var(--ink-muted); margin-top: 10px; line-height: 1.3; }
+
+  .actions { display: grid; grid-template-columns: repeat(3, 1fr); gap: 18px; margin: 30px 0; }
+  .action {
+    background: var(--sheet); border: 1px solid var(--rule); border-radius: 16px;
+    padding: 24px 22px; border-top: 8px solid var(--neutral);
+  }
+  .action.a { border-top-color: var(--approve); }
+  .action.r { border-top-color: var(--review); }
+  .action.b { border-top-color: var(--block); }
+  .action .name { font: 700 30px "Barlow Condensed", sans-serif; letter-spacing: .1em; text-transform: uppercase; margin-bottom: 10px; }
+  .action.a .name { color: var(--approve); }
+  .action.r .name { color: var(--review); }
+  .action.b .name { color: var(--block); }
+  .action .formula { font-family: "JetBrains Mono", monospace; font-size: 18px; line-height: 1.5; color: var(--ink); }
+  .action .why { font-size: 19px; color: var(--ink-muted); margin-top: 10px; line-height: 1.35; }
+
+  .hist {
+    display: flex; align-items: flex-end; gap: 7px; height: 300px;
+    margin: 36px 0 0; padding: 0 10px 0 0; position: relative;
+    border-bottom: 2px solid var(--rule-strong);
+  }
+  .hist .bar { flex: 1; background: var(--neutral); border-radius: 4px 4px 0 0; }
+  .hist .bar.hot { background: var(--cover); }
+  .hist .marker {
+    position: absolute; left: 50%; top: -18px; bottom: -2px; width: 4px;
+    background: var(--block); border-radius: 2px;
+  }
+  .hist .marker span {
+    position: absolute; top: -40px; left: -54px; width: 120px; text-align: center;
+    font: 700 17px "JetBrains Mono", monospace; color: var(--block);
+  }
+  .hist-note { display: flex; justify-content: space-between; font-size: 18px; color: var(--ink-muted); margin-top: 10px; }
+
+  .svg-wrap { background: var(--sheet); border: 1px solid var(--rule); border-radius: 16px; padding: 18px 18px 8px; margin: 26px 0 22px; }
+  .svg-wrap svg { width: 100%; display: block; }
+
+  .bars2 { display: flex; align-items: flex-end; gap: 54px; height: 380px; margin: 30px 0 10px; padding-left: 12px; }
+  .bars2 .col { flex: 1; display: flex; flex-direction: column; justify-content: flex-end; align-items: center; height: 100%; }
+  .bars2 .bar { width: 100%; border-radius: 10px 10px 0 0; }
+  .bars2 .bar.naive { background: var(--neutral); height: 100%; }
+  .bars2 .bar.fair { background: var(--cover); height: 38.5%; }
+  .bars2 .v { font-family: "JetBrains Mono", monospace; font-variant-numeric: tabular-nums; font-size: 40px; color: var(--ink); margin-bottom: 10px; }
+  .bars2 .l { font-size: 20px; color: var(--ink-muted); text-align: center; margin-top: 10px; line-height: 1.3; }
+  .bars2 .l b { color: var(--ink); }
+
+  .waterfall { display: grid; gap: 24px; margin: 34px 0 26px; }
+  .wf-row { display: grid; grid-template-columns: 320px 1fr 140px; gap: 16px; align-items: center; }
+  .wf-row .name { font-size: 24px; color: var(--ink-muted); line-height: 1.25; }
+  .wf-row .track { background: #E7E9E2; border-radius: 8px; height: 64px; overflow: hidden; }
+  .wf-row .fill { height: 100%; border-radius: 8px; background: var(--neutral); }
+  .wf-row .fill.dark { background: var(--cover); }
+  .wf-row .fill.mid { background: #8FA3BF; }
+  .wf-row .fill.light { background: #B9C4D4; }
+  .wf-row .val { font-family: "JetBrains Mono", monospace; font-variant-numeric: tabular-nums; font-size: 26px; text-align: right; color: var(--ink); }
+  .wf-row .val small { display: block; font-size: 18px; color: var(--approve); }
+
+  table.verdict { width: 100%; border-collapse: collapse; background: var(--sheet); border: 1px solid var(--rule); border-radius: 16px; overflow: hidden; margin-top: 26px; }
+  table.verdict th { text-align: left; font-size: 18px; letter-spacing: .08em; text-transform: uppercase; color: var(--ink-muted); padding: 16px 18px; border-bottom: 1px solid var(--rule); }
+  table.verdict td { font-size: 22px; padding: 17px 18px; border-bottom: 1px solid var(--rule); }
+  table.verdict tr:last-child td { border-bottom: 0; }
+  table.verdict td.n { text-align: right; font-family: "JetBrains Mono", monospace; font-variant-numeric: tabular-nums; }
+  .pill { display: inline-block; padding: 3px 10px; border-radius: 999px; font-size: 15px; font-weight: 700; letter-spacing: .05em; text-transform: uppercase; }
+  .pill.s { color: var(--approve); background: #E6F2EA; }
+  .pill.f { color: var(--review); background: #F8EEDC; }
+  .pill.k { color: var(--block); background: #FBE9E7; }
+
+  .foot {
+    position: absolute; left: 86px; right: 86px; bottom: 46px;
+    display: flex; justify-content: space-between; align-items: baseline;
+    font-size: 17px; color: var(--ink-muted);
+    border-top: 1px solid var(--rule); padding-top: 14px;
+  }
+  .dark .foot { color: var(--cover-muted); border-top-color: rgba(255,255,255,0.18); }
+
+  .links { display: grid; gap: 14px; margin-top: 30px; }
+  .link-row { background: var(--sheet); border: 1px solid var(--rule); border-radius: 12px; padding: 18px 22px; font-size: 23px; }
+  .link-row b { color: var(--cover); }
+
+  @media print {
+    body { background: none; }
+    .toolbar { display: none; }
+    .slide { margin: 0; box-shadow: none; }
+    @page { size: 1080px 1350px; margin: 0; }
+  }
+</style>
+</head>
+<body>
+
+<div class="toolbar">
+  <span>Export: <b>Print → Save as PDF</b> (background graphics on), or screenshot each 1080×1350 slide.</span>
+  <button onclick="window.print()">Print / Save as PDF</button>
+</div>
+
+<!-- 1 -->
+<section class="slide dark center">
+  <p class="kicker">Fraud decisioning · 2026</p>
+  <h1>My fraud model cut cost by 57%.</h1>
+  <div class="huge">57.9%</div>
+  <div style="margin: 6px 0 34px;"><span class="stamp red">Questionable</span></div>
+  <p class="sub">Then I checked the baseline. It was a 50% cut-off — at a 1.1% fraud rate, that is almost approve-all.</p>
+  <div class="foot"><span>Ken Ira Lacson Talingting · BS Machine Learning</span><span>1 / 10</span></div>
+</section>
+
+<!-- 2 -->
+<section class="slide light">
+  <p class="kicker">The setup</p>
+  <h1 class="small">A million applications. A 1.1% fraud rate. Labels arrive a month late.</h1>
+  <div class="grid3">
+    <div class="stat"><div class="n">1.0M</div><div class="l">applications in the BAF dataset</div></div>
+    <div class="stat"><div class="n">1.1%</div><div class="l">fraud rate — a severe class imbalance</div></div>
+    <div class="stat"><div class="n">1 mo</div><div class="l">label delay, with censored rows excluded</div></div>
+  </div>
+  <p class="sub">Decide in milliseconds. Learn weeks later. A missed fraud and a false positive do not cost the same.</p>
+  <div class="foot"><span>Source: docs/data_card.md</span><span>2 / 10</span></div>
+</section>
+
+<!-- 3 -->
+<section class="slide light">
+  <p class="kicker">The policy</p>
+  <h1 class="small">Don't classify. Price three actions and pick the cheapest.</h1>
+  <div class="actions">
+    <div class="action a"><div class="name">Approve</div><div class="formula">p × fraud_loss</div><div class="why">Let it through; absorb the fraud loss if it is fraud.</div></div>
+    <div class="action r"><div class="name">Review</div><div class="formula">review_cost<br>+ p × residual_loss</div><div class="why">A human checks it; some loss may remain.</div></div>
+    <div class="action b"><div class="name">Block</div><div class="formula">(1 − p) × false_positive_cost</div><div class="why">Stop it; pay the cost of a wrongly blocked good customer.</div></div>
+  </div>
+  <p class="sub">The argmin is the source of truth. Derived thresholds are a diagnostic view only.</p>
+  <div class="foot"><span>Source: src/policy/decide.py · configs/costs.yaml</span><span>3 / 10</span></div>
+</section>
+
+<!-- 4 -->
+<section class="slide light">
+  <p class="kicker">The flaw</p>
+  <h1 class="small">The baseline was a 50% cut-off.</h1>
+  <div class="hist">
+    <div class="marker"><span>0.50</span></div>
+    <div class="bar hot" style="height:100%"></div>
+    <div class="bar hot" style="height:62%"></div>
+    <div class="bar hot" style="height:38%"></div>
+    <div class="bar" style="height:22%"></div>
+    <div class="bar" style="height:14%"></div>
+    <div class="bar" style="height:9%"></div>
+    <div class="bar" style="height:6%"></div>
+    <div class="bar" style="height:4%"></div>
+    <div class="bar" style="height:3%"></div>
+    <div class="bar" style="height:2%"></div>
+    <div class="bar" style="height:1.6%"></div>
+    <div class="bar" style="height:1.2%"></div>
+    <div class="bar" style="height:0.9%"></div>
+    <div class="bar" style="height:0.7%"></div>
+    <div class="bar" style="height:0.5%"></div>
+    <div class="bar" style="height:0.4%"></div>
+    <div class="bar" style="height:0.3%"></div>
+    <div class="bar" style="height:0.2%"></div>
+    <div class="bar" style="height:0.15%"></div>
+  </div>
+  <div class="hist-note"><span>Model scores (most applications near 0)</span><span>Almost no mass at 0.50</span></div>
+  <p class="sub" style="margin-top:26px">At a 1.1% base rate, a 0.5 cut-off is almost approve-all. The 57.9% win was mostly threshold placement, not modeling.</p>
+  <div class="foot"><span>Source: reports/ablation.md</span><span>4 / 10</span></div>
+</section>
+
+<!-- 5 -->
+<section class="slide light">
+  <p class="kicker">The fix</p>
+  <h1 class="small">Compare against the best simple rule.</h1>
+  <div class="svg-wrap">
+    <svg viewBox="0 0 900 330" role="img" aria-label="Cost versus decision threshold, with the minimum at 0.060.">
+      <line x1="70" y1="280" x2="860" y2="280" stroke="#B9C0B3" stroke-width="2"/>
+      <line x1="70" y1="30" x2="70" y2="280" stroke="#B9C0B3" stroke-width="2"/>
+      <path d="M 80 60 C 220 210, 280 260, 360 266 C 460 274, 620 180, 850 70"
+            fill="none" stroke="#13294B" stroke-width="6" stroke-linecap="round"/>
+      <circle cx="360" cy="266" r="12" fill="#B42318"/>
+      <line x1="360" y1="266" x2="360" y2="280" stroke="#B42318" stroke-width="2" stroke-dasharray="5 5"/>
+      <text x="360" y="316" text-anchor="middle" font-family="JetBrains Mono, monospace" font-size="22" fill="#B42318">t = 0.060</text>
+      <text x="70" y="318" font-family="JetBrains Mono, monospace" font-size="18" fill="#3E4752">0</text>
+      <text x="850" y="318" text-anchor="end" font-family="JetBrains Mono, monospace" font-size="18" fill="#3E4752">1.0</text>
+      <text x="86" y="52" font-family="Public Sans, sans-serif" font-size="20" fill="#3E4752">cost / txn</text>
+    </svg>
+  </div>
+  <p class="sub">A cost-optimal threshold tuned on the validation window and applied unchanged to test. It is the strongest rule a competent team would deploy.</p>
+  <div class="foot"><span>Source: src/evaluation/baselines.py</span><span>5 / 10</span></div>
+</section>
+
+<!-- 6 -->
+<section class="slide light center">
+  <p class="kicker">The real number</p>
+  <h1 class="xs">57.9% → 22.3%</h1>
+  <div class="bars2">
+    <div class="col">
+      <div class="v">57.9%</div>
+      <div class="bar naive"></div>
+      <div class="l"><b>vs a 50% cut-off</b><br>95% CI 53.95–62.13</div>
+    </div>
+    <div class="col">
+      <div class="v">22.3%</div>
+      <div class="bar fair"></div>
+      <div class="l"><b>vs the best cost-optimal threshold</b><br>95% CI 19.71–24.95</div>
+    </div>
+  </div>
+  <p class="sub" style="margin-top:30px">Still real. Smaller. Honest. The 22.3% is above the 5% effect-size bar, and the 95% CI excludes zero.</p>
+  <div class="foot"><span>Source: reports/ablation.md</span><span>6 / 10</span></div>
+</section>
+
+<!-- 7 -->
+<section class="slide light center">
+  <p class="kicker">Where the gain comes from</p>
+  <h1 class="xs">Three steps, not one.</h1>
+  <div class="waterfall">
+    <div class="wf-row"><div class="name">Approve-all</div><div class="track"><div class="fill" style="width:100%"></div></div><div class="val">0.018928</div></div>
+    <div class="wf-row"><div class="name">+ cost-optimal threshold</div><div class="track"><div class="fill light" style="width:66.1%"></div></div><div class="val">0.012512<small>−33.9%</small></div></div>
+    <div class="wf-row"><div class="name">+ review action</div><div class="track"><div class="fill mid" style="width:50.9%"></div></div><div class="val">0.009640<small>−23.0%</small></div></div>
+    <div class="wf-row"><div class="name">+ amount-conditioned loss</div><div class="track"><div class="fill dark" style="width:39.6%"></div></div><div class="val">0.007491<small>−22.3%</small></div></div>
+  </div>
+  <p class="sub">The steps are sequential, not additive. Threshold placement, then the review action, then amount conditioning.</p>
+  <div class="foot"><span>Source: reports/ablation.md</span><span>7 / 10</span></div>
+</section>
+
+<!-- 8 -->
+<section class="slide light">
+  <p class="kicker">Then I tried to kill it</p>
+  <h1 class="xs">Six pre-registered tests.</h1>
+  <table class="verdict">
+    <thead><tr><th>Hypothesis</th><th>Verdict</th><th style="text-align:right">Key result</th></tr></thead>
+    <tbody>
+      <tr><td>Review capacity</td><td><span class="pill s">Survived</span></td><td class="n">44.25% at 2%</td></tr>
+      <tr><td>Longer label delay</td><td><span class="pill s">Survived</span></td><td class="n">58.08%</td></tr>
+      <tr><td>Rolling retraining</td><td><span class="pill f">Fragile</span></td><td class="n">gap 4.25%</td></tr>
+      <tr><td>Feature drift</td><td><span class="pill s">Survived</span></td><td class="n">max PSI 3.94</td></tr>
+      <tr><td>Group disparity</td><td><span class="pill k">Killed</span></td><td class="n">2.26pp &lt; 5pp</td></tr>
+      <tr><td>Stratified calibration</td><td><span class="pill k">Killed</span></td><td class="n">ECE 0.0600</td></tr>
+    </tbody>
+  </table>
+  <p class="sub" style="margin-top:24px">Three survived, one is fragile, two were killed. Non-findings are reported at the same length as survivors.</p>
+  <div class="foot"><span>Source: reports/v2_falsification.md</span><span>8 / 10</span></div>
+</section>
+
+<!-- 9 -->
+<section class="slide dark center">
+  <p class="kicker">The takeaway</p>
+  <h1 class="small">Compare against the best simple rule, not the weakest.</h1>
+  <div style="margin: 40px 0 30px;"><span class="stamp green">Corrected</span></div>
+  <p class="sub">Your headline will shrink. Your credibility won't.</p>
+  <div class="foot"><span>Ken Ira Lacson Talingting</span><span>9 / 10</span></div>
+</section>
+
+<!-- 10 -->
+<section class="slide light center">
+  <p class="kicker">The artifact</p>
+  <h1 class="small">A decision desk, a benchmark, and a falsification study.</h1>
+  <div class="grid3">
+    <div class="stat"><div class="n">76</div><div class="l">tests passing</div></div>
+    <div class="stat"><div class="n">227k</div><div class="l">held-out test rows</div></div>
+    <div class="stat"><div class="n">6</div><div class="l">pre-registered hypotheses</div></div>
+  </div>
+  <div class="links">
+    <div class="link-row"><b>Repo:</b> github.com/kira-ml/delayed-label-fraud-decisioning</div>
+    <div class="link-row"><b>Demo:</b> delayed-label-fraud-decisioning.streamlit.app</div>
+    <div class="link-row"><b>Case study:</b> two-page PDF in this folder</div>
+  </div>
+  <p class="sub" style="margin-top:26px">I'm a third-year ML student. I build decision systems for delayed-feedback problems — and I falsify my own results first.</p>
+  <div class="foot"><span>Source of truth: reports/ablation.md · reports/v2_falsification.md</span><span>10 / 10</span></div>
+</section>
+
+</body>
+</html>

@@ -51,18 +51,31 @@ the objective.
 
 Under a 1-month delayed-label regime with a chronological train /
 validation / test split, the cost-sensitive policy reduces realized cost
-per transaction by **57.91%** relative to the strongest baseline
-(LightGBM + static 0.5), with a 95% bootstrap confidence interval of
-**[53.95%, 62.13%]**.
+per transaction by:
 
-| Baseline | Cost per transaction |
+- **57.91%** versus the strongest 0.5-cut-off baseline
+  (95% CI **[53.95%, 62.13%]**).
+- **22.29%** versus the best cost-optimal threshold tuned on the
+  validation window (95% CI **[19.71%, 24.95%]**).
+
+The second comparison is the defensible one. At a 1.1% base rate, a 0.5
+cut-off is almost approve-all, so the 57.91% headline overstates the
+policy's value. Against the best simple rule a competent team would
+deploy, the gain is 22.29%, and it decomposes into roughly **34%** from
+moving to a cost-optimal threshold, **23%** from adding the review
+action, and **22%** from conditioning the loss on the amount. See
+[`reports/ablation.md`](reports/ablation.md).
+
+| Strategy | Cost per transaction |
 |---|---:|
+| Block-all | 0.098742 |
 | Random | 0.047484 |
 | Approve-all | 0.018928 |
-| Block-all | 0.098742 |
-| LR + static 0.5 | 0.018737 |
 | RF + static 0.5 | 0.018928 |
-| **LGBM + static 0.5 (strongest baseline)** | **0.017798** |
+| LR + static 0.5 | 0.018737 |
+| LGBM + static 0.5 (V1's strongest 0.5 baseline) | 0.017798 |
+| Cost-optimal single threshold (val-tuned) | 0.012512 |
+| **Cost-optimal two-threshold (val-tuned, strongest simple baseline)** | **0.009640** |
 | **Cost-sensitive policy (ours)** | **0.007491** |
 
 Action distribution on the test window:
@@ -75,9 +88,14 @@ Action distribution on the test window:
 
 The result is robust to a 2× variation in each cost parameter
 (`false_positive_cost`, `review_cost`, `residual_fraud_loss`); the minimum
-advantage across all variations is **47.76%** (at `review_cost=0.04`).
+advantage versus the strongest 0.5 baseline is **47.76%** (at
+`review_cost=0.04`). The sensitivity sweep still uses the six canonical
+V1 baselines; extending it to the fair cost-optimal baseline is a next
+step.
 
 Primary report: [`reports/decision_backtest.md`](reports/decision_backtest.md).
+Baseline audit and ablation:
+[`reports/ablation.md`](reports/ablation.md).
 Supporting sensitivity and bootstrap:
 [`reports/sensitivity.md`](reports/sensitivity.md),
 [`reports/bootstrap.md`](reports/bootstrap.md).
@@ -107,6 +125,33 @@ Full CV and test results:
 Expected Calibration Error on the validation window: **ECE = 0.0033**
 (gate: ECE < 0.05). Gate passed; no calibration step applied. The policy
 uses raw classifier output directly.
+
+### V2 — Falsification Study (Supporting)
+
+V2 asks whether the policy survives operational reality. Six hypotheses
+were pre-registered with numeric kill criteria before the tests ran.
+
+| Hypothesis | Verdict | Key result |
+|---|---|---|
+| Review capacity | **Survived** | 44.25% advantage at 2% capacity (K = 4,550) |
+| Longer label delay | **Survived** | 58.08% on a separate 2-month split |
+| Rolling retraining | **Confirmed, fragile** | LR selected both steps; LGBM–LR gap widens to 4.25% / 4.17% |
+| Feature drift | **Survived** | Max PSI 3.94; 9/28 features drift, concentrated on low-importance features |
+| Group disparity | **Killed** | Max block-rate disparity 2.26pp < 5pp |
+| Stratified calibration | **Killed** | Block-stratum ECE 0.0600; bounded bias ~2.1% |
+
+The delay result uses a **different split** (train 0–1, validation 2–3,
+test 4–5), so it is a re-development check rather than a like-for-like
+delay comparison. The fairness verdict is about **block rate only**;
+review-rate disparity is larger and was not the pre-registered metric.
+Both caveats are recorded in `docs/v2/findings.md`.
+
+Phase B built the two components the surviving hypotheses earned:
+a capacity-aware policy (`src/policy/decide_capacity.py`) and a PSI drift
+detector (`src/monitoring/drift_detector.py`).
+
+Full study: [`docs/v2/`](docs/v2/) and
+[`reports/v2_falsification.md`](reports/v2_falsification.md).
 
 ---
 
@@ -224,7 +269,8 @@ evaluate_compare → score → decide → backtest`.
 python -m src.pipeline --analyses
 ```
 
-Runs the pipeline, then `calibration`, `sensitivity`, and `bootstrap`.
+Runs the pipeline, then `calibration`, `ablation`, `sensitivity`, and
+`bootstrap`.
 
 ### List the steps without running
 
@@ -236,6 +282,7 @@ python -m src.pipeline --list
 
 ```bash
 python -m src.evaluation.calibration    # prints ECE and reliability table
+python -m src.evaluation.ablation       # writes reports/ablation.md + figure
 python -m src.evaluation.sensitivity    # writes reports/sensitivity.md
 python -m src.evaluation.bootstrap      # writes reports/bootstrap.md
 ```
@@ -244,7 +291,7 @@ python -m src.evaluation.bootstrap      # writes reports/bootstrap.md
 
 ```bash
 pytest -q
-# 58 passed
+# 76 passed
 ```
 
 ### Environment
@@ -265,9 +312,10 @@ Verified library versions: Python 3.11, numpy 2.2.6, pandas 2.3.3,
 pyarrow 19.0.1, scikit-learn 1.7.2, LightGBM 4.7.0, Streamlit 1.64.0,
 joblib 1.6.0, PyYAML 6.0.3, matplotlib 3.8+, pytest 8.1+.
 
-The pipeline reproduces byte-for-byte. Given `data/original/Base.csv`
-plus `configs/costs.yaml` and the fixed seed (`42`), every number in the
-reports regenerates.
+The pipeline reproduces the reported numbers. Given
+`data/original/Base.csv` plus `configs/costs.yaml` and the fixed seed
+(`42`), every text report regenerates byte-for-byte; the waterfall figure
+is regenerated from the same numbers.
 
 ---
 
@@ -316,9 +364,11 @@ reports regenerates.
 | Report | Contents |
 |---|---|
 | [`reports/decision_backtest.md`](reports/decision_backtest.md) | Primary: policy vs. baseline comparison, data integrity, failure analysis, stop verdict |
+| [`reports/ablation.md`](reports/ablation.md) | Baseline audit: fair cost-optimal baselines, gain decomposition, confidence intervals |
 | [`reports/model_comparison.md`](reports/model_comparison.md) | Supporting: classifier comparison as policy inputs, selection justification |
 | [`reports/sensitivity.md`](reports/sensitivity.md) | Full cost sensitivity table across the 2× sweep |
 | [`reports/bootstrap.md`](reports/bootstrap.md) | 95% confidence intervals on cost per transaction |
+| [`reports/v2_falsification.md`](reports/v2_falsification.md) | V2: six pre-registered hypotheses, verdicts, and evidence |
 
 ### Paper materials
 

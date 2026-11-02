@@ -157,10 +157,15 @@ reports/*.png
 reports/*.jpg
 reports/*.svg
 
+# Ship the figures that the README, paper, and case study reference.
+!reports/figures/
+!reports/figures/*.png
+
 # Keep markdown reports
 !reports/*.md
 
 !reports/cv_results.json
+!reports/ablation.json
 !reports/.gitkeep
 
 # ----------------------------

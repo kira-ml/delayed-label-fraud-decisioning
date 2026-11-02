@@ -40,6 +40,7 @@ DEFAULTS_PATH = MODELS / "feature_defaults.json"
 IMPORTANCES_PATH = MODELS / "feature_importances.json"
 COSTS_PATH = _REPO_ROOT / "configs" / "costs.yaml"
 CV_RESULTS_PATH = _REPO_ROOT / "reports" / "cv_results.json"
+ABLATION_PATH = _REPO_ROOT / "reports" / "ablation.json"
 SAMPLE_BATCH_PATH = _REPO_ROOT / "sample_500.csv"
 FONTS_DIR = _APP_DIR / "static" / "fonts"
 
@@ -82,9 +83,15 @@ BASELINE_COSTS = [
     ("Approve everyone", 0.018928),
     ("Random Forest + 50% cut-off", 0.018928),
     ("Logistic Regression + 50% cut-off", 0.018737),
-    ("LightGBM + 50% cut-off (best simple rule)", 0.017798),
+    ("LightGBM + 50% cut-off", 0.017798),
+    ("Cost-optimal single threshold", 0.012512),
+    ("Cost-optimal two-threshold (best simple rule)", 0.009640),
     ("Decision desk (cost-based)", 0.007491),
 ]
+# Fallbacks if reports/ablation.json is absent. The JSON is the source of
+# truth; these keep the demo readable on a fresh checkout.
+HEADLINE_NAIVE = 57.91
+HEADLINE_FAIR = 22.29
 SENSITIVITY = [
     ("As planned", 0.007491, 57.91),
     ("Wrongly blocking costs half as much", 0.007037, 60.36),
@@ -274,7 +281,11 @@ def load_artifacts():
         json.loads(CV_RESULTS_PATH.read_text(encoding="utf-8"))
         if CV_RESULTS_PATH.exists() else None
     )
-    return model, pre, features, defaults, importances, cv_results
+    ablation = (
+        json.loads(ABLATION_PATH.read_text(encoding="utf-8"))
+        if ABLATION_PATH.exists() else None
+    )
+    return model, pre, features, defaults, importances, cv_results, ablation
 
 
 @st.cache_data(show_spinner=False)
@@ -1116,13 +1127,28 @@ def tab_how(model, features, importances, cv_results, costs_override) -> None:
 # ============================================================
 # Tab 4: study results
 # ============================================================
-def tab_results() -> None:
+def tab_results(ablation: dict | None = None) -> None:
+    if ablation:
+        fair = float(ablation["advantage_vs_fair_two"]) * 100.0
+        fair_lo, fair_hi = [
+            float(x) * 100.0 for x in ablation["advantage_vs_fair_two_ci_95"]
+        ]
+        naive = float(ablation["advantage_vs_lgbm_05"]) * 100.0
+        n = int(ablation["test_rows"])
+    else:
+        fair, fair_lo, fair_hi = HEADLINE_FAIR, 19.71, 24.95
+        naive = HEADLINE_NAIVE
+        n = 227_491
+
     st.html(
-        '<div class="headline"><span class="num">57.91%</span> lower cost than the best simple rule</div>'
+        f'<div class="headline"><span class="num">{fair:.1f}%</span> '
+        "lower cost than the best simple rule</div>"
     )
     st.markdown(
-        "Tested once on **227,491** applications from months the model never saw. "
-        "We are 95% confident the true reduction is between **53.95%** and **62.13%**."
+        f"Tested once on **{n:,}** applications from months the model never saw. "
+        f"Against the best cost-optimal threshold, the reduction is **{fair:.1f}%** "
+        f"(95% CI **{fair_lo:.1f}%–{fair_hi:.1f}%**). Against a naive 50% cut-off, "
+        f"the reduction is **{naive:.1f}%**. The second number is the one to defend."
     )
 
     st.markdown("### Average cost per application, by strategy")
@@ -1144,7 +1170,9 @@ def tab_results() -> None:
     st.altair_chart((bars + labels).properties(height=330), width="stretch")
     st.caption(
         "A 50% cut-off barely beats approving everyone, because fraud is only "
-        "about 1% of applications. Weighing costs is what makes the difference."
+        "about 1% of applications. The fair comparison is the cost-optimal "
+        f"two-threshold rule; the desk is {fair:.1f}% cheaper than that, and "
+        f"about {naive:.1f}% cheaper than the 50% cut-off."
     )
 
     st.markdown("### Does it still hold if our cost guesses are off?")
@@ -1197,7 +1225,7 @@ def main() -> None:
     altair_theme()
     header_band()
 
-    model, pre, features, _defaults, importances, cv_results = load_artifacts()
+    model, pre, features, _defaults, importances, cv_results, ablation = load_artifacts()
     costs_override = sidebar_settings()
 
     t1, t2, t3, t4 = st.tabs(
@@ -1210,7 +1238,7 @@ def main() -> None:
     with t3:
         tab_how(model, features, importances, cv_results, costs_override)
     with t4:
-        tab_results()
+        tab_results(ablation)
 
 
 if __name__ == "__main__":

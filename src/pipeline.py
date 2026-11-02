@@ -70,6 +70,7 @@ def _print_list() -> None:
 def _run_analyses() -> None:
     for module in (
         "src.evaluation.calibration",
+        "src.evaluation.ablation",
         "src.evaluation.sensitivity",
         "src.evaluation.bootstrap",
     ):
